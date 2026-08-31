@@ -1,0 +1,58 @@
+Make ONE targeted visual consistency change across the EXISTING UI.
+
+TASK:
+Find EVERY place in the existing prototype where a map, map-like graphic, geographic visualization, challenge-density visualization, location visualization, or abstract geographic shape is currently displayed.
+
+Replace ALL such map/map-like visuals with a recognizable outline/silhouette map of JHARKHAND.
+
+IMPORTANT:
+I want this change EVERYWHERE it appears in the existing UI, not just on the dashboard "Community impact" section.
+
+For every existing map/location visualization:
+- Use the actual recognizable Jharkhand state outline.
+- Preserve the existing information/data shown on top of the map.
+- Preserve existing district names, markers, numbers, labels and statuses wherever they already exist.
+- Position existing markers approximately according to their real Jharkhand locations when possible.
+- Keep each map's existing card/container size, position, spacing and overall layout.
+- Keep the existing visual style and green/cream design language.
+- A static SVG of Jharkhand is sufficient.
+- DO NOT implement PostgreSQL GIS, Mapbox, Google Maps, Leaflet, geospatial APIs, or any new mapping infrastructure.
+
+IMPORTANT SCOPE:
+Search the existing UI for ALL existing map instances before making the change, including:
+- Dashboard
+- Community Impact
+- Challenge/location views
+- Citizen pages
+- Panchayat/ULB pages
+- Validation/review pages
+- Tracking/status pages
+- Any other page where a map or geographic visualization already exists
+
+Do NOT create new map sections. Only replace existing map/map-like visuals.
+
+STRICTLY DO NOT CHANGE:
+- Page layouts
+- Navbar/header
+- Typography
+- Global colors
+- Buttons
+- Forms
+- Cards
+- Text/content
+- Existing mock data
+- Routing
+- Functionality
+- AI logic
+- Database
+- Any non-map UI
+
+USAGE LIMIT:
+Inspect only the files/components necessary to locate the existing map/map-like visuals.
+Do NOT redesign or refactor the project.
+Prefer ONE reusable Jharkhand SVG asset/component wherever practical, so the same asset can be reused across existing map locations.
+Make the minimum changes necessary.
+
+Before finishing, verify that EVERY existing map/map-like visualization in the UI now uses the Jharkhand map instead of the previous abstract map.
+
+Then STOP. Do not make any other changes.

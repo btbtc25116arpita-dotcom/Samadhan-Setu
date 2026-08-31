@@ -105,27 +105,19 @@ function Auth({ mode }: { mode: 'login' | 'register' }) { const params = usePara
 
 function Metric({ label, value, detail, icon: metricIcon, tone = 'primary' }: { label: string; value: string; detail: string; icon: IconType; tone?: 'primary' | 'orange' | 'blue' | 'green' }) { const colors = { primary: 'bg-primary text-secondary', orange: 'bg-orange-100 text-accent', blue: 'bg-sky-100 text-sky-700', green: 'bg-emerald-100 text-emerald-700' }; return <Card className="p-4 md:p-5"><div className="flex items-start justify-between"><span className={cx('flex h-10 w-10 items-center justify-center rounded-xl', colors[tone])}><Icon icon={metricIcon} size={19} /></span><TrendingUp size={16} className="text-emerald-600" /></div><p className="mt-4 font-display text-2xl font-bold md:text-3xl" data-testid={`text-metric-${label.toLowerCase().replaceAll(' ', '-')}`}>{value}</p><p className="mt-1 text-sm font-semibold">{label}</p><p className="mt-1 text-xs text-muted-foreground">{detail}</p></Card>; }
 function PageIntro({ eyebrow, title, description, action }: { eyebrow: string; title: string; description: string; action?: ReactNode }) { return <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end"><div><p className="mb-2 text-xs font-bold uppercase tracking-[.18em] text-accent">{eyebrow}</p><h1 className="font-display text-3xl font-bold tracking-tight md:text-4xl">{title}</h1><p className="mt-2 max-w-2xl text-sm text-muted-foreground">{description}</p></div>{action}</div>; }
-function MapMock({ filter = 'All', outline = false }: { filter?: string; outline?: boolean }) {
+function MapMock({ filter = 'All' }: { filter?: string }) {
   const mapUrl = 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Jharkhand_map_for_WLM-IN.svg';
-  const showOutline = outline || currentRole() === 'community';
-  const points = showOutline ? [
+  const points = [
     { x: '45%', y: '50%', name: 'Ranchi', count: 18 },
     { x: '61%', y: '65%', name: 'Jamshedpur', count: 12 },
     { x: '46%', y: '37%', name: 'Hazaribagh', count: 9 },
     { x: '64%', y: '42%', name: 'Dhanbad', count: 11 },
     { x: '33%', y: '59%', name: 'Gumla', count: 7 },
     { x: '68%', y: '27%', name: 'Deoghar', count: 8 },
-  ] : [
-    { x: '29%', y: '32%', name: 'Ranchi', count: 18 },
-    { x: '64%', y: '47%', name: 'Jamshedpur', count: 12 },
-    { x: '42%', y: '22%', name: 'Hazaribagh', count: 9 },
-    { x: '74%', y: '28%', name: 'Dhanbad', count: 11 },
-    { x: '54%', y: '72%', name: 'Gumla', count: 7 },
-    { x: '79%', y: '71%', name: 'Deoghar', count: 8 },
   ];
   return <div className="relative h-[310px] overflow-hidden rounded-2xl border border-secondary/60 bg-[#e6eee2]" data-testid="visual-problem-map">
     <div className="absolute inset-0 opacity-50" style={{ backgroundImage: 'linear-gradient(30deg, transparent 48%, hsl(158 54% 25% / .08) 49%, transparent 51%), linear-gradient(120deg, transparent 48%, hsl(158 54% 25% / .08) 49%, transparent 51%)', backgroundSize: '90px 90px' }} />
-    {showOutline ? <div
+    <div
       className="absolute inset-0 bg-[#c1d9bd] opacity-90"
       style={{
         maskImage: `url(${mapUrl})`,
@@ -137,7 +129,7 @@ function MapMock({ filter = 'All', outline = false }: { filter?: string; outline
         maskSize: '72% 88%',
         WebkitMaskSize: '72% 88%',
       }}
-    /> : <div className="absolute left-[16%] top-[8%] h-[82%] w-[68%] rotate-[-9deg] rounded-[44%_56%_41%_59%/44%_36%_64%_56%] border-[16px] border-[#c1d9bd] bg-[#d7e7ce]" />}
+    />
     <div className="absolute bottom-4 left-4 rounded-xl bg-card/90 px-3 py-2 text-xs font-semibold shadow-sm"><span className="mr-1.5 inline-block h-2 w-2 rounded-full bg-accent" />Mock challenge density</div>
     {points.map(point => <div key={point.name} className="absolute z-10 -translate-x-1/2 -translate-y-1/2" style={{ left: point.x, top: point.y }}><div className="flex h-9 w-9 items-center justify-center rounded-full border-4 border-card bg-accent text-[10px] font-bold text-white shadow-lg transition hover:scale-125" title={`${point.name}: ${point.count} challenges`} data-testid={`map-point-${point.name.toLowerCase()}`}>{point.count}</div><span className="mt-1 block text-center text-[10px] font-bold text-primary">{point.name}</span></div>)}
   </div>;
