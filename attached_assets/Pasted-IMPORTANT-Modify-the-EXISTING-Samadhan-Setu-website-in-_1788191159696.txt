@@ -1,0 +1,110 @@
+IMPORTANT: Modify the EXISTING Samadhan Setu website in this current Replit project.
+
+DO NOT create a new website.
+DO NOT rebuild or redesign anything.
+DO NOT replace the existing implementation.
+DO NOT create duplicate components/pages.
+Work ONLY on the existing implementation that is already running in this project.
+
+Before making any changes, inspect the existing implementation of the four role-selection flows and identify the existing files/components/data controlling them.
+
+### REQUIRED CHANGES
+
+Update the role/category options under these four sections:
+
+1. "Report a Problem"
+ONLY:
+- Citizen
+- Panchayat
+
+2. "Manage Community Problems"
+ONLY:
+- Panchayat
+- ULB
+
+3. "Join Innovation Challenge"
+ONLY:
+- Student
+- Faculty
+
+4. "Support or Monitor Projects"
+ONLY:
+- Government
+- Industry
+
+### IMPORTANT — PRESERVE THE EXISTING WEBSITE
+
+This is a SMALL TARGETED CORRECTION, NOT A REDESIGN.
+
+DO NOT change:
+- visual design
+- layout
+- colors
+- fonts
+- spacing
+- cards
+- buttons
+- animations
+- navbar
+- hero section
+- existing pages
+- existing navigation
+- routing
+- authentication
+- backend/API functionality
+- unrelated functionality
+
+Preserve all existing components and styling.
+
+If these role options are controlled by an existing shared data/configuration structure, modify that existing structure instead of creating duplicate components or data.
+
+### FUNCTIONAL REQUIREMENT
+
+Each of the four sections must show ONLY its corresponding two options.
+
+The four flows must remain separate/context-aware. Clicking a section must show the correct two roles for THAT section.
+
+Make sure:
+- Report a Problem → Citizen, Panchayat
+- Manage Community Problems → Panchayat, ULB
+- Join Innovation Challenge → Student, Faculty
+- Support or Monitor Projects → Government, Industry
+
+Do not leave any incorrect roles visible in any of these four flows.
+
+When an existing role is selected, preserve its existing click/Continue behavior and navigation.
+
+For Panchayat and ULB:
+- First inspect how the existing project currently handles community/Panchayat/ULB functionality.
+- Reuse the existing implementation wherever possible.
+- Do NOT introduce completely new authentication, dashboards, or backend systems just for this change.
+
+### BEFORE EDITING
+
+First inspect the code and tell me:
+
+1. Which exact existing files/components you will modify.
+2. Which existing data/configuration controls these role options.
+3. Exactly what you plan to change.
+4. Confirm that you will not modify unrelated files.
+
+DO NOT make changes until you have identified the correct existing implementation.
+
+Once the correct files are identified, you may proceed with ONLY this targeted change.
+
+### AFTER EDITING
+
+Verify the project:
+
+1. Run the relevant typecheck/build.
+2. Confirm it succeeds.
+3. Confirm only the necessary existing files were modified.
+4. Confirm all four flows display exactly the requested roles.
+5. Confirm existing navigation/click behavior still works.
+6. Do not make any additional redesigns or improvements.
+
+Again:
+
+EXISTING PROJECT → INSPECT → TARGETED EDIT ONLY → VERIFY.
+
+Do NOT create a new implementation.
