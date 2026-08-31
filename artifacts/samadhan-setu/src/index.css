@@ -130,3 +130,13 @@
 
 @keyframes rise-in { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 @keyframes soft-pulse { 0%,100% { opacity:.72; } 50% { opacity:1; } }
+
+.relative.hidden.min-h-\[330px\].lg\:block.rise-in.rise-in-delay-2 {
+  background: url("https://upload.wikimedia.org/wikipedia/commons/d/d0/Asur_Tribe_Peoples_%28PVTG%29_In_a_Village_Near_Sakhuapani_%2C_Gurdari%2C_Jharkhand_Sample_1.jpg") center / cover no-repeat;
+  border-radius: 3rem;
+  overflow: hidden;
+}
+
+.relative.hidden.min-h-\[330px\].lg\:block.rise-in.rise-in-delay-2 > * {
+  visibility: hidden;
+}

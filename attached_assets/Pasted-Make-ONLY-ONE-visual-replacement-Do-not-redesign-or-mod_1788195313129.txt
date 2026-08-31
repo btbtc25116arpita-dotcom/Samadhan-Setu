@@ -1,0 +1,49 @@
+Make ONLY ONE visual replacement. Do not redesign or modify the rest of the prototype.
+
+TASK:
+On the HOME/LANDING PAGE, replace the current abstract business-style illustration on the RIGHT SIDE of the hero section.
+
+CURRENT VISUAL:
+It contains the green rounded rectangle with abstract circles plus floating cards such as "Challenge map" and "Solution in motion".
+
+I do NOT want this startup/business-style illustration anymore.
+
+REPLACE IT WITH:
+A realistic, government/public-service themed Jharkhand visual that feels connected to citizens and communities.
+
+Preferred visual:
+- A high-quality realistic photograph-style image showing ordinary Jharkhand citizens/community members.
+- Prefer a natural community/public-service setting rather than a corporate office.
+- The image can subtly represent people, community participation, local development or civic issues.
+- It should feel authentic to Jharkhand and India.
+- Avoid generic Western stock-photo aesthetics.
+- Avoid corporate/business imagery.
+- Avoid AI-looking futuristic graphics.
+- Avoid dashboards, charts, floating UI cards, abstract circles or SaaS illustrations.
+
+DESIGN:
+Keep the EXISTING right-side hero area's exact approximate size, position, spacing and overall layout.
+The new image should fit naturally inside the existing visual area.
+Use a clean rounded-corner image treatment consistent with the existing design.
+
+STRICT LIMITS:
+- Do NOT modify the left side of the hero section.
+- Do NOT modify the heading.
+- Do NOT modify the paragraph.
+- Do NOT modify buttons.
+- Do NOT modify navbar/header.
+- Do NOT modify colors elsewhere.
+- Do NOT modify typography.
+- Do NOT modify sections below the hero.
+- Do NOT modify routing or functionality.
+- Do NOT refactor unrelated code.
+- Do NOT redesign the page.
+- Do NOT change responsive behavior.
+
+TOKEN/USAGE CONSTRAINT:
+Inspect ONLY the home page component and the code responsible for the current right-side hero visual.
+Do not scan the entire project.
+Make the smallest possible change: replace the existing hero visual/asset only.
+If an appropriate local image asset already exists, reuse it instead of searching for or generating a new one.
+
+After replacing the visual, STOP. Do not make any other changes.
