@@ -26,8 +26,8 @@ author = "agent"
 
 [[workflows.workflow.tasks]]
 task = "shell.exec"
-args = "PORT=24553 BASE_PATH=/ pnpm --filter @workspace/samadhan-setu run dev"
-waitForPort = 24553
+args = "PORT=5173 BASE_PATH=/ pnpm --filter @workspace/samadhan-setu run dev"
+waitForPort = 5173
 
 [workflows.workflow.metadata]
 outputType = "webview"
