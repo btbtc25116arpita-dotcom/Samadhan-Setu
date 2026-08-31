@@ -49,7 +49,7 @@ function Icon({ icon: IconComponent, size = 18, className }: { icon: IconType; s
 
 function Button({ children, variant = 'primary', className, ...props }: React.ButtonHTMLAttributes<HTMLButtonElement> & { variant?: 'primary' | 'outline' | 'ghost' | 'soft' | 'danger' }) {
   const styles = { primary: 'bg-primary text-primary-foreground hover:brightness-110', outline: 'border border-border bg-card hover:border-primary hover:text-primary', ghost: 'hover:bg-muted', soft: 'bg-secondary/40 text-foreground hover:bg-secondary/65', danger: 'bg-red-50 text-red-700 hover:bg-red-100' };
-  return <button {...props} className={cx('inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50', styles[variant], className)} />;
+  return <button {...props} className={cx('inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-all duration-200 active:scale-[.98] disabled:cursor-not-allowed disabled:opacity-50', styles[variant], className)}>{children}</button>;
 }
 function Badge({ children, tone = 'muted' }: { children: ReactNode; tone?: 'green' | 'amber' | 'orange' | 'blue' | 'muted' | 'red' }) {
   const tones = { green: 'bg-emerald-100 text-emerald-800', amber: 'bg-amber-100 text-amber-800', orange: 'bg-orange-100 text-orange-800', blue: 'bg-sky-100 text-sky-800', muted: 'bg-muted text-muted-foreground', red: 'bg-red-100 text-red-800' };
