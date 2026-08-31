@@ -1,0 +1,1583 @@
+Build a complete frontend prototype called:
+
+SAMADHAN SETU
+
+Tagline:
+"Connecting Community Challenges with Innovation"
+
+IMPORTANT:
+Do NOT create a generic dashboard template.
+Do NOT simplify the requirements.
+Do NOT remove any module.
+Build the application as a realistic, polished, demo-ready product prototype with working navigation, forms, dropdowns, modals, dashboards and role-based flows.
+
+The application is for a Jharkhand-focused societal innovation and collaboration ecosystem.
+
+====================================================
+1. CORE PRODUCT PURPOSE
+====================================================
+
+Samadhan Setu is a digital platform that connects:
+
+Citizens / Community Organizations / Panchayati Raj Institutions / ULBs / Government Departments
+
+with:
+
+Universities / HEIs / Students / Faculty
+
+and:
+
+Industries / Startups / MSMEs / CSR organizations / Research Institutions / Innovation Hubs.
+
+The platform allows societal problems to be submitted, categorized, evaluated, assigned to suitable institutions, converted into projects, supported by industry and tracked until implementation.
+
+Main ecosystem:
+
+COMMUNITY PROBLEM
+        ↓
+SUBMISSION
+        ↓
+AI CATEGORIZATION
+        ↓
+VALIDATION / PRIORITIZATION
+        ↓
+UNIVERSITY MATCHING
+        ↓
+STUDENT + FACULTY TEAM
+        ↓
+INDUSTRY COLLABORATION
+        ↓
+PROJECT / PROTOTYPE
+        ↓
+PILOT / IMPLEMENTATION
+        ↓
+MEASURABLE COMMUNITY IMPACT
+
+This is a FRONTEND PROTOTYPE.
+Use realistic mock data.
+No real Aadhaar verification, payment processing, government APIs or external authentication are required.
+
+====================================================
+2. DESIGN LANGUAGE
+====================================================
+
+Use the SECOND PROVIDED REFERENCE IMAGE as the visual direction.
+
+Overall visual style:
+
+- Clean
+- Minimal
+- Government + innovation ecosystem feel
+- Trustworthy
+- Modern but not overly futuristic
+- Mobile-first
+- Professional
+- Easy for rural and non-technical users
+- Strong visual hierarchy
+
+Primary visual inspiration:
+- white background
+- dark green headers
+- soft green accents
+- light grey borders
+- rounded cards
+- rounded input fields
+- subtle shadows
+- simple line icons
+- small illustrations where useful
+- large readable text
+- plenty of whitespace
+
+Use a Jharkhand/nature-inspired palette:
+
+Primary:
+deep forest green
+
+Secondary:
+leaf green
+
+Accent:
+soft blue
+
+Innovation:
+purple
+
+Industry:
+orange
+
+Neutral:
+white / light grey / dark charcoal
+
+Do NOT make the interface black-heavy.
+
+Use:
+Lucide React icons or another clean icon library.
+
+Typography:
+Use Inter, Poppins or a similar highly readable modern font.
+
+====================================================
+3. APPLICATION ENTRY SCREEN
+====================================================
+
+When the app opens, FIRST show a landing/action-selection screen.
+
+The first screen must follow this exact conceptual sequence:
+
+Header:
+
+SAMADHAN SETU
+
+"Welcome to Samadhan Setu"
+
+"What would you like to do?"
+
+Then show FOUR large action cards vertically.
+
+CARD 1 — GREEN
+
+Icon: report/problem icon
+
+Title:
+Report a Local Problem
+
+Subtitle:
+"Tell us about a problem in your community"
+
+On click:
+go to role selection / login.
+
+Small supporting text:
+Citizen / Community Organization / Panchayat / ULB
+
+----------------------------------------------------
+
+CARD 2 — BLUE
+
+Icon: community / management icon
+
+Title:
+Manage Community Problems
+
+Subtitle:
+"Review, validate and manage submitted challenges"
+
+On click:
+go to role selection / login.
+
+Relevant roles:
+Panchayat / ULB / Government Body
+
+----------------------------------------------------
+
+CARD 3 — PURPLE
+
+Icon: lightbulb / innovation icon
+
+Title:
+Join an Innovation Challenge
+
+Subtitle:
+"Work with students, faculty and innovators on real problems"
+
+On click:
+go to role selection / login.
+
+Relevant roles:
+Student / Faculty / University
+
+----------------------------------------------------
+
+CARD 4 — ORANGE
+
+Icon: collaboration / briefcase icon
+
+Title:
+Support or Monitor Projects
+
+Subtitle:
+"Collaborate, mentor, fund or monitor solutions"
+
+On click:
+go to role selection / login.
+
+Relevant roles:
+Industry / Startup / Government Body / CSR
+
+----------------------------------------------------
+
+At the bottom:
+
+"Already have an account? Login"
+
+"New to Samadhan Setu? Create an account"
+
+====================================================
+4. HAMBURGER MENU
+====================================================
+
+The SECOND PROVIDED IMAGE represents the style of role selection/login.
+
+Use a top navigation bar after entering the application.
+
+Left:
+hamburger icon
+
+Center/left:
+SAMADHAN SETU logo + name
+
+Right:
+notification icon
+profile icon
+
+When hamburger is clicked, open a smooth side drawer.
+
+Menu:
+
+Home
+
+Report a Local Problem
+    → Submit Challenge
+    → My Submissions
+    → Track Problems
+
+Manage Community Problems
+    → Review Challenges
+    → Assigned Problems
+    → Validation Queue
+
+Innovation
+    → Innovation Challenges
+    → Universities
+    → Student Teams
+    → Solution Proposals
+
+Industry & Collaboration
+    → Industry Partners
+    → Mentorship
+    → Funding Opportunities
+    → Active Collaborations
+
+Projects
+    → All Projects
+    → Project Milestones
+    → Pilot Projects
+    → Impact
+
+Analytics
+
+Notifications
+
+Profile
+
+Help & Support
+
+Logout
+
+Use expandable dropdown sections.
+
+Do NOT put everything on one crowded page.
+
+====================================================
+5. ROLE SELECTION
+====================================================
+
+Create a clean page inspired by the SECOND IMAGE.
+
+Title:
+
+"Welcome!"
+
+Subtitle:
+
+"Join hands to build a better Jharkhand through innovation and collaboration."
+
+Use a subtle Jharkhand landscape / community illustration.
+
+Heading:
+
+"Select Your Role"
+
+Role cards:
+
+1. Citizen
+2. Student / Faculty
+3. Industry / Startup
+4. Government / Admin
+
+Each card has:
+- icon
+- title
+- short description
+- arrow
+
+Clicking a role opens the appropriate registration/login form.
+
+====================================================
+6. REGISTRATION / LOGIN
+====================================================
+
+Create separate role-aware forms.
+
+Do NOT ask every role for the same information.
+
+------------------------------------
+CITIZEN REGISTRATION
+------------------------------------
+
+Fields:
+
+Full Name *
+Mobile Number *
+Email Address
+Password *
+Confirm Password *
+State
+District *
+Block / Municipality
+Village / Ward
+Address
+Preferred Language
+
+Identity verification section:
+
+Government ID / Aadhaar Number
+(optional in prototype)
+
+IMPORTANT:
+Do not display Aadhaar numbers openly after submission.
+Mask sensitive identity information in profile/dashboard.
+
+Checkbox:
+"I agree to the Terms & Privacy Policy"
+
+Button:
+Create Account
+
+Also:
+Already have an account? Login
+
+------------------------------------
+STUDENT REGISTRATION
+------------------------------------
+
+Fields:
+
+Full Name *
+Email *
+Mobile Number
+Password *
+College / University *
+University ID / Enrollment Number
+Course
+Branch / Department
+Year of Study
+Skills
+Areas of Interest
+District
+Profile Photo
+
+Optional:
+LinkedIn / GitHub / Portfolio
+
+------------------------------------
+FACULTY REGISTRATION
+------------------------------------
+
+Fields:
+
+Full Name
+Email
+Mobile
+Password
+University / Institution
+Department
+Designation
+Area of Expertise
+Research Interests
+Years of Experience
+ORCID / Research Profile
+District
+
+------------------------------------
+INDUSTRY / STARTUP REGISTRATION
+------------------------------------
+
+Fields:
+
+Organization Name *
+Organization Type *
+    Industry
+    Startup
+    MSME
+    CSR Organization
+    Research Lab
+    Innovation Hub
+
+Official Email *
+Phone
+Password *
+Website
+Industry Sector
+Organization Description
+Head Office / Location
+Areas of Expertise
+Technologies
+Mentorship Offered
+Funding Capability
+Prototype / Testing Capability
+
+Optional:
+GSTIN / Registration Number
+
+------------------------------------
+GOVERNMENT / ADMIN REGISTRATION
+------------------------------------
+
+Fields:
+
+Officer Name
+Official Email
+Mobile
+Password
+Department / Organization
+Designation
+Government Body Type
+
+Options:
+Panchayat
+ULB
+District Administration
+State Department
+Government Agency
+Other
+
+District
+Block / Municipality
+Official ID / Employee ID
+
+====================================================
+7. CITIZEN DASHBOARD
+====================================================
+
+After Citizen login, show a completely separate Citizen Dashboard.
+
+Header:
+
+"Good morning, [Name]"
+
+"Help us turn local problems into real solutions."
+
+Dashboard cards:
+
+Problems Reported
+Under Review
+Accepted
+In Progress
+Resolved
+
+Primary CTA:
+
++ Report a Local Problem
+
+Secondary CTA:
+
+Track My Problems
+
+----------------------------------------------------
+QUICK ACTIONS
+----------------------------------------------------
+
+Report a Problem
+My Submissions
+Track Status
+Nearby Challenges
+Notifications
+
+----------------------------------------------------
+MY RECENT SUBMISSIONS
+----------------------------------------------------
+
+Show realistic cards:
+
+Problem title
+Category
+District
+Date submitted
+Status
+
+Statuses:
+
+Submitted
+Under Review
+Validated
+Matched with University
+Project in Progress
+Pilot Testing
+Resolved
+
+Use colored status badges.
+
+----------------------------------------------------
+PROBLEM MAP
+----------------------------------------------------
+
+Show a mock map of Jharkhand / district map area.
+
+Display sample problem markers.
+
+Filters:
+
+Education
+Healthcare
+Agriculture
+Water
+Sanitation
+Environment
+Infrastructure
+Accessibility
+
+----------------------------------------------------
+COMMUNITY IMPACT
+----------------------------------------------------
+
+Show:
+
+Problems reported
+Problems resolved
+Projects started
+Communities benefited
+
+Use simple charts.
+
+====================================================
+8. REPORT A LOCAL PROBLEM FLOW
+====================================================
+
+This is one of the MOST IMPORTANT features.
+
+When user clicks:
+
+"Report a Local Problem"
+
+Open a multi-step form.
+
+STEP 1:
+Problem Details
+
+Problem Title *
+Describe the problem *
+Category *
+
+Categories:
+
+Education
+Healthcare
+Agriculture
+Water Resources
+Sanitation
+Environment
+Energy
+Urban Development
+Accessibility
+Public Administration
+Rural Livelihoods
+Other
+
+STEP 2:
+Location
+
+State
+District
+Block
+Village / Ward
+Address
+Pin Code
+
+Add:
+
+"Use my current location"
+
+Show a mock location map.
+
+STEP 3:
+Evidence
+
+Upload:
+
+Photos
+Videos
+Documents
+
+Drag-and-drop upload area.
+
+STEP 4:
+Impact
+
+Who is affected?
+
+Approximate number of people affected
+
+How long has the problem existed?
+
+Urgency:
+
+Low
+Medium
+High
+Critical
+
+Expected impact:
+
+Low
+Medium
+High
+
+STEP 5:
+Submit
+
+Show a review summary.
+
+Button:
+
+"Submit Challenge"
+
+After submission:
+
+Show success screen:
+
+"Challenge Submitted Successfully"
+
+Generate a mock Challenge ID:
+
+SS-JH-2026-00124
+
+Show:
+
+Your challenge has been received and will be evaluated.
+
+Buttons:
+
+Track Challenge
+Back to Dashboard
+
+====================================================
+9. AI PROBLEM CLASSIFICATION
+====================================================
+
+After a problem is submitted, show an AI analysis card.
+
+Example:
+
+"AI-assisted Challenge Analysis"
+
+Detected Category:
+Water Resources
+
+Priority:
+High
+
+Affected Area:
+Rural Community
+
+Estimated Impact:
+High
+
+Suggested Expertise:
+Civil Engineering
+Water Resource Management
+Environmental Engineering
+IoT / Sensors
+
+Possible University Matches:
+University A
+University B
+University C
+
+Potential Industry Support:
+Water Technology
+IoT
+CSR
+
+This is MOCK AI behavior for the frontend.
+
+Use believable loading animation:
+
+"Analyzing your challenge..."
+
+Then reveal results.
+
+====================================================
+10. COMMUNITY / PANCHAYAT / ULB DASHBOARD
+====================================================
+
+Create a separate dashboard for authorized community/government managers.
+
+Header:
+
+"Community Problem Management"
+
+Metrics:
+
+Total Challenges
+Pending Validation
+High Priority
+Assigned
+Resolved
+
+Main sections:
+
+Validation Queue
+
+Each challenge card:
+
+Challenge ID
+Title
+Location
+Category
+Submitted By
+Priority
+Date
+AI Category
+Status
+
+Actions:
+
+View
+Validate
+Reject
+Request More Information
+Assign
+
+Filters:
+
+District
+Block
+Category
+Priority
+Status
+Date
+
+====================================================
+11. GOVERNMENT ADMIN DASHBOARD
+====================================================
+
+Create a powerful government/admin dashboard.
+
+Header:
+
+"Jharkhand Societal Innovation Dashboard"
+
+Top metrics:
+
+Total Challenges
+Validated Challenges
+Universities Participating
+Industry Partners
+Active Projects
+Resolved Challenges
+Citizens Benefited
+
+Charts:
+
+Challenges by Domain
+
+Challenges by District
+
+University Participation
+
+Industry Participation
+
+Project Progress
+
+Community Impact
+
+Show a Jharkhand district map visualization using mock data.
+
+District filter.
+
+Domain filter.
+
+Time filter.
+
+====================================================
+12. UNIVERSITY DASHBOARD
+====================================================
+
+For Student / Faculty / University users.
+
+Header:
+
+"University Innovation Hub"
+
+Cards:
+
+Assigned Challenges
+Active Projects
+Student Teams
+Faculty Mentors
+Industry Collaborations
+Completed Projects
+
+Sections:
+
+Recommended Challenges
+
+Each challenge:
+
+Title
+Domain
+Location
+Problem Severity
+Required Skills
+Suggested Team Size
+Potential Impact
+
+Buttons:
+
+View Challenge
+Apply
+Create Team
+
+----------------------------------------------------
+STUDENT TEAM CREATION
+----------------------------------------------------
+
+Create Team button.
+
+Fields:
+
+Team Name
+Project Lead
+Members
+Skills Required
+Faculty Mentor
+Expected Timeline
+
+Show team members as profile chips.
+
+====================================================
+13. FACULTY DASHBOARD
+====================================================
+
+Sections:
+
+Assigned Challenges
+
+Student Teams
+
+Projects Under Mentorship
+
+Pending Approvals
+
+Research Opportunities
+
+Actions:
+
+Review Proposal
+Approve Team
+Give Feedback
+Assign Milestone
+Upload Research Document
+
+====================================================
+14. INDUSTRY / STARTUP DASHBOARD
+====================================================
+
+Create a separate industry dashboard.
+
+Header:
+
+"Industry Collaboration Hub"
+
+Metrics:
+
+Active Collaborations
+Mentorship Requests
+Funding Opportunities
+Projects Supported
+Pilots Running
+Communities Impacted
+
+Sections:
+
+Projects Looking for Industry Support
+
+Each card:
+
+Project title
+University
+Problem domain
+Location
+Support required:
+
+Mentorship
+Funding
+Technology
+Prototype
+Testing
+Deployment
+
+Buttons:
+
+View Project
+
+Offer Support
+
+----------------------------------------------------
+INDUSTRY SUPPORT FORM
+----------------------------------------------------
+
+Support Type:
+
+Mentorship
+Funding
+Prototype Development
+Technology
+Testing
+Deployment
+CSR Support
+
+Description
+
+Estimated Budget
+
+Timeline
+
+Expertise Offered
+
+Submit Collaboration Request
+
+====================================================
+15. PROJECT LIFECYCLE
+====================================================
+
+Create a visual project timeline.
+
+Stages:
+
+Challenge Submitted
+↓
+Validated
+↓
+University Assigned
+↓
+Team Formed
+↓
+Proposal Submitted
+↓
+Industry Collaboration
+↓
+Prototype
+↓
+Testing
+↓
+Pilot
+↓
+Deployment
+↓
+Impact Measurement
+↓
+Completed
+
+Use a horizontal timeline on desktop and vertical timeline on mobile.
+
+Each milestone can be clicked.
+
+Show:
+
+Milestone name
+Date
+Owner
+Status
+Documents
+Comments
+
+====================================================
+16. PROJECT DETAIL PAGE
+====================================================
+
+Create a complete project detail page.
+
+Sections:
+
+Project Overview
+
+Problem Statement
+
+Location
+
+Community Impact
+
+University Team
+
+Faculty Mentor
+
+Industry Partner
+
+Project Timeline
+
+Milestones
+
+Documents
+
+Prototype
+
+Pilot Results
+
+Impact Metrics
+
+Comments / Communication
+
+Project Status
+
+Example:
+
+"Smart Water Monitoring for Rural Villages"
+
+Domain:
+Water Resources
+
+Location:
+Jharkhand
+
+Status:
+Pilot Testing
+
+Impact:
+1,200 households
+
+University:
+Example University
+
+Industry Partner:
+Example WaterTech Pvt Ltd
+
+====================================================
+17. NOTIFICATION SYSTEM
+====================================================
+
+Create notifications.
+
+Examples:
+
+"Your challenge SS-JH-2026-00124 has been validated."
+
+"Your challenge has been matched with a university."
+
+"University team submitted a proposal."
+
+"Industry partner requested collaboration."
+
+"Project milestone completed."
+
+"Pilot testing started."
+
+Unread notifications should have visual indicators.
+
+====================================================
+18. COMMUNICATION
+====================================================
+
+Create a simple project communication section.
+
+Chat-like interface between:
+
+Citizen
+Government / Community Body
+University
+Faculty
+Industry
+
+Show:
+
+messages
+timestamps
+attachments
+milestone updates
+
+This can use mock data.
+
+====================================================
+19. ANALYTICS
+====================================================
+
+Create analytics page.
+
+Charts:
+
+Challenges by category
+
+Challenges by district
+
+Resolution rate
+
+University participation
+
+Industry participation
+
+Project lifecycle status
+
+Impact by district
+
+Use mock realistic data.
+
+Include filters:
+
+District
+Domain
+Year
+Status
+
+====================================================
+20. PROFILE
+====================================================
+
+Create role-specific profile pages.
+
+Citizen:
+
+Name
+Phone
+Email
+District
+Village/Ward
+Submitted Challenges
+Resolved Challenges
+
+Student:
+
+Name
+University
+Course
+Skills
+Projects
+Achievements
+
+Faculty:
+
+Name
+Institution
+Department
+Expertise
+Research Areas
+Projects
+
+Industry:
+
+Organization
+Sector
+Expertise
+Collaborations
+Projects
+
+Government:
+
+Officer
+Department
+Designation
+District
+Managed Challenges
+
+====================================================
+21. DATA / MOCK BACKEND BEHAVIOR
+====================================================
+
+Since this is a frontend prototype, create realistic mock data and state.
+
+Actions must actually work in the UI.
+
+For example:
+
+Submitting a challenge should add it to My Submissions.
+
+Changing a challenge status should update the UI.
+
+Opening a challenge should show its details.
+
+Applying to a challenge should change the button state.
+
+Creating a team should show the created team.
+
+Offering industry support should create a collaboration request.
+
+Notifications should update based on actions.
+
+Use localStorage or a simple frontend state store so demo actions persist during the session.
+
+Do NOT make buttons that do nothing.
+
+====================================================
+22. ROUTING
+====================================================
+
+Implement proper client-side routing.
+
+Suggested routes:
+
+/
+/role-selection
+/login
+/register/citizen
+/register/student
+/register/faculty
+/register/industry
+/register/government
+
+/citizen/dashboard
+/citizen/report
+/citizen/submissions
+/citizen/submissions/:id
+
+/community/dashboard
+/community/challenges
+/community/challenges/:id
+
+/university/dashboard
+/university/challenges
+/university/teams
+/university/projects
+
+/faculty/dashboard
+/faculty/projects
+
+/industry/dashboard
+/industry/projects
+/industry/collaborations
+
+/government/dashboard
+/government/analytics
+
+/projects
+/projects/:id
+
+/notifications
+/profile
+/help
+
+Protect role-specific pages in the frontend.
+
+====================================================
+23. RESPONSIVE DESIGN
+====================================================
+
+The application MUST work properly on:
+
+Mobile
+Tablet
+Desktop
+
+On mobile:
+
+- hamburger menu
+- stacked cards
+- bottom-friendly buttons
+- readable forms
+- no horizontal overflow
+
+On desktop:
+
+- sidebar / top navigation
+- multi-column dashboards
+- charts side-by-side
+- larger content area
+
+====================================================
+24. ACCESSIBILITY
+====================================================
+
+Use:
+
+Large readable labels
+
+Clear error messages
+
+Required field indicators
+
+Keyboard accessible controls
+
+Accessible buttons
+
+Good contrast
+
+Do not rely only on color to communicate status.
+
+====================================================
+25. FORM VALIDATION
+====================================================
+
+Implement frontend validation.
+
+Examples:
+
+Invalid phone number
+Invalid email
+Required fields
+Password mismatch
+Missing location
+Missing problem description
+
+Show inline error messages.
+
+Do NOT allow empty challenge submission.
+
+====================================================
+26. VISUAL DETAILS
+====================================================
+
+Landing page:
+
+Use subtle Jharkhand landscape / community imagery or illustration.
+
+Avoid excessive animations.
+
+Use small smooth transitions.
+
+Cards:
+
+border-radius: 12–18px
+
+Buttons:
+
+rounded but not pill-shaped everywhere.
+
+Use consistent iconography.
+
+Use status badges.
+
+Use empty states.
+
+Use loading states.
+
+Use success states.
+
+Use error states.
+
+====================================================
+27. BRANDING
+====================================================
+
+Brand name everywhere:
+
+SAMADHAN SETU
+
+Subtitle:
+
+"Connecting Community Challenges with Innovation"
+
+Use a logo concept combining:
+
+bridge + people + innovation / connected nodes.
+
+Create the logo using CSS/iconography if no image asset exists.
+
+Do not use copyrighted logos.
+
+====================================================
+28. LANDING PAGE EXACT CONTENT
+====================================================
+
+Use this exact structure:
+
+Welcome to Samadhan Setu
+
+What would you like to do?
+
+Report a Local Problem
+Tell us about a challenge in your community.
+
+Manage Community Problems
+Review, validate and coordinate local challenges.
+
+Join an Innovation Challenge
+Connect students, faculty and universities with real-world problems.
+
+Support or Monitor Projects
+Mentor, fund, implement or monitor solutions.
+
+====================================================
+29. IMPORTANT UX RULE
+====================================================
+
+DO NOT force users to understand organizational hierarchy before they can act.
+
+The FIRST thing should be:
+
+"What would you like to do?"
+
+Only after selecting an action should the platform ask for the appropriate role.
+
+Example:
+
+Report a Local Problem
+→ Citizen / Community Organization / Panchayat / ULB
+→ Login / Register
+→ Citizen/community dashboard
+
+Join an Innovation Challenge
+→ Student / Faculty / University
+→ Login / Register
+→ University dashboard
+
+Support or Monitor Projects
+→ Industry / Startup / CSR / Government
+→ Login / Register
+→ Industry/Government dashboard
+
+This is a core UX requirement.
+
+====================================================
+30. DEMO DATA
+====================================================
+
+Create realistic Jharkhand-focused mock data.
+
+District examples:
+
+Ranchi
+Jamshedpur
+Dhanbad
+Bokaro
+Deoghar
+Hazaribagh
+Giridih
+Dumka
+Gumla
+Palamu
+Chaibasa
+Ramgarh
+
+Problem examples:
+
+"Village drinking water pipeline frequently stops working"
+
+"School lacks accessible toilets"
+
+"Crop irrigation becomes difficult during summer"
+
+"Garbage accumulation near residential area"
+
+"Street lighting unavailable near school road"
+
+"Primary health centre lacks basic digital record system"
+
+Do NOT claim these are real government complaints.
+Clearly treat them as demo/mock data.
+
+====================================================
+31. TECHNICAL REQUIREMENTS
+====================================================
+
+Use:
+
+React
+Vite
+TypeScript or JavaScript
+Tailwind CSS
+React Router
+Lucide React
+Recharts or another lightweight chart library
+
+Keep components reusable.
+
+Suggested structure:
+
+components/
+pages/
+layouts/
+data/
+hooks/
+utils/
+
+Create reusable components:
+
+Button
+Card
+Input
+Select
+Modal
+Badge
+Sidebar
+Navbar
+StatCard
+ChallengeCard
+Timeline
+ChartCard
+NotificationItem
+FileUpload
+MapPlaceholder
+
+====================================================
+32. FINAL QUALITY REQUIREMENT
+====================================================
+
+Before finishing, test EVERY major user flow.
+
+Test:
+
+Landing → Report Problem → Role → Login → Citizen Dashboard
+
+Landing → Manage Problems → Government/Community Dashboard
+
+Landing → Innovation → Student/Faculty Dashboard
+
+Landing → Support Projects → Industry Dashboard
+
+Citizen → Submit Challenge → Success → My Submissions
+
+University → View Challenge → Create Team
+
+Industry → View Project → Offer Support
+
+Government → View Analytics
+
+Project → Timeline → Milestones
+
+Notifications → Open notification
+
+Profile → Edit profile
+
+Hamburger menu → every major section
+
+No dead buttons.
+
+No broken routes.
+
+No placeholder text such as:
+"Lorem ipsum"
+"Coming soon"
+"TODO"
+"Feature coming soon"
+
+unless absolutely necessary.
+
+Every screen should look like part of the SAME Samadhan Setu product.
+
+====================================================
+33. MOST IMPORTANT IMPLEMENTATION INSTRUCTION
+====================================================
+
+Build the APPLICATION, not just a visual mockup.
+
+Prioritize:
+
+1. Landing/action selection
+2. Role selection
+3. Login/register
+4. Citizen dashboard
+5. Problem submission
+6. Challenge tracking
+7. University dashboard
+8. Industry dashboard
+9. Government/community dashboard
+10. Project lifecycle
+11. Notifications
+12. Analytics
+13. Profile
+14. Hamburger navigation
+
+If implementation becomes large, implement all screens with realistic frontend state rather than removing modules.
+
+The result must be polished enough to demonstrate as a hackathon/project prototype.
+
+Start by creating the complete application structure and then implement the screens and flows.

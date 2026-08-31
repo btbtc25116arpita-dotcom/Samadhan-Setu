@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "Samadhan Setu"
+description = "A Jharkhand-focused societal innovation ecosystem that connects community challenges with citizens, government bodies, universities, students, faculty, and industry partners through realistic role-based workflows and project tracking."
+version = "1.0.0"
+id = "artifacts/samadhan-setu"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 24553
+
+[services.development]
+run = "pnpm --filter @workspace/samadhan-setu run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/samadhan-setu", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/samadhan-setu/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "24553"
+BASE_PATH = "/"
