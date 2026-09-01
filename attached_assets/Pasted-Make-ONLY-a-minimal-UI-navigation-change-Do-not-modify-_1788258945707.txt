@@ -1,0 +1,66 @@
+Make ONLY a minimal UI/navigation change. Do not modify anything else in the prototype.
+
+CURRENT ISSUE:
+When the top-left hamburger/menu is clicked, a large semi-transparent white sidebar/drawer appears over the page. I do NOT want this sidebar/drawer to appear.
+
+REQUIRED CHANGE:
+
+1. REMOVE/HIDE the left transparent sidebar/drawer entirely.
+   - Do not show the large white/translucent panel over the page.
+   - Do not show the sidebar navigation inside that panel.
+   - Do not change the main page layout, cards, map, typography, colors, spacing, or content.
+
+2. MOVE "Log out" to the TOP-RIGHT PROFILE MENU.
+   - The existing profile area at the top-right shows the user name/avatar and dropdown arrow.
+   - When the user clicks the profile area/dropdown, show a small dropdown menu containing:
+       • Log out
+   - Logout must continue using the EXISTING logout functionality.
+   - Do NOT create a new logout mechanism.
+
+3. The profile dropdown should be a normal small dropdown anchored to the top-right profile area, NOT a sidebar, modal, drawer, or full-width overlay.
+
+4. The hamburger/menu button should no longer open the large transparent sidebar.
+   - If removing the hamburger is safer, hide only that menu trigger.
+   - Do not replace it with another navigation system.
+
+IMPORTANT:
+Do NOT change:
+- dashboard content
+- Report Problem
+- validation
+- authentication
+- routes
+- database
+- backend
+- AI
+- map
+- cards
+- existing profile information
+- existing logout logic
+- styling anywhere else
+
+ONLY change:
+A) the left sidebar/drawer visibility/trigger
+B) placement of the existing Logout action into the existing top-right profile dropdown.
+
+The final behavior should be:
+
+TOP LEFT:
+No transparent sidebar/drawer.
+
+TOP RIGHT:
+[Avatar] [User Name] [▼]
+          ↓ click
+       ┌────────────┐
+       │ Log out    │
+       └────────────┘
+
+Logout must still work exactly as it currently does.
+
+USAGE LIMIT:
+Do NOT scan or refactor the entire project.
+Inspect only the component responsible for the sidebar/menu and the existing profile dropdown/logout action.
+Reuse the existing logout handler/function.
+Make the smallest possible change.
+Do not create new components unless absolutely necessary.
+STOP immediately after implementing this change.
