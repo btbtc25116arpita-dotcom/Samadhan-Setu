@@ -1,44 +1,55 @@
-# [Project name]
+# Samadhan Setu
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+Samadhan Setu is a Jharkhand-focused civic innovation workspace that connects local challenges with people and organisations who can help solve them.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+- Preview: `PORT=5173 BASE_PATH=/ pnpm --filter @workspace/samadhan-setu run dev`
+- The Replit workflow `Samadhan Setu Preview` runs the preview automatically.
+- `pnpm --filter @workspace/samadhan-setu run typecheck` — typecheck the web app
+- `PORT=5173 BASE_PATH=/ pnpm --filter @workspace/samadhan-setu run build` — build the web app
+- `pnpm run typecheck` — typecheck all workspace packages
+- The current Samadhan Setu preview uses demo data and browser local storage; it does not require `DATABASE_URL` to launch.
 
 ## Stack
 
-- pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- pnpm workspaces, Node.js 20, TypeScript 5.9
+- Frontend: React 19 + Vite 7
+- Styling: Tailwind CSS 4
+- UI: Radix UI primitives, Lucide icons, Wouter routing
+- Supporting API/database packages are present in the workspace but are not required by the current frontend demo.
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/samadhan-setu/src/App.tsx` — main routes, role flows, demo data, and local-storage state
+- `artifacts/samadhan-setu/src/index.css` — theme tokens and global styles
+- `artifacts/samadhan-setu/vite.config.ts` — Vite, port, base path, and Replit preview settings
+- `artifacts/samadhan-setu/.replit-artifact/artifact.toml` — artifact metadata and service configuration
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- The frontend is served at the workspace root (`/`) so the Replit preview opens directly to Samadhan Setu.
+- Demo role and notification state is kept in browser local storage to make the imported prototype usable without external services.
+- Vite is configured to read `PORT` and `BASE_PATH` from the workflow environment.
 
 ## Product
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Public landing and role-selection flows
+- Citizen problem reporting
+- Community problem management
+- University innovation challenges
+- Industry collaboration
+- Projects, analytics, notifications, profile, and help screens
+- Role-specific dashboards for citizens, students, faculty, industry, government, and community managers
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+No project-specific preferences recorded.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- Use pnpm; the repository enforces pnpm through its preinstall script.
+- The workspace-wide `pnpm run build` currently also builds `artifacts/mockup-sandbox`, whose Vite config requires a `PORT`; build Samadhan Setu directly with `PORT=5173 BASE_PATH=/` when validating this app alone.
 
 ## Pointers
 

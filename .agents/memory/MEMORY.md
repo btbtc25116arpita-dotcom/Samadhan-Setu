@@ -1,0 +1,1 @@
+- [Imported artifact registration](imported-artifact-registration.md) — imported artifact metadata may exist on disk while the artifact registry remains empty.
