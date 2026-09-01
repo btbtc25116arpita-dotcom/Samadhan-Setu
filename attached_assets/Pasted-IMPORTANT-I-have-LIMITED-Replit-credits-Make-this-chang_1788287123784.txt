@@ -1,0 +1,131 @@
+IMPORTANT: I have LIMITED Replit credits.
+Make this change with the SMALLEST possible implementation.
+Do not redesign or restructure the existing Samadhan Setu application.
+
+FEATURE: GLOBAL LANGUAGE TOGGLE
+
+I want a language selector on the LOGIN PAGE.
+
+Add a compact toggle/dropdown with:
+
+"Choose your language"
+"अपनी भाषा चुनें"
+
+Options:
+- English
+- हिंदी
+
+DEFAULT:
+English
+
+CORE REQUIREMENT:
+This language selection must be GLOBAL and PERSIST across the entire application.
+
+When the user selects "हिंदी":
+EVERY PAGE of Samadhan Setu must switch to Hindi.
+
+This includes ALL visible UI text, not only the login page:
+
+- Login page
+- User/role selection
+- Citizen pages
+- Panchayat pages
+- ULB pages
+- Student pages
+- Faculty pages
+- Industry pages
+- Government pages
+- Problem submission
+- Problem review
+- AI Review
+- Faculty Review
+- Collaboration/project pages
+- Government Overview
+- Dashboard cards
+- Navigation/sidebar
+- Buttons
+- Form labels
+- Placeholders
+- Status labels
+- Validation/error messages
+- Empty states
+- Modal/dialog text
+- Confirmation messages
+- Headings and subtitles
+
+When Hindi is selected, English UI text should NOT remain visible anywhere in the application except:
+- proper names/brand names such as "Samadhan Setu"
+- technical values or user-entered content where translation would be inappropriate.
+
+IMPLEMENTATION:
+Do NOT install a translation package.
+Do NOT add an external translation API.
+Do NOT create a backend.
+Do NOT modify the database.
+Do NOT redesign existing pages.
+
+Create a lightweight centralized frontend translation system using a single translation dictionary/object for English and Hindi.
+
+Example structure:
+
+translations = {
+  en: {
+    login: "...",
+    submitProblem: "...",
+    dashboard: "...",
+    ...
+  },
+  hi: {
+    login: "...",
+    submitProblem: "...",
+    dashboard: "...",
+    ...
+  }
+}
+
+Use a simple global language state/context or the smallest suitable existing state mechanism so every page can access the selected language.
+
+Persist the selected language using localStorage so that:
+- selecting Hindi remains Hindi when navigating between pages
+- refreshing the page keeps Hindi selected
+- navigating to another dashboard keeps Hindi selected
+
+IMPORTANT:
+Do not duplicate entire pages for Hindi.
+Do not create separate Hindi versions of components.
+Use the same existing components and replace hardcoded UI strings with translation keys.
+
+Translate the EXISTING UI text accurately into natural, simple Hindi suitable for ordinary citizens and government users.
+
+Examples:
+"Login" → "लॉग इन करें"
+"Choose your language" → "अपनी भाषा चुनें"
+"Report a Problem" → "समस्या की रिपोर्ट करें"
+"Submit Problem" → "समस्या सबमिट करें"
+"Government Overview" → "सरकारी अवलोकन"
+"Review" → "समीक्षा"
+"Feedback" → "प्रतिक्रिया"
+"Take Up as Collaborative Project" → "सहयोगात्मक परियोजना के रूप में अपनाएँ"
+"Submit" → "सबमिट करें"
+"Cancel" → "रद्द करें"
+"Next" → "आगे"
+"Back" → "पीछे"
+
+Do not translate user-entered problem descriptions, names, locations, uploaded content, or other dynamic user data.
+
+VERY IMPORTANT CREDIT-SAVING CONSTRAINT:
+Before editing, inspect the existing project and identify the central routing/layout/components used across pages.
+
+Reuse the existing architecture.
+Modify only the necessary files/components.
+Do not refactor unrelated code.
+Do not change existing styling or functionality.
+
+After implementation, test at least these flows:
+1. Select Hindi on login → navigate to another page → UI remains Hindi.
+2. Refresh page → Hindi remains selected.
+3. Select English → all UI returns to English.
+4. Navigate between different role dashboards → selected language remains consistent.
+
+Do NOT stop after translating only the login page.
+The language selection must control the ENTIRE Samadhan Setu application.

@@ -1,1 +1,2 @@
 - [Imported artifact registration](imported-artifact-registration.md) — imported artifact metadata may exist on disk while the artifact registry remains empty.
+- [TypeScript JSX modules](typescript-jsx-modules.md) — keep JSX-bearing modules as `.tsx`; `.ts` files are parsed without JSX support here.
