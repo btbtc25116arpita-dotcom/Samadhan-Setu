@@ -1,0 +1,71 @@
+Make ONLY the following UI change in the existing Samadhan Setu project. 
+Do not redesign the page, do not change the overall layout, colors, navbar, stepper, buttons, routing, or any other existing functionality.
+
+CURRENT ISSUE:
+On the final Review & Submit step, the section titled "A quick look before you send" only repeats the raw information entered by the user. We want this section to look like an AI-powered assessment instead.
+
+CHANGE:
+
+1. Replace the heading:
+"A quick look before you send"
+
+WITH:
+"AI Review & Community Assessment"
+
+Add a small supporting line below it:
+"Our AI has reviewed the information you provided and prepared a structured assessment for the next stage."
+
+2. Replace the current raw-data rows with a more meaningful AI-analysis layout.
+
+Do NOT simply display the entered values again. Instead, show conclusions/assessments derived from those values.
+
+Use these fields:
+
+- AI Summary
+  Example: "A non-functional handpump is affecting access to drinking water and may require immediate local maintenance."
+
+- Problem Type
+  Example: "Public Water Infrastructure"
+
+- Severity
+  Example: "Medium"
+
+- Estimated Community Impact
+  Example: "10–50 people potentially affected"
+
+- Likely Issue
+  Example: "Local infrastructure failure / maintenance requirement"
+
+- Recommended Action
+  Example: "Inspect the handpump, identify the mechanical fault, and initiate repair or replacement."
+
+- Suggested Responsible Authority
+  Example: "Panchayat / Local Water & Sanitation Authority"
+
+- Priority
+  Example: "Needs local intervention"
+
+3. Visually make "AI Summary" the main/highlighted section at the top, because this is the most important conclusion.
+
+4. Add a subtle AI indicator such as:
+"AI-generated preliminary assessment"
+This should clearly communicate that this is currently an AI-style assessment and not a final government decision.
+
+5. IMPORTANT:
+For now, DO NOT integrate OpenAI, Gemini, any external API, database, backend AI model, or actual AI training.
+Use the existing submitted form data and generate the assessment using simple frontend logic/static example conclusions so the UI demonstrates the intended future AI workflow.
+
+6. Keep the existing Review & Submit step and all existing navigation exactly as they are.
+
+7. Keep this change minimal and credit-efficient:
+- Modify only the relevant component/styles.
+- Do not refactor unrelated code.
+- Do not install new packages.
+- Do not create new files unless absolutely necessary.
+- Do not change existing functionality outside this review section.
+
+The final result should feel like:
+USER INPUT → AI REVIEW → STRUCTURED ASSESSMENT → SUBMIT
+
+rather than:
+USER INPUT → RAW DATA RECAP → SUBMIT.

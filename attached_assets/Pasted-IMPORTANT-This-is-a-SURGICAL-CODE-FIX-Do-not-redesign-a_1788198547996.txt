@@ -1,0 +1,94 @@
+IMPORTANT: This is a SURGICAL CODE FIX. Do not redesign anything and do not refactor anything.
+
+I need you to FIX THE EXISTING ROLE-BASED ACCESS for reporting and validation.
+
+DO NOT CREATE A NEW REPORTING FLOW.
+
+STEP 1 — FIND THE EXISTING REPORTING FLOW
+Search the code for the existing Citizen "Report a Problem" / problem submission feature and identify:
+- the existing Report a Problem button/link
+- the route/page it opens
+- the role check that currently makes it Citizen-only
+
+DO NOT change the reporting form itself.
+
+STEP 2 — CHANGE REPORTING PERMISSION
+
+The EXISTING Report a Problem feature must be available to ALL THREE roles:
+
+Citizen → Report a Problem → existing reporting page
+Panchayat → Report a Problem → SAME existing reporting page
+ULB → Report a Problem → SAME existing reporting page
+
+Panchayat and ULB must get EXACTLY the same reporting capabilities that Citizen currently has, including every existing field, attachment/evidence option, location, description, category, AI processing and submission functionality.
+
+DO NOT duplicate the reporting page.
+DO NOT create PanchayatReport or ULBReport.
+DO NOT create another form.
+
+Instead, change ONLY the existing role restriction from:
+
+Citizen only
+
+to:
+
+Citizen OR Panchayat OR ULB
+
+Also make sure the "Report a Problem" navigation/button is VISIBLE for Panchayat and ULB wherever the existing Citizen reporting option is displayed.
+
+STEP 3 — VALIDATION MUST REMAIN RESTRICTED
+
+Find the EXISTING validation feature/page, including the existing "Validation queue" / challenge review functionality.
+
+Its permission must be:
+
+Panchayat → ALLOWED
+ULB → ALLOWED
+Citizen → NOT ALLOWED
+
+If the validation page currently has a role check such as Citizen-only or another restriction, modify ONLY that check so Panchayat and ULB can access it.
+
+Do NOT give Citizens validation access.
+
+STEP 4 — FINAL PERMISSION MATRIX
+
+The resulting permissions MUST be:
+
+                    Citizen    Panchayat    ULB
+Report Problem         YES         YES       YES
+Submit Problem        YES         YES       YES
+Use existing AI       YES         YES       YES
+Track Problem         YES         YES       YES
+Validation Queue       NO         YES       YES
+Validate Problem       NO         YES       YES
+
+CRITICAL:
+"Report Problem" and "Validation" are TWO DIFFERENT permissions.
+
+Do NOT accidentally give Citizens validation access.
+Do NOT accidentally remove Citizens' existing reporting access.
+
+IMPLEMENTATION RULES:
+- Reuse the existing routes/components/functions.
+- Modify only the existing role guards/conditional rendering for these two features.
+- Do not change the UI design.
+- Do not change the database.
+- Do not change the AI logic.
+- Do not change the reporting form.
+- Do not change existing data.
+- Do not change routing except if the existing role guard prevents the shared reporting route from opening.
+- Do not refactor unrelated code.
+
+VERY IMPORTANT FOR REPLIT USAGE:
+Search ONLY for these existing strings/logic first:
+"Report a Problem"
+"Validation queue"
+"Citizen"
+"Panchayat"
+"ULB"
+
+Then identify the exact permission checks controlling those features.
+
+Make the MINIMUM number of code changes necessary.
+
+After implementing the permission changes, STOP. Do not make any other improvements.
