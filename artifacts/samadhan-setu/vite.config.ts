@@ -8,7 +8,7 @@ import runtimeErrorOverlay from "@replit/vite-plugin-runtime-error-modal";
 const rawPort = process.env.PORT;
 const port = rawPort ? Number(rawPort) : 5173;
 
-const basePath = process.env.BASE_PATH || "/";
+const basePath = process.env.VERCEL ? "/" : (process.env.BASE_PATH || "/");
 
 export default defineConfig({
   base: basePath,
