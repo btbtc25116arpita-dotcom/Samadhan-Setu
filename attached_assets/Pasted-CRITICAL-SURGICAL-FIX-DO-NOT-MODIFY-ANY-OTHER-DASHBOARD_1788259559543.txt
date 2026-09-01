@@ -1,0 +1,109 @@
+CRITICAL SURGICAL FIX — DO NOT MODIFY ANY OTHER DASHBOARD OR WORKFLOW.
+
+I have tried fixing this multiple times and the previous changes did NOT produce the required UI. This time, make the actual visible change described below.
+
+CURRENT SCREEN:
+This is the "How will you join the work?" role-selection screen.
+
+It currently has TWO cards:
+1. Citizen
+2. Panchayat
+
+REQUIRED CHANGE TO THIS SCREEN ONLY:
+
+REMOVE THE ENTIRE "PANCHAYAT" CARD FROM THIS SCREEN.
+
+Do NOT modify, delete, rename, or disable the actual Panchayat dashboard anywhere else in the application.
+
+The Panchayat validation dashboard is a SEPARATE existing feature and MUST remain fully functional.
+
+AFTER REMOVING THE PANCHAYAT CARD:
+
+Change the existing Citizen card into the single reporting entry point.
+
+The card should clearly communicate that reporting is available to ALL THREE roles:
+
+"Citizen / Panchayat / ULB"
+
+or equivalent wording such as:
+
+"Report a Problem"
+"Citizen • Panchayat • ULB"
+
+Clicking this card must open the EXISTING problem-reporting workflow/form.
+
+Do NOT create a new reporting form.
+
+Do NOT create separate Citizen/Panchayat/ULB reporting forms.
+
+ALL THREE roles must use the SAME existing reporting workflow:
+
+Citizen → Report Problem → existing report form
+Panchayat → Report Problem → existing report form
+ULB → Report Problem → existing report form
+
+IMPORTANT ROLE SEPARATION:
+
+The Panchayat/ULB validation dashboard is NOT part of this screen.
+
+DO NOT:
+- remove Panchayat validation
+- remove ULB validation
+- change the validation dashboard
+- change validation permissions
+- change the validation queue
+- change Panchayat dashboard
+- change ULB dashboard
+- change authentication
+- change database
+- change backend
+- change routes
+- change the existing report form
+- change AI logic
+- change any other dashboard
+
+ONLY MODIFY THE ROLE-SELECTION SCREEN SHOWN HERE.
+
+SPECIFICALLY:
+1. Find the component/page that renders the "Citizen" and "Panchayat" cards on the "How will you join the work?" screen.
+2. Remove ONLY the Panchayat card from this screen.
+3. Keep the existing Citizen card's destination/reporting functionality.
+4. Update only the Citizen card's visible title/description so it clearly indicates that Citizen, Panchayat and ULB can use this reporting entry point.
+5. Do NOT change the actual destination or reporting form unless absolutely required for role access.
+6. Do NOT touch the separate Panchayat/ULB dashboard routes or components.
+
+VERY IMPORTANT:
+There must NOT be a Panchayat card on this screen after the change.
+
+There should be ONE reporting card/entry point that represents:
+
+        CITIZEN
+        PANCHAYAT
+        ULB
+           ↓
+     REPORT PROBLEM
+           ↓
+   EXISTING REPORT FORM
+
+The existing Panchayat/ULB validation dashboard must continue to exist independently.
+
+USAGE LIMIT:
+This is a tiny UI change.
+
+Inspect ONLY the component responsible for this "How will you join the work?" screen and the minimum role/access condition directly connected to the existing Report Problem destination.
+
+Do NOT scan, refactor, redesign, or rewrite the project.
+
+Do NOT modify unrelated files.
+
+Make the smallest possible change and STOP.
+
+BEFORE FINISHING, VERIFY THESE EXACT CONDITIONS:
+
+✓ Panchayat card is gone from this screen
+✓ Citizen/reporting card remains
+✓ Reporting card visibly says Citizen / Panchayat / ULB
+✓ Clicking it still opens the existing report workflow
+✓ Panchayat validation dashboard is unchanged
+✓ ULB validation dashboard is unchanged
+✓ No other dashboard has been modified
