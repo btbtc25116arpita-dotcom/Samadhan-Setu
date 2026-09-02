@@ -24,17 +24,22 @@ function clean(value: unknown): string {
 
 router.get("/problems", async (_req, res) => {
   try {
-    const rows = await db.select().from(problems).orderBy(desc(problems.createdAt));
-    res.json(rows);
+    const rows = await db
+      .select()
+      .from(problems)
+      .orderBy(desc(problems.createdAt));
+
+    return res.json(rows);
   } catch (error) {
     console.error("GET /api/problems failed", error);
-    res.status(500).json({ message: "Unable to load problems" });
+    return res.status(500).json({ message: "Unable to load problems" });
   }
 });
 
 router.post("/problems", async (req, res) => {
   try {
     const body = req.body as ProblemInput;
+
     const title = clean(body.title);
     const description = clean(body.description);
     const category = clean(body.category);
@@ -44,30 +49,45 @@ router.post("/problems", async (req, res) => {
     const people = clean(body.people);
     const evidence = clean(body.evidence);
 
-    if (!title || !description || !category || !district || !location || !urgency || !people) {
-      return res.status(400).json({ message: "Required problem details are missing" });
+    if (
+      !title ||
+      !description ||
+      !category ||
+      !district ||
+      !location ||
+      !urgency ||
+      !people
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Required problem details are missing" });
     }
 
-    const id = clean(body.id) || `SS-JH-${new Date().getFullYear()}-${String(Date.now()).slice(-8)}`;
+    const id =
+      clean(body.id) ||
+      `SS-JH-${new Date().getFullYear()}-${String(Date.now()).slice(-8)}`;
 
-    const [created] = await db.insert(problems).values({
-      id,
-      title,
-      description,
-      category,
-      district,
-      location,
-      urgency,
-      people,
-      evidence,
-      status: clean(body.status) || "Under review",
-      votes: Number.isFinite(body.votes) ? Number(body.votes) : 0,
-    }).returning();
+    const [created] = await db
+      .insert(problems)
+      .values({
+        id,
+        title,
+        description,
+        category,
+        district,
+        location,
+        urgency,
+        people,
+        evidence,
+        status: clean(body.status) || "Under review",
+        votes: Number.isFinite(body.votes) ? Number(body.votes) : 0,
+      })
+      .returning();
 
     return res.status(201).json(created);
   } catch (error) {
     console.error("POST /api/problems failed", error);
-    res.status(500).json({ message: "Unable to save problem" });
+    return res.status(500).json({ message: "Unable to save problem" });
   }
 });
 
@@ -77,10 +97,13 @@ router.patch("/problems/:id/status", async (req, res) => {
     const status = clean((req.body as { status?: string }).status);
 
     if (!id || !status) {
-      return res.status(400).json({ message: "Problem id and status are required" });
+      return res
+        .status(400)
+        .json({ message: "Problem id and status are required" });
     }
 
-    const [updated] = await db.update(problems)
+    const [updated] = await db
+      .update(problems)
       .set({ status })
       .where(eq(problems.id, id))
       .returning();
@@ -92,7 +115,9 @@ router.patch("/problems/:id/status", async (req, res) => {
     return res.json(updated);
   } catch (error) {
     console.error("PATCH /api/problems/:id/status failed", error);
-    res.status(500).json({ message: "Unable to update problem status" });
+    return res
+      .status(500)
+      .json({ message: "Unable to update problem status" });
   }
 });
 
