@@ -17,4 +17,19 @@
 //   export type InsertPost = z.infer<typeof insertPostSchema>;
 //   export type Post = typeof postsTable.$inferSelect;
 
-export {}
+import { integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+
+export const problems = pgTable("problems", {
+  id: text("id").primaryKey(),
+  title: text("title"),
+  description: text("description"),
+  category: text("category"),
+  district: text("district"),
+  location: text("location"),
+  urgency: text("urgency"),
+  people: text("people"),
+  evidence: text("evidence"),
+  status: text("status"),
+  votes: integer("votes").default(0),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
