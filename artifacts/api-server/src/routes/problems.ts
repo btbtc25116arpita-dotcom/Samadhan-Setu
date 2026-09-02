@@ -16,6 +16,7 @@ type ProblemInput = {
   evidence?: string;
   status?: string;
   votes?: number;
+  reportedBy?: string;
 };
 
 function clean(value: unknown): string {
@@ -81,6 +82,7 @@ router.post("/problems", async (req, res) => {
         evidence,
         status: clean(body.status) || "Under review",
         votes: Number.isFinite(body.votes) ? Number(body.votes) : 0,
+        reportedBy: clean(body.reportedBy),
       })
       .returning();
 
