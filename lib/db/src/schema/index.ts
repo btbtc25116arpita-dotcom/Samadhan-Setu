@@ -31,6 +31,7 @@ export const problems = pgTable("problems", {
   evidence: text("evidence"),
   status: text("status"),
   votes: integer("votes").default(0),
+  reportedBy: text("reported_by"),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
 export const users = pgTable("users", {
