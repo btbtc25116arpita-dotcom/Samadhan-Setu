@@ -6,7 +6,7 @@ import usersRouter from "./users";
 const router: IRouter = Router();
 
 router.use(healthRouter);
-router.use("/problems", problemsRouter);
+router.use(problemsRouter);
 router.use("/users", usersRouter);
 
 export default router;
