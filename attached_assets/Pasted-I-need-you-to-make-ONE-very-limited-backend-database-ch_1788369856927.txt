@@ -1,0 +1,114 @@
+I need you to make ONE very limited backend/database change to the existing Samadhan Setu project.
+
+IMPORTANT: This project is already connected to GitHub and deployed on Vercel. DO NOT make broad changes. DO NOT refactor existing code.
+
+GOAL:
+Create the initial Drizzle ORM schema for the existing problem-report data structure so that we can connect it to Supabase later.
+
+BEFORE CHANGING ANYTHING:
+1. Inspect the existing project structure.
+2. Inspect the existing Drizzle/database setup under lib/db.
+3. Inspect the existing API and frontend problem-report data structure.
+4. Confirm the existing database uses PostgreSQL + Drizzle.
+5. Do NOT modify the existing frontend implementation.
+
+CREATE ONLY:
+A Drizzle schema for a PostgreSQL table named "problems".
+
+The schema should contain ONLY fields that are already represented by the current problem-report implementation:
+
+- id
+- title
+- description
+- category
+- district
+- location
+- urgency
+- people
+- evidence
+- status
+- votes
+- createdAt
+
+IMPORTANT ID REQUIREMENT:
+The frontend currently uses human-readable problem IDs such as:
+"SS-JH-2026-00124"
+
+Do NOT replace this existing ID format anywhere in the frontend.
+Do NOT change how the frontend generates or displays problem IDs.
+The database ID should be compatible with the existing application ID values.
+
+IMPORTANT:
+Do not invent additional fields such as:
+- userId
+- latitude
+- longitude
+- validationScore
+- assignedDepartment
+- assignedOfficer
+- panchayatId
+- ULBId
+- resolvedAt
+- priority
+- AI score
+- expert score
+- etc.
+
+Those will be added later only after their existing application flow is verified.
+
+DO NOT:
+- change any React components
+- change any CSS
+- change any page layout
+- change the validation dashboard
+- remove or rename any existing UI element
+- change routing
+- change authentication
+- change API behavior
+- replace localStorage yet
+- create a new API endpoint yet
+- connect Supabase yet
+- run database migrations against Supabase
+- modify Vercel configuration
+- modify environment variables
+- modify package versions
+- modify packageManager
+- modify tsconfig
+- modify existing deployment settings
+- restructure folders
+- install unnecessary packages
+- rewrite existing code
+
+ONLY:
+1. Add the Drizzle table definition in the existing database schema location.
+2. Export the table/schema correctly using the project's existing Drizzle conventions.
+3. If a schema index/barrel export is required by the EXISTING database setup, add only the necessary export.
+4. Do not create migrations yet.
+5. Do not connect to Supabase yet.
+
+TYPE GUIDANCE:
+Use PostgreSQL-compatible Drizzle types.
+Use text/varchar types for textual fields.
+Use integer for votes.
+Use a timestamp with timezone for createdAt.
+Use a sensible default of 0 for votes.
+Use the existing problem ID format as the database primary key if that is compatible with the existing code.
+
+CRITICAL SAFETY RULE:
+Before editing, inspect the current files and preserve all existing behavior.
+If implementing this schema would require changing an existing file in a way that could affect the deployed application, STOP and tell me exactly which file and why before making that change.
+
+After making the change:
+- Run only the minimum typecheck/build validation necessary to verify that the schema does not break the existing project.
+- Do NOT deploy anything manually.
+- Do NOT push to GitHub automatically.
+- Do NOT make unrelated fixes.
+
+FINAL RESPONSE:
+Tell me:
+1. Which exact file(s) you changed.
+2. What was added.
+3. Whether the existing frontend/API behavior was untouched.
+4. Whether the project still passes its relevant build/typecheck.
+
+Do not make any other changes.
