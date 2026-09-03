@@ -15,6 +15,30 @@ import {
 } from 'lucide-react';
 
 const queryClient = new QueryClient();
+const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
+
+async function apiRequest<T>(path: string, options?: RequestInit): Promise<T> {
+  const response = await fetch(`${API_BASE_URL}/api${path}`, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...(options?.headers || {}),
+    },
+    ...options,
+  });
+
+  if (!response.ok) {
+    let message = 'Request failed';
+
+    try {
+      const body = await response.json();
+      message = body.message || body.error || message;
+    } catch {}
+
+    throw new Error(message);
+  }
+
+  return response.json() as Promise<T>;
+}
 type Role = 'citizen' | 'student' | 'faculty' | 'industry' | 'government' | 'community';
 type IconType = typeof Activity;
 
@@ -150,7 +174,80 @@ function Report() {
     authority: form.category === 'Water & sanitation' ? 'Panchayat / Local Water & Sanitation Authority' : 'Panchayat / Relevant Local Authority',
     priority: form.urgency === 'High' ? 'Immediate local intervention' : form.urgency === 'Low' ? 'Monitor and address locally' : 'Needs local intervention',
   };
-  const next = () => { setError(''); if (step === 1 && (!form.title || form.description.length < 12)) { setError('Add a clear title and a little more detail so others can understand the challenge.'); return; } if (step === 2 && !form.location) { setError('Please add a village, ward, landmark or pin description.'); return; } if (step < 5) setStep(step + 1); else { setAnalyzing(true); setTimeout(() => { const id = 'SS-JH-2026-00124'; const saved = [{ ...form, id, status: 'Under review', votes: 0, age: 'Just now' }, ...readStore('ss-problems', initialProblems)]; writeStore('ss-problems', saved); writeStore('ss-unread', 4); setAnalyzing(false); setSubmitted(true); }, 1300); } };
+const next = async () => {
+  setError('');
+
+  if (step === 1 && (!form.title || form.description.length < 12)) {
+    setError('Add a clear title and a little more detail so others can understand the challenge.');
+    return;
+  }
+
+  if (step === 2 && !form.location) {
+    setError('Please add a village, ward, landmark or pin description.');
+    return;
+  }
+
+  if (step < 5) {
+    setStep(step + 1);
+    return;
+  }
+
+  setAnalyzing(true);
+
+  try {
+    const user = readStore('ss-user', null) as {
+      id?: string;
+      name?: string;
+      email?: string;
+      role?: string;
+    } | null;
+
+    const id = `SS-JH-${new Date().getFullYear()}-${String(Date.now()).slice(-8)}`;
+
+    const created = await apiRequest('/problems', {
+      method: 'POST',
+      body: JSON.stringify({
+        id,
+        title: form.title,
+        description: form.description,
+        category: form.category,
+        district: form.district,
+        location: form.location,
+        urgency: form.urgency,
+        people: form.people,
+        evidence: form.evidence,
+        status: 'Under review',
+        votes: 0,
+        reportedBy: user?.id || '',
+      }),
+    });
+
+    const saved = [
+      {
+        ...form,
+        id: created.id || id,
+        status: created.status || 'Under review',
+        votes: created.votes || 0,
+        age: 'Just now',
+      },
+      ...readStore('ss-problems', initialProblems),
+    ];
+
+    writeStore('ss-problems', saved);
+    writeStore('ss-unread', 4);
+
+    setAnalyzing(false);
+    setSubmitted(true);
+  } catch (error) {
+    console.error('Problem submission failed:', error);
+    setAnalyzing(false);
+    setError(
+      error instanceof Error
+        ? error.message
+        : 'Unable to submit the problem right now. Please try again.'
+    );
+  }
+};
   if (submitted) return <Shell><div className="mx-auto max-w-2xl py-10 text-center"><div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 rise-in"><CheckCircle2 size={38} /></div><p className="mt-6 text-xs font-bold uppercase tracking-[.18em] text-accent">Submission received</p><h1 className="mt-2 font-display text-4xl font-bold text-primary">Your voice is now in motion.</h1><p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">The community team will review your challenge and keep you updated. This is demo data, not a real complaint.</p><div className="mx-auto mt-7 max-w-sm rounded-2xl border border-secondary bg-secondary/25 p-5"><p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Your tracking ID</p><p className="mt-2 font-display text-2xl font-bold text-primary" data-testid="text-generated-submission-id">SS-JH-2026-00124</p><p className="mt-2 text-xs text-muted-foreground">{form.title}</p></div><div className="mt-7 flex justify-center gap-3"><Link href="/citizen/submissions/SS-JH-2026-00124" className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground" data-testid="link-track-new-submission">Track submission <ArrowRight size={16} /></Link><Link href="/citizen/dashboard" className="inline-flex items-center gap-2 rounded-xl border border-border px-5 py-3 text-sm font-bold" data-testid="link-back-dashboard">Back to dashboard</Link></div></div></Shell>;
   const titles = ['Describe the challenge', 'Where is it?', 'Add evidence', 'Show the impact', 'Review & submit'];
   return <Shell><div className="mx-auto max-w-4xl"><Link href="/citizen/dashboard" className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-muted-foreground hover:text-primary" data-testid="link-back-report"><ArrowLeft size={16} />Back to dashboard</Link><PageIntro eyebrow="New community challenge" title="Tell us what needs attention." description="You can save this in under five minutes. Share what you know; the community will help fill the gaps." /><div className="mb-8 flex items-start justify-between">{titles.map((title, i) => <div key={title} className="relative flex flex-1 flex-col items-center text-center"><div className={cx('relative z-10 flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold transition', step > i + 1 ? 'bg-secondary text-primary' : step === i + 1 ? 'bg-primary text-secondary' : 'bg-muted text-muted-foreground')}>{step > i + 1 ? <Check size={16} /> : i + 1}</div><span className={cx('mt-2 hidden text-[11px] font-semibold sm:block', step === i + 1 ? 'text-primary' : 'text-muted-foreground')}>{title}</span>{i < titles.length - 1 && <div className={cx('absolute left-1/2 top-4 h-px w-full', step > i + 1 ? 'bg-secondary' : 'bg-border')} />}</div>)}</div><Card className="p-5 md:p-8">{step === 1 && <div className="space-y-5"><div><label className="mb-1.5 block text-sm font-bold">What is the challenge? <span className="text-accent">*</span></label><input value={form.title} onChange={e => update('title', e.target.value)} placeholder="Example: Handpump is not working near the school" className="w-full rounded-xl border border-input bg-background px-4 py-3.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" data-testid="input-report-title" /></div><div><label className="mb-1.5 block text-sm font-bold">Tell us what is happening <span className="text-accent">*</span></label><textarea value={form.description} onChange={e => update('description', e.target.value)} rows={5} placeholder="What have you observed? Who is affected? Add any useful context." className="w-full resize-none rounded-xl border border-input bg-background px-4 py-3.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" data-testid="textarea-report-description" /><p className="mt-1 text-right text-xs text-muted-foreground">{form.description.length} / 500</p></div><div><label className="mb-1.5 block text-sm font-bold">Choose a category</label><select value={form.category} onChange={e => update('category', e.target.value)} className="w-full rounded-xl border border-input bg-background px-4 py-3.5 text-sm" data-testid="select-report-category">{categories.map(c => <option key={c}>{c}</option>)}</select></div></div>}{step === 2 && <div className="space-y-5"><div><label className="mb-1.5 block text-sm font-bold">District</label><select value={form.district} onChange={e => update('district', e.target.value)} className="w-full rounded-xl border border-input bg-background px-4 py-3.5 text-sm" data-testid="select-report-district">{districts.map(d => <option key={d}>{d}</option>)}</select></div><div><label className="mb-1.5 block text-sm font-bold">Village, ward or nearby landmark <span className="text-accent">*</span></label><input value={form.location} onChange={e => update('location', e.target.value)} placeholder="Example: Beside Birsa Munda School, Torpa block" className="w-full rounded-xl border border-input bg-background px-4 py-3.5 text-sm" data-testid="input-report-location" /></div><div className="flex items-center gap-3 rounded-xl border border-secondary bg-secondary/20 p-4 text-sm"><MapPin className="text-primary" size={20} /><span><strong>Map pin included in demo</strong><br /><span className="text-xs text-muted-foreground">Your approximate district location will help route the challenge.</span></span></div></div>}{step === 3 && <div><label className="mb-2 block text-sm font-bold">Photos, documents or audio note</label><label className="flex min-h-52 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-muted/30 text-center transition hover:border-primary hover:bg-muted"><Upload size={25} className="mb-3 text-primary" /><span className="text-sm font-bold">Drop evidence here or browse</span><span className="mt-1 text-xs text-muted-foreground">JPG, PNG, PDF or audio up to 10 MB</span><input type="file" className="hidden" onChange={e => update('evidence', e.target.files?.[0]?.name || '')} data-testid="input-report-evidence" />{form.evidence && <Badge tone="green">{form.evidence}</Badge>}</label><p className="mt-4 text-xs leading-relaxed text-muted-foreground">Evidence is optional. A clear description is enough to start a conversation.</p></div>}{step === 4 && <div className="space-y-6"><div><label className="mb-2 block text-sm font-bold">How urgent is this?</label><div className="grid grid-cols-3 gap-2">{['Low', 'Medium', 'High'].map(level => <button key={level} type="button" onClick={() => update('urgency', level)} className={cx('rounded-xl border px-3 py-3 text-sm font-bold', form.urgency === level ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:border-primary')} data-testid={`button-urgency-${level.toLowerCase()}`}>{level}</button>)}</div></div><div><label className="mb-2 block text-sm font-bold">How many people are affected?</label><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{['1–10', '10–50', '50–200', '200+'].map(count => <button key={count} type="button" onClick={() => update('people', count)} className={cx('rounded-xl border px-3 py-3 text-sm font-bold', form.people === count ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:border-primary')} data-testid={`button-people-${count}`}>{count}</button>)}</div></div><div className="rounded-2xl bg-muted p-4 text-sm"><p className="font-bold">Why this helps</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">Urgency and reach help community managers prioritise fairly. You can always update this later.</p></div></div>}{step === 5 && <div className="space-y-4"><div><h3 className="font-display text-xl font-bold">AI Review & Community Assessment</h3><p className="mt-1 text-sm text-muted-foreground">Our AI has reviewed the information you provided and prepared a structured assessment for the next stage.</p></div><div className="rounded-2xl border border-secondary bg-secondary/20 p-5"><div className="flex items-center gap-2"><Sparkles size={17} className="text-primary" /><p className="text-xs font-bold uppercase tracking-wider text-primary">AI Summary</p></div><p className="mt-3 text-sm leading-relaxed">{assessment.summary}</p></div><div className="divide-y divide-border rounded-2xl border border-border">{[['Problem Type', assessment.problemType], ['Severity', assessment.severity], ['Estimated Community Impact', assessment.impact], ['Likely Issue', assessment.likelyIssue], ['Recommended Action', assessment.recommendedAction], ['Suggested Responsible Authority', assessment.authority], ['Priority', assessment.priority]].map(([label, value]) => <div key={label} className="grid gap-1 p-4 sm:grid-cols-[210px_1fr] sm:gap-4"><span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{label}</span><span className="text-sm">{value}</span></div>)}</div><div className="flex items-start gap-3 rounded-xl bg-secondary/25 p-4 text-sm"><ShieldCheck size={18} className="mt-0.5 shrink-0 text-primary" /><span><strong>AI-generated preliminary assessment</strong><br />This is an AI-style assessment, not a final government decision. Your submission will enter the community validation queue. This demo never sends a real complaint.</span></div></div>}{error && <p className="mt-5 flex items-center gap-2 rounded-xl bg-red-50 p-3 text-sm font-medium text-red-700" data-testid="text-report-error"><AlertCircle size={16} />{error}</p>}<div className="mt-8 flex justify-between gap-3 border-t border-border pt-5"><Button variant="ghost" onClick={() => step > 1 ? setStep(step - 1) : setLocation('/citizen/dashboard')} data-testid="button-report-back"><ArrowLeft size={16} />{step > 1 ? 'Back' : 'Cancel'}</Button><Button onClick={next} disabled={analyzing} data-testid="button-report-next">{analyzing ? <><Activity size={17} className="soft-pulse" />Analysing your challenge...</> : step === 5 ? <><Send size={16} />Submit challenge</> : <>Continue <ArrowRight size={16} /></>}</Button></div></Card></div></Shell>;
