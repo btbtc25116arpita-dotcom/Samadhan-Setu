@@ -1,14 +1,5 @@
 import { Router } from "express";
 import { randomBytes, randomUUID, scryptSync } from "node:crypto";
-function verifyPassword(password: string, storedPassword: string): boolean {
-  const [salt, storedHash] = storedPassword.split(":");
-
-  if (!salt || !storedHash) return false;
-
-  const hash = scryptSync(password, salt, 64).toString("hex");
-
-  return hash === storedHash;
-}
 import { db, users } from "@workspace/db";
 
 const router = Router();
