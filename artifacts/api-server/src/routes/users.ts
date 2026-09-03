@@ -1,5 +1,37 @@
 import { Router } from "express";
 import { randomBytes, randomUUID, scryptSync } from "node:crypto";
+function verifyPassword(password: string, storedPassword: string): boolean {
+  const [salt, storedHash] = storedPassword.split(":");
+
+  if (!salt || !storedHash) return false;
+
+  const hash = scryptSync(password, salt, 64).toString("hex");
+
+  return hash === storedHash;
+}
+router.post("/verify-password", async (req, res) => {
+  try {
+    const { password, salt, storedHash } = req.body;
+
+    if (!password || !salt || !storedHash) {
+      return res.status(400).json({
+        error: "Password verification data is required",
+      });
+    }
+
+    const hash = scryptSync(password, salt, 64).toString("hex");
+
+    return res.json({
+      valid: hash === storedHash,
+    });
+  } catch (error) {
+    console.error("Error verifying password:", error);
+
+    return res.status(500).json({
+      error: "Failed to verify password",
+    });
+  }
+});
 import { db, users } from "@workspace/db";
 
 const router = Router();
