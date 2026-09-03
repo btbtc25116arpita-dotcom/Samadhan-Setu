@@ -1,18 +1,57 @@
 import { Router } from "express";
+import { randomBytes, randomUUID, scryptSync } from "node:crypto";
 import { db, users } from "@workspace/db";
 
 const router = Router();
 
+function hashPassword(password: string): string {
+  const salt = randomBytes(16).toString("hex");
+  const hash = scryptSync(password, salt, 64).toString("hex");
+
+  return `${salt}:${hash}`;
+}
+
 // Create a new user
 router.post("/", async (req, res) => {
   try {
-    const { id, name, email, phone, role, district } = req.body;
+    const {
+      name,
+      email,
+      phone,
+      password,
+      role,
+      district,
+      organizationName,
+    } = req.body;
 
-    if (!id || !name || !email || !role) {
+    if (!name || !email || !password || !role) {
       return res.status(400).json({
-        error: "id, name, email and role are required",
+        error: "name, email, password and role are required",
       });
     }
+
+    if (typeof password !== "string" || password.length < 6) {
+      return res.status(400).json({
+        error: "Password must be at least 6 characters",
+      });
+    }
+
+    const allowedRoles = [
+      "citizen",
+      "student",
+      "industry",
+      "government",
+      "panchayat_ulb",
+    ];
+
+    if (!allowedRoles.includes(role)) {
+      return res.status(400).json({
+        error: "Invalid role",
+      });
+    }
+
+    const id = randomUUID();
+    const passwordHash = hashPassword(password);
 
     const [user] = await db
       .insert(users)
@@ -23,8 +62,21 @@ router.post("/", async (req, res) => {
         phone: phone || null,
         role,
         district: district || null,
+        passwordHash,
+        organizationName: organizationName || null,
       })
-      .returning();
+      .returning({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        phone: users.phone,
+        role: users.role,
+        district: users.district,
+        organizationName: users.organizationName,
+        verified: users.verified,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
+      });
 
     return res.status(201).json(user);
   } catch (error: any) {
@@ -45,7 +97,21 @@ router.post("/", async (req, res) => {
 // Get all users
 router.get("/", async (_req, res) => {
   try {
-    const result = await db.select().from(users);
+    const result = await db
+      .select({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        phone: users.phone,
+        role: users.role,
+        district: users.district,
+        organizationName: users.organizationName,
+        verified: users.verified,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
+      })
+      .from(users);
+
     return res.json(result);
   } catch (error) {
     console.error("Error fetching users:", error);
