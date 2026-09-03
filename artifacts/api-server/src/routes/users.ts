@@ -7,11 +7,20 @@ const router = Router();
 function hashPassword(password: string): string {
   const salt = randomBytes(16).toString("hex");
   const hash = scryptSync(password, salt, 64).toString("hex");
-
   return `${salt}:${hash}`;
 }
 
-// Create a new user
+function verifyPassword(password: string, storedPassword: string): boolean {
+  const [salt, storedHash] = storedPassword.split(":");
+
+  if (!salt || !storedHash) return false;
+
+  const hash = scryptSync(password, salt, 64).toString("hex");
+
+  return hash === storedHash;
+}
+
+// REGISTER
 router.post("/", async (req, res) => {
   try {
     const {
@@ -94,7 +103,69 @@ router.post("/", async (req, res) => {
   }
 });
 
-// Get all users
+// LOGIN
+router.post("/login", async (req, res) => {
+  try {
+    const { identifier, password } = req.body;
+
+    if (!identifier || !password) {
+      return res.status(400).json({
+        error: "Email/mobile and password are required",
+      });
+    }
+
+    const allUsers = await db
+      .select()
+      .from(users);
+
+    const user = allUsers.find(
+      (u) =>
+        u.email.toLowerCase() === String(identifier).toLowerCase() ||
+        u.phone === String(identifier)
+    );
+
+    if (!user) {
+      return res.status(401).json({
+        error: "Invalid email/mobile or password",
+      });
+    }
+
+    if (!user.passwordHash) {
+      return res.status(401).json({
+        error: "This account does not have a password. Please register again.",
+      });
+    }
+
+    const valid = verifyPassword(password, user.passwordHash);
+
+    if (!valid) {
+      return res.status(401).json({
+        error: "Invalid email/mobile or password",
+      });
+    }
+
+    return res.json({
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      phone: user.phone,
+      role: user.role,
+      district: user.district,
+      organizationName: user.organizationName,
+      verified: user.verified,
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
+    });
+  } catch (error) {
+    console.error("Error logging in:", error);
+
+    return res.status(500).json({
+      error: "Failed to login",
+    });
+  }
+});
+
+// GET USERS
 router.get("/", async (_req, res) => {
   try {
     const result = await db
