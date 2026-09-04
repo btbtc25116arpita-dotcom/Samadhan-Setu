@@ -126,7 +126,155 @@ function Landing() { const [, setLocation] = useLocation(); const actions = [{ t
 
 function RoleSelection() { const [, setLocation] = useLocation(); const flow = new URLSearchParams(window.location.search).get('flow') || 'report'; const roleSets: Record<string, { id: string; role: Role; label: string }[]> = { report: [{ id: 'citizen', role: 'citizen', label: 'Report a Problem' }], manage: [{ id: 'panchayat', role: 'community', label: 'Panchayat' }, { id: 'ulb', role: 'community', label: 'ULB' }], innovation: [{ id: 'student', role: 'student', label: 'Student' }, { id: 'faculty', role: 'faculty', label: 'Faculty' }], support: [{ id: 'government', role: 'government', label: 'Government' }, { id: 'industry', role: 'industry', label: 'Industry' }] }; const choices = roleSets[flow] || roleSets.report; return <div className="min-h-[100dvh] bg-primary text-primary-foreground"><PublicHeader /><main className="mx-auto max-w-6xl px-5 pb-16 pt-10 md:px-8 md:pt-16"><div className="grid gap-12 lg:grid-cols-[.84fr_1.16fr] lg:items-center"><div><p className="mb-4 text-xs font-bold uppercase tracking-[.18em] text-secondary">One bridge, many roles</p><h1 className="font-display text-5xl font-bold leading-[1.02] tracking-[-.045em] md:text-6xl">How will you<br /><span className="text-secondary">join the work?</span></h1><p className="mt-6 max-w-md text-base leading-relaxed text-primary-foreground/70">Every strong solution starts with a different point of view. Tell us yours and we’ll take you to the right workspace.</p><div className="relative mt-12 h-36 max-w-md overflow-hidden rounded-[2rem] border border-primary-foreground/10 bg-sidebar-accent"><div className="absolute -bottom-16 left-5 h-40 w-52 rounded-[50%] bg-secondary/80" /><div className="absolute -bottom-20 right-[-20px] h-44 w-72 rounded-[50%] bg-accent/70" /><div className="absolute bottom-8 left-16 h-20 w-20 rounded-full border-4 border-primary bg-secondary/50" /><div className="absolute bottom-10 left-40 h-14 w-14 rounded-full border-4 border-primary bg-accent/60" /><p className="absolute right-5 top-5 text-right text-xs font-bold leading-relaxed text-primary-foreground/80">From a village idea<br />to a district-wide change.</p></div></div><div className="grid gap-3 sm:grid-cols-2">{choices.map((choice, i) => { const info = roleInfo[choice.role]; return <button key={choice.id} onClick={() => { setRole(choice.role); setLocation(`/register/${choice.role}`); }} className={cx('group rounded-3xl border p-5 text-left transition duration-300 hover:-translate-y-1', i === 0 ? 'border-secondary bg-secondary text-secondary-foreground' : 'border-primary-foreground/15 bg-primary-foreground/5 hover:bg-primary-foreground/10')} data-testid={`button-role-${choice.id}`}><span className={cx('mb-10 flex h-12 w-12 items-center justify-center rounded-2xl', i === 0 ? 'bg-primary text-secondary' : 'bg-primary-foreground/10 text-secondary')}><Icon icon={info.icon} size={23} /></span><h2 className="font-display text-xl font-bold">{choice.label}</h2><p className={cx('mt-2 text-sm leading-relaxed', i === 0 ? 'text-secondary-foreground/70' : 'text-primary-foreground/60')}>{flow === 'report' ? 'Citizen • Panchayat • ULB' : choice.role === 'citizen' ? 'Share what your community needs.' : choice.role === 'student' ? 'Build with your campus and peers.' : choice.role === 'industry' ? 'Bring expertise, resources and scale.' : choice.label === 'Panchayat' ? 'Bring local challenges into the community workspace.' : choice.label === 'ULB' ? 'Coordinate ward-level challenges and solutions.' : choice.role === 'faculty' ? 'Guide teams toward practical solutions.' : 'Coordinate action where it matters.'}</p><span className="mt-5 inline-flex items-center gap-1 text-sm font-bold">Continue <ArrowRight size={15} className="transition group-hover:translate-x-1" /></span></button>; })}</div></div></main></div>; }
 
-function Auth({ mode }: { mode: 'login' | 'register' }) { const params = useParams<{ role?: string }>(); const [, setLocation] = useLocation(); const [role, setAuthRole] = useState<Role>((params.role as Role) || currentRole()); const [error, setError] = useState(''); const [busy, setBusy] = useState(false); const isLogin = mode === 'login'; const info = roleInfo[role] || roleInfo.citizen; const fields = isLogin ? [{ name: 'email', label: 'Email or mobile number', placeholder: 'you@example.com', type: 'text' }, { name: 'password', label: 'Password', placeholder: 'Enter your password', type: 'password' }] : role === 'citizen' ? [{ name: 'name', label: 'Full name', placeholder: 'Asha Kumar', type: 'text' }, { name: 'mobile', label: 'Mobile number', placeholder: '10 digit mobile number', type: 'tel' }, { name: 'password', label: 'Create password', placeholder: 'At least 8 characters', type: 'password' }] : role === 'industry' ? [{ name: 'name', label: 'Organisation / startup name', placeholder: 'Your organisation', type: 'text' }, { name: 'email', label: 'Work email', placeholder: 'name@organisation.org', type: 'email' }, { name: 'sector', label: 'Sector', placeholder: 'Technology, CSR, manufacturing...', type: 'text' }, { name: 'password', label: 'Create password', placeholder: 'At least 8 characters', type: 'password' }] : [{ name: 'name', label: role === 'government' ? 'Department / office name' : 'Name of institution', placeholder: role === 'government' ? 'District Rural Development Agency' : 'Institution name', type: 'text' }, { name: 'email', label: 'Official email', placeholder: 'name@institution.org', type: 'email' }, { name: 'identity', label: role === 'government' ? 'Department ID' : 'Institution code', placeholder: 'Enter ID or code', type: 'text' }, { name: 'password', label: 'Create password', placeholder: 'At least 8 characters', type: 'password' }]; const submit = (e: React.FormEvent<HTMLFormElement>) => { e.preventDefault(); const data = new FormData(e.currentTarget); if ([...data.values()].some(v => String(v).trim().length < 3)) { setError('Please complete every field before continuing.'); return; } setBusy(true); setTimeout(() => { setRole(role); writeStore('ss-authenticated', true); setLocation(isLogin ? info.home : role === 'citizen' ? '/citizen/dashboard' : info.home); }, 650); }; return <div className="min-h-[100dvh] bg-paper-grid"><PublicHeader /><main className="mx-auto grid max-w-5xl gap-12 px-5 pb-16 pt-10 md:px-8 lg:grid-cols-[.85fr_1.15fr] lg:pt-16"><div className="hidden rounded-[2rem] bg-primary p-8 text-primary-foreground lg:block"><div className="flex h-full flex-col justify-between"><div><p className="text-xs font-bold uppercase tracking-[.18em] text-secondary">Samadhan Setu</p><h1 className="mt-16 max-w-sm font-display text-4xl font-bold leading-tight">Good change needs a place to begin.</h1><p className="mt-5 max-w-sm text-sm leading-relaxed text-primary-foreground/65">A trusted digital space for ideas, action and accountability across Jharkhand.</p></div><div className="grid grid-cols-2 gap-3"><div className="rounded-2xl bg-primary-foreground/10 p-4"><p className="font-display text-2xl font-bold text-secondary">12</p><p className="mt-1 text-xs text-primary-foreground/60">districts in demo</p></div><div className="rounded-2xl bg-primary-foreground/10 p-4"><p className="font-display text-2xl font-bold text-secondary">03</p><p className="mt-1 text-xs text-primary-foreground/60">active pilots</p></div></div></div></div><Card className="p-6 md:p-9"><div className="mb-8"><div className={cx('mb-4 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold', info.color)}><Icon icon={info.icon} size={14} />{info.label}</div><h1 className="font-display text-3xl font-bold">{isLogin ? 'Welcome back.' : `Create your ${info.short.toLowerCase()} account.`}</h1><p className="mt-2 text-sm text-muted-foreground">{isLogin ? 'Pick up where your community left off.' : 'Your details help us create the right workspace.'}</p></div>{isLogin && <div className="mb-5 flex flex-wrap gap-2">{(['citizen', 'student', 'faculty', 'industry', 'government', 'community'] as Role[]).map(r => <button key={r} onClick={() => setAuthRole(r)} className={cx('rounded-full border px-3 py-1.5 text-xs font-semibold transition', role === r ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-muted-foreground hover:border-primary')} data-testid={`button-login-role-${r}`}>{roleInfo[r].label}</button>)}</div>}<form onSubmit={submit} className="space-y-4" data-testid={`form-${mode}`}><div className="grid gap-4 sm:grid-cols-2">{fields.map(field => <label key={field.name} className={cx('block', fields.length % 2 && field.name === 'password' ? 'sm:col-span-2' : '')}><span className="mb-1.5 block text-sm font-semibold">{field.label}</span><input name={field.name} type={field.type} placeholder={field.placeholder} className="w-full rounded-xl border border-input bg-background px-3.5 py-3 text-sm outline-none transition placeholder:text-muted-foreground/60 focus:border-primary focus:ring-2 focus:ring-primary/15" data-testid={`input-${field.name}`} /></label>)}</div>{error && <p className="flex items-center gap-2 text-sm font-medium text-red-700" data-testid="text-auth-error"><AlertCircle size={16} />{error}</p>}<Button type="submit" className="mt-3 w-full py-3.5" disabled={busy} data-testid="button-submit-auth">{busy ? 'Opening your workspace...' : isLogin ? 'Enter workspace' : 'Create account' }<ArrowRight size={17} /></Button></form><p className="mt-6 text-center text-sm text-muted-foreground">{isLogin ? <>New to Samadhan Setu? <Link href={`/register/${role === 'citizen' ? 'citizen' : role}`} className="font-bold text-primary underline underline-offset-4" data-testid="link-switch-register">Create an account</Link></> : <>Already registered? <Link href="/login" className="font-bold text-primary underline underline-offset-4" data-testid="link-switch-login">Log in</Link></>}</p><p className="mt-5 flex items-center justify-center gap-1.5 text-xs text-muted-foreground"><LockKeyhole size={13} /> Demo only — no real identity is stored</p></Card></main></div>; }
+function Auth({ mode }: { mode: 'login' | 'register' }) { const params = useParams<{ role?: string }>(); const [, setLocation] = useLocation(); const [role, setAuthRole] = useState<Role>((params.role as Role) || currentRole()); const [error, setError] = useState(''); const [busy, setBusy] = useState(false); const isLogin = mode === 'login'; const info = roleInfo[role] || roleInfo.citizen;const fields = isLogin
+  ? [
+      {
+        name: 'identifier',
+        label: 'Email or mobile number',
+        placeholder: 'you@example.com',
+        type: 'text',
+      },
+      {
+        name: 'password',
+        label: 'Password',
+        placeholder: 'Enter your password',
+        type: 'password',
+      },
+    ]
+  : role === 'citizen'
+    ? [
+        {
+          name: 'name',
+          label: 'Full name',
+          placeholder: 'Your full name',
+          type: 'text',
+        },
+        {
+          name: 'email',
+          label: 'Email address',
+          placeholder: 'you@example.com',
+          type: 'email',
+        },
+        {
+          name: 'mobile',
+          label: 'Mobile number',
+          placeholder: '10 digit mobile number',
+          type: 'tel',
+        },
+        {
+          name: 'password',
+          label: 'Create password',
+          placeholder: 'At least 6 characters',
+          type: 'password',
+        },
+      ]
+    : role === 'industry'
+      ? [
+          {
+            name: 'name',
+            label: 'Organisation / startup name',
+            placeholder: 'Your organisation',
+            type: 'text',
+          },
+          {
+            name: 'email',
+            label: 'Work email',
+            placeholder: 'name@organisation.org',
+            type: 'email',
+          },
+          {
+            name: 'sector',
+            label: 'Sector',
+            placeholder: 'Technology, CSR, manufacturing...',
+            type: 'text',
+          },
+          {
+            name: 'password',
+            label: 'Create password',
+            placeholder: 'At least 6 characters',
+            type: 'password',
+          },
+        ]
+      : role === 'student' || role === 'faculty'
+        ? [
+            {
+              name: 'name',
+              label: 'Full name',
+              placeholder: 'Your full name',
+              type: 'text',
+            },
+            {
+              name: 'email',
+              label: 'Email address',
+              placeholder: 'you@college.edu',
+              type: 'email',
+            },
+            {
+              name: 'identity',
+              label: 'Institution code',
+              placeholder: 'College / institution code',
+              type: 'text',
+            },
+            {
+              name: 'password',
+              label: 'Create password',
+              placeholder: 'At least 6 characters',
+              type: 'password',
+            },
+          ]
+        : role === 'government'
+          ? [
+              {
+                name: 'name',
+                label: 'Department / office name',
+                placeholder: 'District Rural Development Agency',
+                type: 'text',
+              },
+              {
+                name: 'email',
+                label: 'Official email',
+                placeholder: 'name@gov.in',
+                type: 'email',
+              },
+              {
+                name: 'identity',
+                label: 'Department ID',
+                placeholder: 'Enter department ID',
+                type: 'text',
+              },
+              {
+                name: 'password',
+                label: 'Create password',
+                placeholder: 'At least 6 characters',
+                type: 'password',
+              },
+            ]
+          : [
+              {
+                name: 'name',
+                label: 'Panchayat / ULB name',
+                placeholder: 'Enter Panchayat or ULB name',
+                type: 'text',
+              },
+              {
+                name: 'email',
+                label: 'Official email',
+                placeholder: 'name@institution.org',
+                type: 'email',
+              },
+              {
+                name: 'identity',
+                label: 'Panchayat / ULB code',
+                placeholder: 'Enter official code',
+                type: 'text',
+              },
+              {
+                name: 'password',
+                label: 'Create password',
+                placeholder: 'At least 6 characters',
+                type: 'password',
+              },
+            ]; const submit = (e: React.FormEvent<HTMLFormElement>) => { e.preventDefault(); const data = new FormData(e.currentTarget); if ([...data.values()].some(v => String(v).trim().length < 3)) { setError('Please complete every field before continuing.'); return; } setBusy(true); setTimeout(() => { setRole(role); writeStore('ss-authenticated', true); setLocation(isLogin ? info.home : role === 'citizen' ? '/citizen/dashboard' : info.home); }, 650); }; return <div className="min-h-[100dvh] bg-paper-grid"><PublicHeader /><main className="mx-auto grid max-w-5xl gap-12 px-5 pb-16 pt-10 md:px-8 lg:grid-cols-[.85fr_1.15fr] lg:pt-16"><div className="hidden rounded-[2rem] bg-primary p-8 text-primary-foreground lg:block"><div className="flex h-full flex-col justify-between"><div><p className="text-xs font-bold uppercase tracking-[.18em] text-secondary">Samadhan Setu</p><h1 className="mt-16 max-w-sm font-display text-4xl font-bold leading-tight">Good change needs a place to begin.</h1><p className="mt-5 max-w-sm text-sm leading-relaxed text-primary-foreground/65">A trusted digital space for ideas, action and accountability across Jharkhand.</p></div><div className="grid grid-cols-2 gap-3"><div className="rounded-2xl bg-primary-foreground/10 p-4"><p className="font-display text-2xl font-bold text-secondary">12</p><p className="mt-1 text-xs text-primary-foreground/60">districts in demo</p></div><div className="rounded-2xl bg-primary-foreground/10 p-4"><p className="font-display text-2xl font-bold text-secondary">03</p><p className="mt-1 text-xs text-primary-foreground/60">active pilots</p></div></div></div></div><Card className="p-6 md:p-9"><div className="mb-8"><div className={cx('mb-4 inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-xs font-bold', info.color)}><Icon icon={info.icon} size={14} />{info.label}</div><h1 className="font-display text-3xl font-bold">{isLogin ? 'Welcome back.' : `Create your ${info.short.toLowerCase()} account.`}</h1><p className="mt-2 text-sm text-muted-foreground">{isLogin ? 'Pick up where your community left off.' : 'Your details help us create the right workspace.'}</p></div>{isLogin && <div className="mb-5 flex flex-wrap gap-2">{(['citizen', 'student', 'faculty', 'industry', 'government', 'community'] as Role[]).map(r => <button key={r} onClick={() => setAuthRole(r)} className={cx('rounded-full border px-3 py-1.5 text-xs font-semibold transition', role === r ? 'border-primary bg-primary text-primary-foreground' : 'border-border text-muted-foreground hover:border-primary')} data-testid={`button-login-role-${r}`}>{roleInfo[r].label}</button>)}</div>}<form onSubmit={submit} className="space-y-4" data-testid={`form-${mode}`}><div className="grid gap-4 sm:grid-cols-2">{fields.map(field => <label key={field.name} className={cx('block', fields.length % 2 && field.name === 'password' ? 'sm:col-span-2' : '')}><span className="mb-1.5 block text-sm font-semibold">{field.label}</span><input name={field.name} type={field.type} placeholder={field.placeholder} className="w-full rounded-xl border border-input bg-background px-3.5 py-3 text-sm outline-none transition placeholder:text-muted-foreground/60 focus:border-primary focus:ring-2 focus:ring-primary/15" data-testid={`input-${field.name}`} /></label>)}</div>{error && <p className="flex items-center gap-2 text-sm font-medium text-red-700" data-testid="text-auth-error"><AlertCircle size={16} />{error}</p>}<Button type="submit" className="mt-3 w-full py-3.5" disabled={busy} data-testid="button-submit-auth">{busy ? 'Opening your workspace...' : isLogin ? 'Enter workspace' : 'Create account' }<ArrowRight size={17} /></Button></form><p className="mt-6 text-center text-sm text-muted-foreground">{isLogin ? <>New to Samadhan Setu? <Link href={`/register/${role === 'citizen' ? 'citizen' : role}`} className="font-bold text-primary underline underline-offset-4" data-testid="link-switch-register">Create an account</Link></> : <>Already registered? <Link href="/login" className="font-bold text-primary underline underline-offset-4" data-testid="link-switch-login">Log in</Link></>}</p><p className="mt-5 flex items-center justify-center gap-1.5 text-xs text-muted-foreground"><LockKeyhole size={13} /> Demo only — no real identity is stored</p></Card></main></div>; }
 
 function Metric({ label, value, detail, icon: metricIcon, tone = 'primary' }: { label: string; value: string; detail: string; icon: IconType; tone?: 'primary' | 'orange' | 'blue' | 'green' }) { const colors = { primary: 'bg-primary text-secondary', orange: 'bg-orange-100 text-accent', blue: 'bg-sky-100 text-sky-700', green: 'bg-emerald-100 text-emerald-700' }; return <Card className="p-4 md:p-5"><div className="flex items-start justify-between"><span className={cx('flex h-10 w-10 items-center justify-center rounded-xl', colors[tone])}><Icon icon={metricIcon} size={19} /></span><TrendingUp size={16} className="text-emerald-600" /></div><p className="mt-4 font-display text-2xl font-bold md:text-3xl" data-testid={`text-metric-${label.toLowerCase().replaceAll(' ', '-')}`}>{value}</p><p className="mt-1 text-sm font-semibold">{label}</p><p className="mt-1 text-xs text-muted-foreground">{detail}</p></Card>; }
 function PageIntro({ eyebrow, title, description, action }: { eyebrow: string; title: string; description: string; action?: ReactNode }) { return <div className="mb-8 flex flex-col justify-between gap-4 md:flex-row md:items-end"><div><p className="mb-2 text-xs font-bold uppercase tracking-[.18em] text-accent">{eyebrow}</p><h1 className="font-display text-3xl font-bold tracking-tight md:text-4xl">{title}</h1><p className="mt-2 max-w-2xl text-sm text-muted-foreground">{description}</p></div>{action}</div>; }
