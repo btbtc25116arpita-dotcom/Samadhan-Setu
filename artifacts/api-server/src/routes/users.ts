@@ -48,6 +48,7 @@ router.post("/", async (req, res) => {
     const allowedRoles = [
       "citizen",
       "student",
+      "faculty",
       "industry",
       "government",
       "panchayat_ulb",
