@@ -122,5 +122,55 @@ router.patch("/problems/:id/status", async (req, res) => {
       .json({ message: "Unable to update problem status" });
   }
 });
+router.patch("/problems/:id/validate", async (req, res) => {
+  try {
+    const id = clean(req.params.id);
+
+    const body = req.body as {
+      validationStatus?: string;
+      validatedBy?: string;
+      validationNote?: string;
+    };
+
+    const validationStatus = clean(body.validationStatus);
+    const validatedBy = clean(body.validatedBy);
+    const validationNote = clean(body.validationNote);
+
+    if (!id || !validationStatus || !validatedBy) {
+      return res.status(400).json({
+        message:
+          "Problem id, validation status and validator are required",
+      });
+    }
+
+    if (!["validated", "rejected"].includes(validationStatus)) {
+      return res.status(400).json({
+        message: "Validation status must be validated or rejected",
+      });
+    }
+
+    const [updated] = await db
+      .update(problems)
+      .set({
+        validationStatus,
+        validatedBy,
+        validatedAt: new Date(),
+        validationNote: validationNote || null,
+      })
+      .where(eq(problems.id, id))
+      .returning();
+
+    if (!updated) {
+      return res.status(404).json({ message: "Problem not found" });
+    }
+
+    return res.json(updated);
+  } catch (error) {
+    console.error("PATCH /api/problems/:id/validate failed", error);
+    return res.status(500).json({
+      message: "Unable to validate problem",
+    });
+  }
+});
 
 export default router;
