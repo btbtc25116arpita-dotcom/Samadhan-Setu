@@ -84,7 +84,7 @@ function Card({ children, className, ...props }: React.HTMLAttributes<HTMLDivEle
 function SectionTitle({ eyebrow, title, description, action }: { eyebrow?: string; title: string; description?: string; action?: ReactNode }) {
   return <div className="mb-6 flex items-end justify-between gap-4"><div><p className="mb-1 text-xs font-bold uppercase tracking-[.18em] text-accent">{eyebrow}</p><h2 className="font-display text-2xl font-bold tracking-tight md:text-3xl">{title}</h2>{description && <p className="mt-1 max-w-2xl text-sm text-muted-foreground">{description}</p>}</div>{action}</div>;
 }
-function Avatar({ role = currentRole(), name = 'Asha' }: { role?: Role; name?: string }) { const info = roleInfo[role]; return <div className={cx('flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold', info.color)} data-testid="avatar-user">{name.split(' ').map(n => n[0]).join('').slice(0, 2)}</div>; }
+function Avatar({ role = currentRole(), name = 'User' }: { role?: Role; name?: string }) { const info = roleInfo[role]; return <div className={cx('flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold', info.color)} data-testid="avatar-user">{name.split(' ').map(n => n[0]).join('').slice(0, 2)}</div>; }
 function Toast({ message, onClose }: { message: string; onClose: () => void }) { return <div className="fixed bottom-5 right-5 z-[60] flex max-w-sm items-center gap-3 rounded-2xl bg-foreground px-4 py-3 text-sm text-background shadow-2xl rise-in" role="status" data-testid="status-toast"><CheckCircle2 size={18} className="text-secondary" />{message}<button onClick={onClose} data-testid="button-close-toast"><X size={16} /></button></div>; }
 
 const navItems = [
