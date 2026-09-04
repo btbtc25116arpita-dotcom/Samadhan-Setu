@@ -106,12 +106,12 @@ function Shell({ children }: { children: ReactNode }) {
   const role = currentRole(); const info = roleInfo[role]; const RoleIcon = info.icon;
   const unread = readStore<number>('ss-unread', 3);
   const homeHref = role === 'government' ? '/government/dashboard' : role === 'industry' ? '/industry/dashboard' : role === 'faculty' ? '/faculty/dashboard' : role === 'student' ? '/university/dashboard' : role === 'community' ? '/community/dashboard' : '/citizen/dashboard';
-  const logout = () => { localStorage.removeItem('ss-role'); setProfileOpen(false); setToast('Signed out of demo workspace'); setLocation('/'); };
+  const logout = () => { localStorage.removeItem('ss-role'); setProfileOpen(false); setToast('Signed out of workspace'); setLocation('/'); };
   return <div className="min-h-[100dvh] bg-background">
     <header className="sticky top-0 z-40 border-b border-border/80 bg-background/90 backdrop-blur-xl">
       <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between px-4 md:px-8">
         <div className="flex items-center gap-3"><Link href={homeHref} className="flex items-center gap-2.5" data-testid="link-app-logo"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-secondary"><img src="https://upload.wikimedia.org/wikipedia/commons/a/a9/Jharkhand_Rajakiya_Chihna.svg" alt="Jharkhand State Emblem" className="h-7 w-7 object-contain" /></span><span className="hidden font-display text-lg font-bold tracking-tight sm:block">Samadhan <span className="text-accent">Setu</span></span></Link></div>
-        <div className="hidden items-center gap-2 text-xs text-muted-foreground md:flex"><span className="h-2 w-2 rounded-full bg-emerald-500" /><span>Demo workspace</span><span className="mx-2 text-border">|</span><span>Jharkhand</span></div>
+        <div className="hidden items-center gap-2 text-xs text-muted-foreground md:flex"><span className="h-2 w-2 rounded-full bg-emerald-500" /><span>workspace</span><span className="mx-2 text-border">|</span><span>Jharkhand</span></div>
         <div className="flex items-center gap-1"><Link href="/notifications" className="relative rounded-xl p-2.5 transition hover:bg-muted" data-testid="link-notifications"><Bell size={19} />{unread > 0 && <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[9px] font-bold text-white">{unread}</span>}</Link><div className="relative"><button type="button" onClick={() => setProfileOpen(!profileOpen)} className="ml-1 flex items-center gap-2 rounded-xl p-1.5 pr-2 transition hover:bg-muted" data-testid="button-profile-menu" aria-expanded={profileOpen}><Avatar role={role} name={readStore('ss-user', { name: 'User' })?.name || 'User'} />
 <span className="hidden text-sm font-semibold lg:block">
   {readStore('ss-user', { name: 'User' })?.name || 'User'}
