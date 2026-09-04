@@ -115,7 +115,85 @@ function Shell({ children }: { children: ReactNode }) {
         <div className="flex items-center gap-1"><Link href="/notifications" className="relative rounded-xl p-2.5 transition hover:bg-muted" data-testid="link-notifications"><Bell size={19} />{unread > 0 && <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[9px] font-bold text-white">{unread}</span>}</Link><div className="relative"><button type="button" onClick={() => setProfileOpen(!profileOpen)} className="ml-1 flex items-center gap-2 rounded-xl p-1.5 pr-2 transition hover:bg-muted" data-testid="button-profile-menu" aria-expanded={profileOpen}><Avatar role={role} name={readStore('ss-user', { name: 'User' })?.name || 'User'} />
 <span className="hidden text-sm font-semibold lg:block">
   {readStore('ss-user', { name: 'User' })?.name || 'User'}
-</span><ChevronDown size={14} className="hidden text-muted-foreground lg:block" /></button>{profileOpen && <div className="absolute right-0 top-full z-50 mt-2 w-36 rounded-xl border border-border bg-card p-1 shadow-xl"><button type="button" onClick={logout} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm font-semibold hover:bg-muted" data-testid="button-logout"><LogOut size={16} />Log out</button></div>}</div></div>
+</span><ChevronDown size={14} className="hidden text-muted-foreground lg:block" /></button>{profileOpen && (
+  <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-2xl border border-border bg-card p-3 shadow-xl">
+    <div className="space-y-1">
+
+      <div className="flex items-center justify-between rounded-xl px-3 py-2.5 hover:bg-muted">
+        <div className="min-w-0">
+          <p className="text-xs text-muted-foreground">Name</p>
+          <p className="truncate text-sm font-semibold">
+            {readStore('ss-user', { name: 'User' })?.name || 'User'}
+          </p>
+        </div>
+        <button
+          type="button"
+          className="ml-3 rounded-lg p-1.5 text-muted-foreground hover:bg-background hover:text-foreground"
+          onClick={() => setLocation('/profile')}
+          aria-label="Edit name"
+        >
+          <Pencil size={14} />
+        </button>
+      </div>
+
+      <div className="flex items-center justify-between rounded-xl px-3 py-2.5 hover:bg-muted">
+        <div className="min-w-0">
+          <p className="text-xs text-muted-foreground">Email</p>
+          <p className="truncate text-sm font-semibold">
+            {readStore('ss-user', { email: '' })?.email || 'Not provided'}
+          </p>
+        </div>
+        <button
+          type="button"
+          className="ml-3 rounded-lg p-1.5 text-muted-foreground hover:bg-background hover:text-foreground"
+          onClick={() => setLocation('/profile')}
+          aria-label="Edit email"
+        >
+          <Pencil size={14} />
+        </button>
+      </div>
+
+      <div className="flex items-center justify-between rounded-xl px-3 py-2.5 hover:bg-muted">
+        <div className="min-w-0">
+          <p className="text-xs text-muted-foreground">Mobile</p>
+          <p className="truncate text-sm font-semibold">
+            {readStore('ss-user', { phone: '' })?.phone || 'Not provided'}
+          </p>
+        </div>
+        <button
+          type="button"
+          className="ml-3 rounded-lg p-1.5 text-muted-foreground hover:bg-background hover:text-foreground"
+          onClick={() => setLocation('/profile')}
+          aria-label="Edit mobile"
+        >
+          <Pencil size={14} />
+        </button>
+      </div>
+
+      <div className="flex items-center justify-between rounded-xl px-3 py-2.5 hover:bg-muted">
+        <div className="min-w-0">
+          <p className="text-xs text-muted-foreground">Role</p>
+          <p className="text-sm font-semibold capitalize">
+            {readStore('ss-user', { role: 'citizen' })?.role?.replace('_', ' ') || 'Citizen'}
+          </p>
+        </div>
+      </div>
+
+      <div className="my-2 border-t border-border" />
+
+      <button
+        type="button"
+        onClick={logout}
+        className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50"
+        data-testid="button-logout"
+      >
+        <LogOut size={16} />
+        Log out
+      </button>
+
+    </div>
+  </div>
+)}</div></div>
       </div>
     </header>
     <main className="mx-auto max-w-[1440px] px-4 py-7 md:px-8 md:py-9">{children}</main>
