@@ -122,7 +122,7 @@ router.post("/login", async (req, res) => {
     const user = allUsers.find(
       (u) =>
         u.email.toLowerCase() === String(identifier).toLowerCase() ||
-        u.phone === String(identifier)
+        u.phone === String(identifier),
     );
 
     if (!user) {
@@ -160,12 +160,17 @@ router.post("/login", async (req, res) => {
   } catch (error) {
     console.error("Error logging in:", error);
 
-   return res.status(500).json({
-  error: "Failed to login",
- detail:
-  error instanceof Error
-    ? `${error.message} | CAUSE: ${error.cause instanceof Error ? error.cause.message : String(error.cause ?? "none")}`
-    : String(error),
+    return res.status(500).json({
+      error: "Failed to login",
+      detail:
+        error instanceof Error
+          ? `${error.message} | CAUSE: ${
+              error.cause instanceof Error
+                ? error.cause.message
+                : String(error.cause ?? "none")
+            }`
+          : String(error),
+    });
   }
 });
 
