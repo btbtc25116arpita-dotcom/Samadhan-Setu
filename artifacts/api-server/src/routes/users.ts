@@ -162,8 +162,10 @@ router.post("/login", async (req, res) => {
 
    return res.status(500).json({
   error: "Failed to login",
-  detail: error instanceof Error ? error.message : String(error),
-});
+ detail:
+  error instanceof Error
+    ? `${error.message} | CAUSE: ${error.cause instanceof Error ? error.cause.message : String(error.cause ?? "none")}`
+    : String(error),
   }
 });
 
