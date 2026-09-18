@@ -5,6 +5,7 @@ import usersRouter from "./users.js";
 import aiRouter from "./ai.js";
 import projectsRouter from "./projects.js";
 import teamsRouter from "./teams.js";
+import industryRouter from "./industry.js";
 const router: IRouter = Router();
 
 router.use(healthRouter);
@@ -13,5 +14,6 @@ router.use(aiRouter);
 router.use("/users", usersRouter);
 router.use(projectsRouter);
 router.use(teamsRouter);
+router.use(industryRouter);
 
 export default router;
