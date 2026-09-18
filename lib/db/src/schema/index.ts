@@ -127,3 +127,23 @@ export const notifications = pgTable("notifications", {
   isRead: boolean("is_read").default(false),
   createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
 });
+
+export const universityDepartment = pgTable("university_department", {
+  id: uuid("id").primaryKey(),
+  universityName: text("university_name").notNull(),
+  department: text("department").notNull(),
+  expertise: text("expertise"),
+  district: text("district"),
+});
+export const aiAnalysis = pgTable("ai_analysis", {
+  id: uuid("id").primaryKey(),
+  problemId: text("problem_id").notNull(),
+  predictedCategory: text("predicted_category"),
+  requiredExpertise: text("required_expertise"),
+  predictedPriority: text("predicted_priority"),
+  matchedUniversity: text("matched_university"),
+  matchedDepartment: text("matched_department"),
+  confidence: numeric("confidence"),
+  modelVersion: text("model_version"),
+  createdAt: timestamp("created_at", { withTimezone: true }).defaultNow(),
+});
