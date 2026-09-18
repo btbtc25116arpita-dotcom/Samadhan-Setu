@@ -672,3 +672,4 @@ function CommunityDashboard() {
     </Shell>
   );
 }
+export default App;
