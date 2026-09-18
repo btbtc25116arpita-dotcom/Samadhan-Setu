@@ -133,7 +133,6 @@ export const universityDepartment = pgTable("university_department", {
   universityName: text("university_name").notNull(),
   department: text("department").notNull(),
   expertise: text("expertise"),
-  district: text("district"),
 });
 export const aiAnalysis = pgTable("ai_analysis", {
   id: uuid("id").primaryKey(),
