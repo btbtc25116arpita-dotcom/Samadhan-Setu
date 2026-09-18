@@ -7,6 +7,7 @@ import projectsRouter from "./projects.js";
 import teamsRouter from "./teams.js";
 import industryRouter from "./industry.js";
 import supportOffersRouter from "./support-offers.js";
+import notificationsRouter from "./notifications.js";
 const router: IRouter = Router();
 
 router.use(healthRouter);
@@ -17,5 +18,6 @@ router.use(projectsRouter);
 router.use(teamsRouter);
 router.use(industryRouter);
 router.use(supportOffersRouter);
+router.use(notificationsRouter);
 
 export default router;
