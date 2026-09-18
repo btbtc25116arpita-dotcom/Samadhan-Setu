@@ -542,4 +542,133 @@ function Submissions() { const [query, setQuery] = useState(''); const [filter, 
 
 function SubmissionDetail() { const params = useParams<{ id: string }>(); const problem = readStore('ss-problems', initialProblems).find((p: typeof initialProblems[number]) => p.id === params.id) || { ...initialProblems[0], id: params.id || 'SS-JH-2026-00124' }; return <Shell><Link href="/citizen/submissions" className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-muted-foreground hover:text-primary" data-testid="link-back-submissions"><ArrowLeft size={16} />All submissions</Link><PageIntro eyebrow={problem.id} title={problem.title} description={`${problem.district} · ${problem.category} · Demo submission`} action={<Badge tone="amber">{problem.status}</Badge>} /><div className="grid gap-6 lg:grid-cols-[1.25fr_.75fr]"><Card className="p-5 md:p-7"><h2 className="font-display text-xl font-bold">Tracking progress</h2><div className="mt-8 space-y-6">{[['Submitted', 'Your report was received', true], ['Community validation', 'The local team is checking the details', true], ['Assigned for action', 'A relevant department or partner will pick this up', problem.status !== 'Under review'], ['Solution in motion', 'Updates will appear here as the work progresses', problem.status === 'In progress']].map(([title, copy, done], i) => <div className="relative flex gap-4" key={String(title)}><div className={cx('relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full', done ? 'bg-secondary text-primary' : 'bg-muted text-muted-foreground')}>{done ? <Check size={16} /> : i + 1}</div>{i < 3 && <div className={cx('absolute left-[17px] top-9 h-8 w-px', done ? 'bg-secondary' : 'bg-border')} />}<div><p className="text-sm font-bold">{title}</p><p className="mt-1 text-xs text-muted-foreground">{copy}</p></div></div>)}</div></Card><div className="space-y-5"><Card className="p-5"><p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Community support</p><p className="mt-2 font-display text-3xl font-bold">{problem.votes}</p><p className="text-sm text-muted-foreground">people have added their voice</p><Button variant="soft" className="mt-4 w-full" data-testid="button-support-submission"><HandHeart size={17} />Add my support</Button></Card><Card className="p-5"><p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Challenge details</p><div className="mt-4 space-y-3 text-sm"><p className="flex justify-between gap-3"><span className="text-muted-foreground">District</span><strong>{problem.district}</strong></p><p className="flex justify-between gap-3"><span className="text-muted-foreground">Category</span><strong>{problem.category}</strong></p><p className="flex justify-between gap-3"><span className="text-muted-foreground">Reported</span><strong>{problem.age}</strong></p></div></Card></div></div></Shell>; }
 
-function CommunityDashboard() { return <Shell><PageIntro eyebrow="Community manager" title="Good morning,title={`Good morning, ${readStore('ss-user', { name: 'User' })?.name || 'User'}.`}." description="A clear view of the challenges waiting for a fair, local response." action={<Link href="/community/challenges" className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground" data-testid="link-open-validation"><ClipboardCheck size={17} />Open validation queue</Link>} /><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><Metric label="Needs validation" value="18" detail="5 high priority" icon={ClipboardCheck} tone="orange" /><Metric label="Validated this month" value="47" detail="+12% from last month" icon={CheckCircle2} tone="green" /><Metric label="Awaiting information" value="09" detail="Across 4 blocks" icon={Clock3} tone="blue" /><Metric label="Assigned actions" value="23" detail="7 due this week" icon={Target} tone="primary" /></div><div className="mt-7 grid gap-6 lg:grid-cols-[1.1fr_.9fr]"><Card className="p-5 md:p-6"><SectionTitle eyebrow="Needs your attention" title="Validation queue" description="Review the newest citizen-submitted challenges." action={<Link href="/community/challenges" className="text-sm font-bold text-primary" data-testid="link-view-queue">View queue <ArrowRight size={15} className="inline" /></Link>} /><div className="space-y-2">{initialProblems.slice(0, 3).map(p => <Link href={`/community/challenges/${p.id}`} key={p.id} className="flex items-center gap-3 rounded-xl border border-border p-3 transition hover:border-primary" data-testid={`card-queue-${p.id}`}><span className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-100 text-accent"><AlertCircle size={17} /></span><span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold">{p.title}</span><span className="text-xs text-muted-foreground">{p.district} · {p.votes} v
+function CommunityDashboard() {
+  const user = readStore('ss-user', { name: 'User' });
+
+  return (
+    <Shell>
+      <PageIntro
+        eyebrow="Community manager"
+        title={`Good morning, ${user?.name || 'User'}.`}
+        description="A clear view of the challenges waiting for a fair, local response."
+        action={
+          <Link
+            href="/community/challenges"
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground"
+            data-testid="link-open-validation"
+          >
+            <ClipboardCheck size={17} />
+            Open validation queue
+          </Link>
+        }
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Metric
+          label="Needs validation"
+          value="18"
+          detail="5 high priority"
+          icon={ClipboardCheck}
+          tone="orange"
+        />
+        <Metric
+          label="Validated this month"
+          value="47"
+          detail="+12% from last month"
+          icon={CheckCircle2}
+          tone="green"
+        />
+        <Metric
+          label="Awaiting information"
+          value="09"
+          detail="Across 4 blocks"
+          icon={Clock3}
+          tone="blue"
+        />
+        <Metric
+          label="Assigned actions"
+          value="23"
+          detail="7 due this week"
+          icon={Target}
+          tone="primary"
+        />
+      </div>
+
+      <div className="mt-7 grid gap-6 lg:grid-cols-[1.1fr_.9fr]">
+        <Card className="p-5 md:p-6">
+          <SectionTitle
+            eyebrow="Needs your attention"
+            title="Validation queue"
+            description="Review the newest citizen-submitted challenges."
+            action={
+              <Link
+                href="/community/challenges"
+                className="text-sm font-bold text-primary"
+                data-testid="link-view-queue"
+              >
+                View queue <ArrowRight size={15} className="inline" />
+              </Link>
+            }
+          />
+
+          <div className="space-y-2">
+            {initialProblems.slice(0, 3).map((p) => (
+              <Link
+                href={`/community/challenges/${p.id}`}
+                key={p.id}
+                className="flex items-center gap-3 rounded-xl border border-border p-3 transition hover:border-primary"
+                data-testid={`card-queue-${p.id}`}
+              >
+                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-100 text-accent">
+                  <AlertCircle size={17} />
+                </span>
+
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-bold">
+                    {p.title}
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    {p.district} · {p.votes} votes
+                  </span>
+                </span>
+
+                <ArrowRight size={16} className="text-muted-foreground" />
+              </Link>
+            ))}
+          </div>
+        </Card>
+
+        <Card className="p-5 md:p-6">
+          <SectionTitle
+            eyebrow="Local action"
+            title="What happens next?"
+            description="Validated challenges move toward university and implementation support."
+          />
+
+          <div className="mt-5 space-y-3">
+            <div className="rounded-xl bg-muted p-4">
+              <p className="text-sm font-bold">1. Validate</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Check the citizen submission and confirm the local issue.
+              </p>
+            </div>
+
+            <div className="rounded-xl bg-muted p-4">
+              <p className="text-sm font-bold">2. Match</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                The challenge moves to a suitable university or department.
+              </p>
+            </div>
+
+            <div className="rounded-xl bg-muted p-4">
+              <p className="text-sm font-bold">3. Track</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                Monitor progress until the solution is implemented.
+              </p>
+            </div>
+          </div>
+        </Card>
+      </div>
+    </Shell>
+  );
+}
