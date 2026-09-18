@@ -9,6 +9,7 @@ import industryRouter from "./industry.js";
 import supportOffersRouter from "./support-offers.js";
 import notificationsRouter from "./notifications.js";
 import districtAnalyticsRouter from "./district-analytics.js";
+import universityDepartmentsRouter from "./university-departments.js";
 const router: IRouter = Router();
 
 router.use(healthRouter);
@@ -21,5 +22,6 @@ router.use(industryRouter);
 router.use(supportOffersRouter);
 router.use(notificationsRouter);
 router.use(districtAnalyticsRouter);
+router.use(universityDepartmentsRouter);
 
 export default router;
