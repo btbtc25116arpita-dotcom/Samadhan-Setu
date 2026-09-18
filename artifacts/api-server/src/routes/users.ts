@@ -51,7 +51,8 @@ router.post("/", async (req, res) => {
       "faculty",
       "industry",
       "government",
-      "panchayat_ulb",
+      "panchayat",
+      "ulb",
     ];
 
     if (!allowedRoles.includes(role)) {
