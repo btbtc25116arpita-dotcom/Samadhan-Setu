@@ -544,33 +544,165 @@ function SubmissionDetail() { const params = useParams<{ id: string }>(); const 
 
 function CommunityDashboard() {
   const user = readStore('ss-user', { name: 'User' });
+
+  const [problems, setProblems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const loadProblems = async () => {
+      try {
+        setLoading(true);
+        setError('');
+
+        const data = await apiRequest<any[]>('/problems');
+
+        const validationQueue = data.filter(
+          (problem) =>
+            problem.status === 'Under review' ||
+            problem.validationStatus === 'under_review' ||
+            problem.validationStatus === 'pending'
+        );
+
+        setProblems(validationQueue);
+      } catch (err) {
+        console.error('Failed to load validation queue:', err);
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Unable to load validation queue.'
+        );
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadProblems();
+  }, []);
+
   return (
     <Shell>
       <PageIntro
         eyebrow="Community manager"
         title={`Good morning, ${user?.name || 'User'}.`}
         description="A clear view of the challenges waiting for a fair, local response."
-        action={<Link href="/community/challenges" className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground"><ClipboardCheck size={17} />Open validation queue</Link>}
+        action={
+          <Link
+            href="/community/challenges"
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground"
+            data-testid="link-open-validation"
+          >
+            <ClipboardCheck size={17} />
+            Open validation queue
+          </Link>
+        }
       />
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Metric label="Needs validation" value="18" detail="5 high priority" icon={ClipboardCheck} tone="orange" />
-        <Metric label="Validated this month" value="47" detail="+12% from last month" icon={CheckCircle2} tone="green" />
-        <Metric label="Awaiting information" value="09" detail="Across 4 blocks" icon={Clock3} tone="blue" />
-        <Metric label="Assigned actions" value="23" detail="7 due this week" icon={Target} tone="primary" />
+        <Metric
+          label="Needs validation"
+          value={String(problems.length)}
+          detail="Citizen-submitted problems"
+          icon={ClipboardCheck}
+          tone="orange"
+        />
+
+        <Metric
+          label="Validated this month"
+          value="0"
+          detail="Will connect next"
+          icon={CheckCircle2}
+          tone="green"
+        />
+
+        <Metric
+          label="Awaiting information"
+          value="0"
+          detail="Will connect next"
+          icon={Clock3}
+          tone="blue"
+        />
+
+        <Metric
+          label="Assigned actions"
+          value="0"
+          detail="Will connect next"
+          icon={Target}
+          tone="primary"
+        />
       </div>
+
       <div className="mt-7">
         <Card className="p-5 md:p-6">
-          <SectionTitle eyebrow="Needs your attention" title="Validation queue" description="Review the newest citizen-submitted challenges." />
-          <div className="space-y-2">
-            {initialProblems.slice(0, 4).map(p => (
-              <Link href={`/community/challenges/${p.id}`} key={p.id} className="flex items-center gap-3 rounded-xl border border-border p-3 transition hover:border-primary">
-                <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-100 text-accent"><AlertCircle size={17} /></span>
-                <span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold">{p.title}</span><span className="text-xs text-muted-foreground">{p.district} · {p.votes} voices</span></span>
-                <Badge tone="amber">{p.status}</Badge>
-                <ArrowRight size={16} className="text-muted-foreground" />
+          <SectionTitle
+            eyebrow="Needs your attention"
+            title="Validation queue"
+            description="Review the newest citizen-submitted challenges."
+            action={
+              <Link
+                href="/community/challenges"
+                className="text-sm font-bold text-primary"
+                data-testid="link-view-queue"
+              >
+                View queue <ArrowRight size={15} className="inline" />
               </Link>
-            ))}
-          </div>
+            }
+          />
+
+          {loading && (
+            <div className="py-10 text-center text-sm text-muted-foreground">
+              Loading validation queue...
+            </div>
+          )}
+
+          {error && (
+            <div className="rounded-xl bg-red-50 p-4 text-sm text-red-700">
+              {error}
+            </div>
+          )}
+
+          {!loading && !error && problems.length === 0 && (
+            <div className="py-10 text-center">
+              <CheckCircle2 className="mx-auto text-green-600" size={32} />
+              <p className="mt-3 font-bold">No problems waiting for validation</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                New citizen submissions will appear here.
+              </p>
+            </div>
+          )}
+
+          {!loading && !error && problems.length > 0 && (
+            <div className="space-y-2">
+              {problems.slice(0, 5).map((p) => (
+                <Link
+                  href={`/community/challenges/${p.id}`}
+                  key={p.id}
+                  className="flex items-center gap-3 rounded-xl border border-border p-3 transition hover:border-primary"
+                  data-testid={`card-queue-${p.id}`}
+                >
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-100 text-accent">
+                    <AlertCircle size={17} />
+                  </span>
+
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-bold">
+                      {p.title}
+                    </span>
+
+                    <span className="text-xs text-muted-foreground">
+                      {p.district || 'Jharkhand'} · {p.people || 0} people affected
+                    </span>
+                  </span>
+
+                  <Badge tone="amber">
+                    {p.status || 'Under review'}
+                  </Badge>
+
+                  <ArrowRight size={16} className="text-muted-foreground" />
+                </Link>
+              ))}
+            </div>
+          )}
         </Card>
       </div>
     </Shell>
