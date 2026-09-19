@@ -2,6 +2,7 @@ import { type ReactNode, useEffect, useState } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ErrorBoundary } from '@/components/error-boundary';
 import { Toaster } from '@/components/ui/toaster';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
 import { TooltipProvider } from '@/components/ui/tooltip';
 import { Link, Route, Switch, useLocation, useParams, Router as WouterRouter } from 'wouter';
 import { LanguageProvider, LanguageSync, useLanguage } from './i18n';
@@ -548,27 +549,78 @@ function CommunityProblemDetail() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  useEffect(() => {
-    const loadProblem = async () => {
-      try {
-        setLoading(true);
-        setError('');
-        const data = await apiRequest<any[]>('/problems');
-        const found = data.find((p) => p.id === params.id);
-        if (!found) {
-          setError('Problem not found.');
-        } else {
-          setProblem(found);
-        }
-      } catch (err) {
-        console.error('Failed to load problem:', err);
-        setError(err instanceof Error ? err.message : 'Unable to load this problem.');
-      } finally {
-        setLoading(false);
+  const [dialogAction, setDialogAction] = useState<'validated' | 'rejected' | null>(null);
+  const [note, setNote] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [actionError, setActionError] = useState('');
+
+  const loadProblem = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const data = await apiRequest<any[]>('/problems');
+      const found = data.find((p) => p.id === params.id);
+      if (!found) {
+        setError('Problem not found.');
+      } else {
+        setProblem(found);
       }
-    };
-    loadProblem();
-  }, [params.id]);
+    } catch (err) {
+      console.error('Failed to load problem:', err);
+      setError(err instanceof Error ? err.message : 'Unable to load this problem.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { loadProblem(); }, [params.id]);
+
+  const openDialog = (action: 'validated' | 'rejected') => {
+    setDialogAction(action);
+    setNote('');
+    setActionError('');
+  };
+
+  const closeDialog = () => {
+    if (submitting) return;
+    setDialogAction(null);
+  };
+
+  const confirmAction = async () => {
+    if (!dialogAction || !problem) return;
+
+    if (dialogAction === 'rejected' && !note.trim()) {
+      setActionError('Please tell the citizen why this is being rejected.');
+      return;
+    }
+
+    const user = readStore('ss-user', { name: 'Panchayat/ULB reviewer', id: '' });
+    const validatedBy = user?.name || user?.id || 'Panchayat/ULB reviewer';
+
+    try {
+      setSubmitting(true);
+      setActionError('');
+
+      const updated = await apiRequest<any>(`/problems/${problem.id}/validate`, {
+        method: 'PATCH',
+        body: JSON.stringify({
+          validationStatus: dialogAction,
+          validatedBy,
+          validationNote: note.trim() || undefined,
+        }),
+      });
+
+      setProblem(updated);
+      setDialogAction(null);
+    } catch (err) {
+      console.error('Failed to update validation status:', err);
+      setActionError(err instanceof Error ? err.message : 'Unable to save this decision.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const isDecided = problem?.validationStatus === 'validated' || problem?.validationStatus === 'rejected';
 
   return (
     <Shell>
@@ -594,8 +646,13 @@ function CommunityProblemDetail() {
             eyebrow={problem.id}
             title={problem.title}
             description={`${problem.district || '—'} · ${problem.category || '—'}`}
-            action={<Badge tone="amber">{problem.status || 'Under review'}</Badge>}
+            action={
+              <Badge tone={problem.validationStatus === 'validated' ? 'green' : problem.validationStatus === 'rejected' ? 'red' : 'amber'}>
+                {problem.validationStatus === 'validated' ? 'Validated' : problem.validationStatus === 'rejected' ? 'Rejected' : (problem.status || 'Under review')}
+              </Badge>
+            }
           />
+
           <Card className="p-5 md:p-7 space-y-4">
             <div>
               <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Description</p>
@@ -607,9 +664,81 @@ function CommunityProblemDetail() {
               <div><p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">People affected</p><p className="mt-1 text-sm">{problem.people}</p></div>
               <div><p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Evidence</p><p className="mt-1 text-sm">{problem.evidence || 'None provided'}</p></div>
             </div>
+
+            {problem.validationNote && (
+              <div className="rounded-xl bg-muted p-4">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Reviewer note</p>
+                <p className="mt-1 text-sm">{problem.validationNote}</p>
+              </div>
+            )}
+
+            <div className="flex flex-wrap gap-3 border-t border-border pt-5">
+              <Button
+                variant="primary"
+                disabled={isDecided}
+                onClick={() => openDialog('validated')}
+                data-testid="button-approve-problem"
+              >
+                <CheckCircle2 size={17} />
+                {problem.validationStatus === 'validated' ? 'Validated' : 'Validate / Approve'}
+              </Button>
+              <Button
+                variant="danger"
+                disabled={isDecided}
+                onClick={() => openDialog('rejected')}
+                data-testid="button-reject-problem"
+              >
+                <X size={17} />
+                {problem.validationStatus === 'rejected' ? 'Rejected' : 'Reject Problem'}
+              </Button>
+            </div>
           </Card>
         </>
       )}
+
+      <Dialog open={dialogAction !== null} onOpenChange={(open) => { if (!open) closeDialog(); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {dialogAction === 'validated' ? 'Approve this problem?' : 'Reject this problem?'}
+            </DialogTitle>
+            <DialogDescription>
+              {dialogAction === 'validated'
+                ? 'This will mark the problem as validated and make it available to the university dashboard.'
+                : 'Please explain why this problem is being rejected. This will be visible to the citizen.'}
+            </DialogDescription>
+          </DialogHeader>
+
+          <textarea
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            rows={4}
+            placeholder={dialogAction === 'validated' ? 'Optional note...' : 'Reason for rejection (required)...'}
+            className="w-full resize-none rounded-xl border border-input bg-background px-4 py-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
+            data-testid="textarea-validation-note"
+          />
+
+          {actionError && (
+            <p className="flex items-center gap-2 text-sm font-medium text-red-700">
+              <AlertCircle size={16} />{actionError}
+            </p>
+          )}
+
+          <DialogFooter>
+            <Button variant="ghost" onClick={closeDialog} disabled={submitting}>
+              Cancel
+            </Button>
+            <Button
+              variant={dialogAction === 'rejected' ? 'danger' : 'primary'}
+              onClick={confirmAction}
+              disabled={submitting}
+              data-testid="button-confirm-validation"
+            >
+              {submitting ? 'Saving...' : dialogAction === 'validated' ? 'Confirm approval' : 'Confirm rejection'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </Shell>
   );
 }
