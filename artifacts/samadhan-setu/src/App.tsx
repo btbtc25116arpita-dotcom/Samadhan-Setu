@@ -908,7 +908,235 @@ function CommunityDashboard() {
     </Shell>
   );
 }
+function UniversityDashboard() {
+  const user = readStore('ss-user', { name: 'User' });
+  const [problems, setProblems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError('');
+        const data = await apiRequest<any[]>('/problems');
+        setProblems(data.filter((p) => p.validationStatus === 'validated'));
+      } catch (err) {
+        console.error('Failed to load innovation challenges:', err);
+        setError(err instanceof Error ? err.message : 'Unable to load challenges.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  return (
+    <Shell>
+      <PageIntro
+        eyebrow="University workspace"
+        title={`Good morning, ${user?.name || 'User'}.`}
+        description="Validated citizen problems ready to become innovation projects."
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Metric label="Validated challenges" value={String(problems.length)} detail="Ready to pick up" icon={GraduationCap} tone="primary" />
+        <Metric label="Active projects" value="0" detail="Will connect next" icon={Lightbulb} tone="orange" />
+        <Metric label="Teams formed" value="0" detail="Will connect next" icon={Users} tone="blue" />
+        <Metric label="Districts covered" value="0" detail="Will connect next" icon={Target} tone="green" />
+      </div>
+
+      <div className="mt-7">
+        <Card className="p-5 md:p-6">
+          <SectionTitle eyebrow="Open for pickup" title="Innovation challenges" description="Problems validated by Panchayat/ULB and available to your department." />
+
+          {loading && <div className="py-10 text-center text-sm text-muted-foreground">Loading challenges...</div>}
+          {error && <div className="rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</div>}
+
+          {!loading && !error && problems.length === 0 && (
+            <div className="py-10 text-center">
+              <GraduationCap className="mx-auto text-muted-foreground" size={32} />
+              <p className="mt-3 font-bold">No validated challenges yet</p>
+              <p className="mt-1 text-sm text-muted-foreground">Once Panchayat/ULB validates a problem, it will appear here.</p>
+            </div>
+          )}
+
+          {!loading && !error && problems.length > 0 && (
+            <div className="space-y-2">
+              {problems.map((p) => (
+                <div key={p.id} className="flex items-center gap-3 rounded-xl border border-border p-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary/45 text-primary">
+                    <Lightbulb size={17} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-bold">{p.title}</span>
+                    <span className="text-xs text-muted-foreground">{p.district || 'Jharkhand'} · {p.category}</span>
+                  </span>
+                  <Badge tone="green">Validated</Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
+    </Shell>
+  );
+}
+
+function FacultyDashboard() {
+  return <UniversityDashboard />;
+}
+function IndustryDashboard() {
+  const user = readStore('ss-user', { name: 'User' });
+  const [projects, setProjects] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError('');
+        const data = await apiRequest<any[]>('/projects');
+        setProjects(data);
+      } catch (err) {
+        console.error('Failed to load projects:', err);
+        setError(err instanceof Error ? err.message : 'Unable to load projects.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  return (
+    <Shell>
+      <PageIntro
+        eyebrow="Industry workspace"
+        title={`Good morning, ${user?.name || 'User'}.`}
+        description="Projects that may need funding, technology or implementation support."
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Metric label="Open projects" value={String(projects.length)} detail="Across all universities" icon={BriefcaseBusiness} tone="primary" />
+        <Metric label="Supported by you" value="0" detail="Will connect next" icon={IndianRupee} tone="orange" />
+        <Metric label="In progress" value={String(projects.filter((p) => p.status === 'In progress').length)} detail="Currently active" icon={Activity} tone="blue" />
+        <Metric label="Completed" value="0" detail="Will connect next" icon={CheckCircle2} tone="green" />
+      </div>
+
+      <div className="mt-7">
+        <Card className="p-5 md:p-6">
+          <SectionTitle eyebrow="Open for support" title="Projects" description="Projects proposed by university teams from validated citizen problems." />
+
+          {loading && <div className="py-10 text-center text-sm text-muted-foreground">Loading projects...</div>}
+          {error && <div className="rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</div>}
+
+          {!loading && !error && projects.length === 0 && (
+            <div className="py-10 text-center">
+              <BriefcaseBusiness className="mx-auto text-muted-foreground" size={32} />
+              <p className="mt-3 font-bold">No projects yet</p>
+              <p className="mt-1 text-sm text-muted-foreground">Once a university picks up a validated problem, it will appear here.</p>
+            </div>
+          )}
+
+          {!loading && !error && projects.length > 0 && (
+            <div className="space-y-2">
+              {projects.map((p) => (
+                <div key={p.id} className="flex items-center gap-3 rounded-xl border border-border p-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-100 text-accent">
+                    <BriefcaseBusiness size={17} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-bold">{p.projectName}</span>
+                    <span className="text-xs text-muted-foreground">{p.progress || 0}% complete</span>
+                  </span>
+                  <Badge tone="blue">{p.status || 'Proposed'}</Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
+    </Shell>
+  );
+}
+function GovernmentDashboard() {
+  const user = readStore('ss-user', { name: 'User' });
+  const [problems, setProblems] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError('');
+        const [problemsData, projectsData] = await Promise.all([
+          apiRequest<any[]>('/problems'),
+          apiRequest<any[]>('/projects'),
+        ]);
+        setProblems(problemsData);
+        setProjects(projectsData);
+      } catch (err) {
+        console.error('Failed to load government overview:', err);
+        setError(err instanceof Error ? err.message : 'Unable to load overview.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  const validated = problems.filter((p) => p.validationStatus === 'validated').length;
+  const pending = problems.filter((p) => !p.validationStatus || p.validationStatus === 'pending').length;
+  const rejected = problems.filter((p) => p.validationStatus === 'rejected').length;
+
+  return (
+    <Shell>
+      <PageIntro
+        eyebrow="Government workspace"
+        title={`Good morning, ${user?.name || 'User'}.`}
+        description="A district-wide view of citizen problems and the projects solving them."
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Metric label="Total problems" value={String(problems.length)} detail="Reported statewide" icon={Network} tone="primary" />
+        <Metric label="Validated" value={String(validated)} detail="Approved by Panchayat/ULB" icon={CheckCircle2} tone="green" />
+        <Metric label="Pending review" value={String(pending)} detail="Awaiting validation" icon={Clock3} tone="orange" />
+        <Metric label="Active projects" value={String(projects.length)} detail="In the pipeline" icon={BarChart3} tone="blue" />
+      </div>
+
+      <div className="mt-7">
+        <Card className="p-5 md:p-6">
+          <SectionTitle eyebrow="Monitoring" title="All problems" description="Every problem reported so far, across all districts." />
+
+          {loading && <div className="py-10 text-center text-sm text-muted-foreground">Loading overview...</div>}
+          {error && <div className="rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</div>}
+
+          {!loading && !error && (
+            <div className="space-y-2">
+              {problems.slice(0, 8).map((p) => (
+                <div key={p.id} className="flex items-center gap-3 rounded-xl border border-border p-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-primary">
+                    <Milestone size={17} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-bold">{p.title}</span>
+                    <span className="text-xs text-muted-foreground">{p.district || 'Jharkhand'}</span>
+                  </span>
+                  <Badge tone={p.validationStatus === 'validated' ? 'green' : p.validationStatus === 'rejected' ? 'red' : 'amber'}>
+                    {p.validationStatus === 'validated' ? 'Validated' : p.validationStatus === 'rejected' ? 'Rejected' : 'Pending'}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
+    </Shell>
+  );
+}
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
