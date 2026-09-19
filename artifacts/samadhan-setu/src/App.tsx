@@ -729,6 +729,7 @@ function App() {
                 <Route path="/citizen/submissions/:id" component={SubmissionDetail} />
                 <Route path="/community/dashboard" component={CommunityDashboard} />
                 <Route path="/community/challenges" component={CommunityDashboard} />
+                <Route path="/community/challenges/:id" component={CommunityProblemDetail} />
                 <Route path="/panchayat/dashboard" component={CommunityDashboard} />
                 <Route path="/ulb/dashboard" component={CommunityDashboard} />
                 <Route component={Dashboard} />
