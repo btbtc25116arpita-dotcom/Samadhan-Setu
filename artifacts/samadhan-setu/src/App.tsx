@@ -541,7 +541,78 @@ const next = async () => {
 function Submissions() { const [query, setQuery] = useState(''); const [filter, setFilter] = useState('All'); const [, setLocation] = useLocation(); const problems = readStore('ss-problems', initialProblems); const filtered = problems.filter((p: typeof initialProblems[number]) => `${p.title} ${p.district} ${p.id}`.toLowerCase().includes(query.toLowerCase()) && (filter === 'All' || p.status === filter)); return <Shell><PageIntro eyebrow="Citizen workspace" title="My submissions" description="Keep an eye on every challenge you’ve brought forward." action={<Link href="/citizen/report" className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground" data-testid="link-new-submission"><Plus size={17} />New submission</Link>} /><Card className="overflow-hidden"><div className="flex flex-col gap-3 border-b border-border p-4 md:flex-row"><div className="relative flex-1"><Search size={17} className="absolute left-3 top-3 text-muted-foreground" /><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search by title, ID or district" className="w-full rounded-xl border border-input bg-background py-2.5 pl-9 pr-3 text-sm" data-testid="input-search-submissions" /></div><div className="flex gap-2 overflow-x-auto">{['All', 'Under review', 'Assigned', 'In progress', 'Validated'].map(item => <button key={item} onClick={() => setFilter(item)} className={cx('whitespace-nowrap rounded-xl border px-3 py-2 text-xs font-bold', filter === item ? 'border-primary bg-primary text-primary-foreground' : 'border-border')} data-testid={`button-filter-${item.toLowerCase().replaceAll(' ', '-')}`}>{item}</button>)}</div></div><div className="divide-y divide-border">{filtered.length ? filtered.map((p: typeof initialProblems[number]) => <button key={p.id} onClick={() => setLocation(`/citizen/submissions/${p.id}`)} className="flex w-full items-center gap-4 p-4 text-left transition hover:bg-muted/60" data-testid={`row-submission-${p.id}`}><span className="hidden h-10 w-10 items-center justify-center rounded-xl bg-muted text-primary sm:flex"><FileText size={18} /></span><span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold">{p.title}</span><span className="mt-1 block text-xs text-muted-foreground">{p.id} · {p.district} · {p.age}</span></span><span className="hidden text-xs text-muted-foreground md:block">{p.votes} community voices</span><Badge tone={p.status === 'In progress' ? 'green' : p.status === 'Assigned' ? 'blue' : 'amber'}>{p.status}</Badge><ArrowRight size={16} className="text-muted-foreground" /></button>) : <div className="p-12 text-center"><Search className="mx-auto text-muted-foreground" /><p className="mt-3 font-bold">No submissions match</p><p className="mt-1 text-sm text-muted-foreground">Try another search or filter.</p></div>}</div></Card></Shell>; }
 
 function SubmissionDetail() { const params = useParams<{ id: string }>(); const problem = readStore('ss-problems', initialProblems).find((p: typeof initialProblems[number]) => p.id === params.id) || { ...initialProblems[0], id: params.id || 'SS-JH-2026-00124' }; return <Shell><Link href="/citizen/submissions" className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-muted-foreground hover:text-primary" data-testid="link-back-submissions"><ArrowLeft size={16} />All submissions</Link><PageIntro eyebrow={problem.id} title={problem.title} description={`${problem.district} · ${problem.category} · Demo submission`} action={<Badge tone="amber">{problem.status}</Badge>} /><div className="grid gap-6 lg:grid-cols-[1.25fr_.75fr]"><Card className="p-5 md:p-7"><h2 className="font-display text-xl font-bold">Tracking progress</h2><div className="mt-8 space-y-6">{[['Submitted', 'Your report was received', true], ['Community validation', 'The local team is checking the details', true], ['Assigned for action', 'A relevant department or partner will pick this up', problem.status !== 'Under review'], ['Solution in motion', 'Updates will appear here as the work progresses', problem.status === 'In progress']].map(([title, copy, done], i) => <div className="relative flex gap-4" key={String(title)}><div className={cx('relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full', done ? 'bg-secondary text-primary' : 'bg-muted text-muted-foreground')}>{done ? <Check size={16} /> : i + 1}</div>{i < 3 && <div className={cx('absolute left-[17px] top-9 h-8 w-px', done ? 'bg-secondary' : 'bg-border')} />}<div><p className="text-sm font-bold">{title}</p><p className="mt-1 text-xs text-muted-foreground">{copy}</p></div></div>)}</div></Card><div className="space-y-5"><Card className="p-5"><p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Community support</p><p className="mt-2 font-display text-3xl font-bold">{problem.votes}</p><p className="text-sm text-muted-foreground">people have added their voice</p><Button variant="soft" className="mt-4 w-full" data-testid="button-support-submission"><HandHeart size={17} />Add my support</Button></Card><Card className="p-5"><p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Challenge details</p><div className="mt-4 space-y-3 text-sm"><p className="flex justify-between gap-3"><span className="text-muted-foreground">District</span><strong>{problem.district}</strong></p><p className="flex justify-between gap-3"><span className="text-muted-foreground">Category</span><strong>{problem.category}</strong></p><p className="flex justify-between gap-3"><span className="text-muted-foreground">Reported</span><strong>{problem.age}</strong></p></div></Card></div></div></Shell>; }
+function CommunityProblemDetail() {
+  const params = useParams<{ id: string }>();
+  const [, setLocation] = useLocation();
+  const [problem, setProblem] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
 
+  useEffect(() => {
+    const loadProblem = async () => {
+      try {
+        setLoading(true);
+        setError('');
+        const data = await apiRequest<any[]>('/problems');
+        const found = data.find((p) => p.id === params.id);
+        if (!found) {
+          setError('Problem not found.');
+        } else {
+          setProblem(found);
+        }
+      } catch (err) {
+        console.error('Failed to load problem:', err);
+        setError(err instanceof Error ? err.message : 'Unable to load this problem.');
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadProblem();
+  }, [params.id]);
+
+  return (
+    <Shell>
+      <Link
+        href="/community/challenges"
+        className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-muted-foreground hover:text-primary"
+        data-testid="link-back-queue"
+      >
+        <ArrowLeft size={16} />Back to validation queue
+      </Link>
+
+      {loading && (
+        <div className="py-10 text-center text-sm text-muted-foreground">Loading problem...</div>
+      )}
+
+      {error && (
+        <div className="rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</div>
+      )}
+
+      {!loading && !error && problem && (
+        <>
+          <PageIntro
+            eyebrow={problem.id}
+            title={problem.title}
+            description={`${problem.district || '—'} · ${problem.category || '—'}`}
+            action={<Badge tone="amber">{problem.status || 'Under review'}</Badge>}
+          />
+          <Card className="p-5 md:p-7 space-y-4">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Description</p>
+              <p className="mt-1 text-sm leading-relaxed">{problem.description}</p>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div><p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Location</p><p className="mt-1 text-sm">{problem.location}</p></div>
+              <div><p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Urgency</p><p className="mt-1 text-sm">{problem.urgency}</p></div>
+              <div><p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">People affected</p><p className="mt-1 text-sm">{problem.people}</p></div>
+              <div><p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Evidence</p><p className="mt-1 text-sm">{problem.evidence || 'None provided'}</p></div>
+            </div>
+          </Card>
+        </>
+      )}
+    </Shell>
+  );
+}
 function CommunityDashboard() {
   const user = readStore('ss-user', { name: 'User' });
 
