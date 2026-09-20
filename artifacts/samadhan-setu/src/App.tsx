@@ -1076,7 +1076,24 @@ function FacultyDashboard() {
         <Metric label="Awaiting your review" value={String(pending.length)} detail="Validated challenges" icon={GraduationCap} tone="primary" />
         <Metric label="Accepted as projects" value={String(projects.length)} detail="Created by your department" icon={CheckCircle2} tone="green" />
         <Metric label="Teams formed" value="0" detail="Will connect next" icon={Users} tone="blue" />
-        <Metric label="Districts covered" value="0" detail="Will connect next" icon={Target} tone="orange" />
+        <Metric
+  label="Districts covered"
+  value={String(
+    new Set(
+      projects
+        .map((project) => {
+          const problem = problems.find(
+            (p) => p.id === project.problemId
+          );
+          return problem?.district;
+        })
+        .filter(Boolean)
+    ).size
+  )}
+  detail="Jharkhand districts"
+  icon={Target}
+  tone="orange"
+/>
       </div>
 
       <div className="mt-7">
