@@ -1193,6 +1193,9 @@ function FacultyDashboard() {
 
               <span className="text-xs text-muted-foreground">
                 {project.progress || 0}% complete
+                <span className="block text-xs text-muted-foreground">
+  {project.description || 'University-led community project'}
+</span>
               </span>
             </span>
 
