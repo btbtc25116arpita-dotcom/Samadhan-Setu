@@ -1120,7 +1120,23 @@ function FacultyDashboard() {
                   </span>
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-bold">{p.title}</span>
-                    <span className="text-xs text-muted-foreground">{p.district || 'Jharkhand'} · {p.category}</span>
+                   <div className="mt-1 flex flex-wrap items-center gap-2">
+  <Badge tone="green">Validated</Badge>
+
+  <Badge tone="blue">
+    {p.category || 'General'}
+  </Badge>
+
+  <span className="text-xs text-muted-foreground">
+    📍 {p.district || 'Jharkhand'}
+  </span>
+
+  {p.people && (
+    <span className="text-xs text-muted-foreground">
+      👥 {p.people} affected
+    </span>
+  )}
+</div>
                   </span>
                   <div className="flex gap-2">
                     <Button variant="primary" onClick={() => openDialog(p, 'accept')} data-testid={`button-accept-${p.id}`}>
