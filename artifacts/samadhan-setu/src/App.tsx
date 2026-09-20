@@ -984,7 +984,176 @@ function UniversityDashboard() {
 }
 
 function FacultyDashboard() {
-  return <UniversityDashboard />;
+  const user = readStore('ss-user', { name: 'User' });
+  const [problems, setProblems] = useState<any[]>([]);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  const [dialogProblem, setDialogProblem] = useState<any>(null);
+  const [dialogAction, setDialogAction] = useState<'accept' | 'reject' | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [actionError, setActionError] = useState('');
+
+  const dismissed: string[] = readStore('ss-faculty-dismissed', []);
+
+  const load = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      const [problemsData, projectsData] = await Promise.all([
+        apiRequest<any[]>('/problems'),
+        apiRequest<any[]>('/projects'),
+      ]);
+      setProblems(problemsData.filter((p) => p.validationStatus === 'validated'));
+      setProjects(projectsData);
+    } catch (err) {
+      console.error('Failed to load faculty queue:', err);
+      setError(err instanceof Error ? err.message : 'Unable to load challenges.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => { load(); }, []);
+
+  const projectProblemIds = new Set(projects.map((p) => p.problemId));
+  const pending = problems.filter((p) => !projectProblemIds.has(p.id) && !dismissed.includes(p.id));
+
+  const openDialog = (problem: any, action: 'accept' | 'reject') => {
+    setDialogProblem(problem);
+    setDialogAction(action);
+    setActionError('');
+  };
+
+  const closeDialog = () => {
+    if (submitting) return;
+    setDialogProblem(null);
+    setDialogAction(null);
+  };
+
+  const confirmAction = async () => {
+    if (!dialogProblem || !dialogAction) return;
+
+    try {
+      setSubmitting(true);
+      setActionError('');
+
+      if (dialogAction === 'accept') {
+        const created = await apiRequest<any>('/projects', {
+          method: 'POST',
+          body: JSON.stringify({
+            problemId: dialogProblem.id,
+            projectName: dialogProblem.title,
+            description: dialogProblem.description,
+          }),
+        });
+        setProjects((prev) => [created, ...prev]);
+      } else {
+        const list: string[] = readStore('ss-faculty-dismissed', []);
+        writeStore('ss-faculty-dismissed', [...list, dialogProblem.id]);
+      }
+
+      setDialogProblem(null);
+      setDialogAction(null);
+    } catch (err) {
+      console.error('Failed to save decision:', err);
+      setActionError(err instanceof Error ? err.message : 'Unable to save this decision.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <Shell>
+      <PageIntro
+        eyebrow="Faculty workspace"
+        title={`Good morning, ${user?.name || 'User'}.`}
+        description="Review validated challenges and accept the ones your department will take on."
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Metric label="Awaiting your review" value={String(pending.length)} detail="Validated challenges" icon={GraduationCap} tone="primary" />
+        <Metric label="Accepted as projects" value={String(projects.length)} detail="Created by your department" icon={CheckCircle2} tone="green" />
+        <Metric label="Teams formed" value="0" detail="Will connect next" icon={Users} tone="blue" />
+        <Metric label="Districts covered" value="0" detail="Will connect next" icon={Target} tone="orange" />
+      </div>
+
+      <div className="mt-7">
+        <Card className="p-5 md:p-6">
+          <SectionTitle eyebrow="Open for review" title="Innovation challenges" description="Validated by Panchayat/ULB. Accept to turn one into a project, or pass on it." />
+
+          {loading && <div className="py-10 text-center text-sm text-muted-foreground">Loading challenges...</div>}
+          {error && <div className="rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</div>}
+
+          {!loading && !error && pending.length === 0 && (
+            <div className="py-10 text-center">
+              <GraduationCap className="mx-auto text-muted-foreground" size={32} />
+              <p className="mt-3 font-bold">Nothing waiting for review</p>
+              <p className="mt-1 text-sm text-muted-foreground">New validated challenges will appear here.</p>
+            </div>
+          )}
+
+          {!loading && !error && pending.length > 0 && (
+            <div className="space-y-2">
+              {pending.map((p) => (
+                <div key={p.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-border p-3">
+                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary/45 text-primary">
+                    <Lightbulb size={17} />
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-bold">{p.title}</span>
+                    <span className="text-xs text-muted-foreground">{p.district || 'Jharkhand'} · {p.category}</span>
+                  </span>
+                  <div className="flex gap-2">
+                    <Button variant="primary" onClick={() => openDialog(p, 'accept')} data-testid={`button-accept-${p.id}`}>
+                      <CheckCircle2 size={16} />Accept
+                    </Button>
+                    <Button variant="danger" onClick={() => openDialog(p, 'reject')} data-testid={`button-reject-${p.id}`}>
+                      <X size={16} />Pass
+                    </Button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
+
+      <Dialog open={dialogProblem !== null} onOpenChange={(open) => { if (!open) closeDialog(); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>
+              {dialogAction === 'accept' ? `Accept "${dialogProblem?.title}"?` : `Pass on "${dialogProblem?.title}"?`}
+            </DialogTitle>
+            <DialogDescription>
+              {dialogAction === 'accept'
+                ? 'This creates a real project in your database, linked to this problem.'
+                : 'This removes it from your review queue on this device.'}
+            </DialogDescription>
+          </DialogHeader>
+
+          {actionError && (
+            <p className="flex items-center gap-2 text-sm font-medium text-red-700">
+              <AlertCircle size={16} />{actionError}
+            </p>
+          )}
+
+          <DialogFooter>
+            <Button variant="ghost" onClick={closeDialog} disabled={submitting}>Cancel</Button>
+            <Button
+              variant={dialogAction === 'reject' ? 'danger' : 'primary'}
+              onClick={confirmAction}
+              disabled={submitting}
+              data-testid="button-confirm-faculty-decision"
+            >
+              {submitting ? 'Saving...' : dialogAction === 'accept' ? 'Confirm accept' : 'Confirm pass'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </Shell>
+  );
 }
 function IndustryDashboard() {
   const user = readStore('ss-user', { name: 'User' });
