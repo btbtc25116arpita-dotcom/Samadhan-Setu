@@ -1098,7 +1098,7 @@ function FacultyDashboard() {
 
       <div className="mt-7">
         <Card className="p-5 md:p-6">
-          <SectionTitle eyebrow="Open for review" title="Innovation challenges" description="Validated by Panchayat/ULB. Accept to turn one into a project, or pass on it." />
+          <SectionTitle eyebrow="Open for review" title="Innovation challenges" description="Validated community challenges matched for university expertise. Review the problem and decide whether your department can take it up." />
 
           {loading && <div className="py-10 text-center text-sm text-muted-foreground">Loading challenges...</div>}
           {error && <div className="rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</div>}
