@@ -1426,6 +1426,9 @@ function App() {
                 <Route path="/community/challenges/:id" component={CommunityProblemDetail} />
                 <Route path="/panchayat/dashboard" component={CommunityDashboard} />
                 <Route path="/ulb/dashboard" component={CommunityDashboard} />
+                <Route path="/faculty/dashboard" component={FacultyDashboard} />
+<Route path="/industry/dashboard" component={IndustryDashboard} />
+<Route path="/government/dashboard" component={GovernmentDashboard} />
                 <Route component={Dashboard} />
               </Switch>
             </WouterRouter>
