@@ -1152,6 +1152,67 @@ function FacultyDashboard() {
           )}
         </Card>
       </div>
+      <div className="mt-7">
+  <Card className="p-5 md:p-6">
+    <SectionTitle
+      eyebrow="Your work"
+      title="My active projects"
+      description="Projects accepted from validated community challenges."
+    />
+
+    {projects.length === 0 ? (
+      <div className="py-8 text-center">
+        <BriefcaseBusiness
+          className="mx-auto text-muted-foreground"
+          size={32}
+        />
+
+        <p className="mt-3 font-bold">
+          No projects yet
+        </p>
+
+        <p className="mt-1 text-sm text-muted-foreground">
+          Accept a validated challenge above to create your first project.
+        </p>
+      </div>
+    ) : (
+      <div className="space-y-2">
+        {projects.map((project) => (
+          <div
+            key={project.id}
+            className="flex items-center gap-3 rounded-xl border border-border p-3"
+          >
+            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary/45 text-primary">
+              <BriefcaseBusiness size={17} />
+            </span>
+
+            <span className="min-w-0 flex-1">
+              <span className="block truncate text-sm font-bold">
+                {project.projectName}
+              </span>
+
+              <span className="text-xs text-muted-foreground">
+                {project.progress || 0}% complete
+              </span>
+            </span>
+
+            <Badge
+              tone={
+                project.status === 'Completed'
+                  ? 'green'
+                  : project.status === 'In progress'
+                  ? 'blue'
+                  : 'amber'
+              }
+            >
+              {project.status || 'Proposed'}
+            </Badge>
+          </div>
+        ))}
+      </div>
+    )}
+  </Card>
+</div>
 
       <Dialog open={dialogProblem !== null} onOpenChange={(open) => { if (!open) closeDialog(); }}>
         <DialogContent>
