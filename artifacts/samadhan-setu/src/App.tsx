@@ -3227,217 +3227,761 @@ function FacultyDashboard() {
 }
 function IndustryDashboard() {
   const user = readStore('ss-user', { name: 'User' });
+
   const [projects, setProjects] = useState<any[]>([]);
+  const [problems, setProblems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const [showCollaboration, setShowCollaboration] = useState(false);
+  const [selectedProblem, setSelectedProblem] = useState<any | null>(null);
 
   useEffect(() => {
     const load = async () => {
       try {
         setLoading(true);
         setError('');
-        const data = await apiRequest<any[]>('/projects');
-        setProjects(data);
+
+        const [projectsData, problemsData] = await Promise.all([
+          apiRequest<any[]>('/projects'),
+          apiRequest<any[]>('/problems'),
+        ]);
+
+        setProjects(projectsData || []);
+        setProblems(problemsData || []);
       } catch (err) {
-        console.error('Failed to load projects:', err);
-        setError(err instanceof Error ? err.message : 'Unable to load projects.');
+        console.error('Failed to load industry dashboard:', err);
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Unable to load industry dashboard.'
+        );
       } finally {
         setLoading(false);
       }
     };
+
     load();
   }, []);
-  {showProblemReview && selectedProblem && (
-  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-    <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-background p-6 shadow-2xl">
 
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            Problem review
-          </p>
+  const openProjects = projects.length;
 
-          <h2 className="mt-2 font-display text-2xl font-bold">
-            {selectedProblem.title || selectedProblem.projectName}
-          </h2>
-        </div>
+  const supportedProjects = projects.filter(
+    (p) =>
+      p.supportedByIndustry === true ||
+      p.supportStatus === 'Supported'
+  ).length;
 
-        <button
-          type="button"
-          onClick={() => setShowProblemReview(false)}
-          className="rounded-lg px-3 py-2 text-muted-foreground hover:bg-secondary"
-        >
-          ✕
-        </button>
-      </div>
+  const inProgressProjects = projects.filter(
+    (p) =>
+      p.status === 'In progress' ||
+      p.status === 'In Progress'
+  ).length;
 
-      <div className="mt-6 space-y-5">
+  const completedProjects = projects.filter(
+    (p) =>
+      p.status === 'Completed' ||
+      p.status === 'completed'
+  ).length;
 
-        <div>
-          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            Description
-          </p>
-
-          <p className="mt-2 text-sm leading-6">
-            {selectedProblem.description ||
-              'No description available.'}
-          </p>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-2">
-
-          <div className="rounded-xl border border-border p-4">
-            <p className="text-xs font-bold text-muted-foreground">
-              Category
-            </p>
-
-            <p className="mt-1 font-semibold">
-              {selectedProblem.category || 'Not specified'}
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-border p-4">
-            <p className="text-xs font-bold text-muted-foreground">
-              District
-            </p>
-
-            <p className="mt-1 font-semibold">
-              {selectedProblem.district || 'Not specified'}
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-border p-4">
-            <p className="text-xs font-bold text-muted-foreground">
-              Location
-            </p>
-
-            <p className="mt-1 font-semibold">
-              {selectedProblem.location || 'Not specified'}
-            </p>
-          </div>
-
-          <div className="rounded-xl border border-border p-4">
-            <p className="text-xs font-bold text-muted-foreground">
-              Urgency
-            </p>
-
-            <p className="mt-1 font-semibold">
-              {selectedProblem.urgency || 'Not specified'}
-            </p>
-          </div>
-
-        </div>
-
-        {selectedProblem.people && (
-          <div>
-            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              People affected
-            </p>
-
-            <p className="mt-1 text-sm">
-              {selectedProblem.people}
-            </p>
-          </div>
-        )}
-
-        <div className="rounded-xl bg-secondary/50 p-4">
-          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-            Current status
-          </p>
-
-          <p className="mt-1 font-semibold">
-            {selectedProblem.status ||
-              selectedProblem.validationStatus ||
-              'Pending review'}
-          </p>
-        </div>
-
-      </div>
-
-      <div className="mt-7 flex flex-wrap justify-end gap-3">
-
-        <Button
-          variant="outline"
-          onClick={() => {
-            setShowProblemReview(false);
-          }}
-        >
-          Give feedback
-        </Button>
-
-        <Button
-          variant="primary"
-          onClick={() => {
-            setShowProblemReview(false);
-          }}
-        >
-          Approve
-        </Button>
-
-        <Button
-          variant="primary"
-          onClick={() => {
-            setShowCollaboration(true);
-          }}
-        >
-          Take up as collaborative project
-          <ArrowRight size={16} />
-        </Button>
-
-      </div>
-
-    </div>
-  </div>
-)}
+  /*
+   * SAMPLE INDUSTRY COLLABORATION DATA
+   * These cards are intentionally displayed even if the database
+   * does not yet contain collaboration records.
+   */
+  const collaborationOptions = [
+    {
+      title: 'Smart Water Monitoring',
+      category: 'Water & Sanitation',
+      district: 'Ranchi',
+      description:
+        'Develop an affordable monitoring system for local water supply and quality.',
+      need: 'Technology + Implementation',
+      organization: 'University innovation team',
+      icon: Droplets,
+    },
+    {
+      title: 'Rural Learning Access',
+      category: 'Education',
+      district: 'Dumka',
+      description:
+        'Improve access to digital learning resources for students in underserved areas.',
+      need: 'Technology + Funding',
+      organization: 'University innovation team',
+      icon: GraduationCap,
+    },
+    {
+      title: 'Community Health Access',
+      category: 'Healthcare',
+      district: 'Hazaribagh',
+      description:
+        'Create a technology-enabled system to improve access to essential healthcare services.',
+      need: 'Implementation + Technology',
+      organization: 'University innovation team',
+      icon: ShieldCheck,
+    },
+    {
+      title: 'Sustainable Agriculture Support',
+      category: 'Agriculture',
+      district: 'Gumla',
+      description:
+        'Support farmers through better access to information, monitoring and field solutions.',
+      need: 'Technology + Field Support',
+      organization: 'University innovation team',
+      icon: Target,
+    },
+  ];
 
   return (
     <Shell>
-      <PageIntro
-        eyebrow="Industry workspace"
-        title={`Good morning, ${user?.name || 'User'}.`}
-        description="Projects that may need funding, technology or implementation support."
-      />
+      {/* =========================================================
+          HEADER
+      ========================================================= */}
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Metric label="Open projects" value={String(projects.length)} detail="Across all universities" icon={BriefcaseBusiness} tone="primary" />
-        <Metric label="Supported by you" value="0" detail="Will connect next" icon={IndianRupee} tone="orange" />
-        <Metric label="In progress" value={String(projects.filter((p) => p.status === 'In progress').length)} detail="Currently active" icon={Activity} tone="blue" />
-        <Metric label="Completed" value="0" detail="Will connect next" icon={CheckCircle2} tone="green" />
+      <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+        <PageIntro
+          eyebrow="Industry workspace"
+          title={`Good morning, ${user?.name || 'User'}.`}
+          description="Discover community problems where your technology, funding or implementation support can create measurable impact."
+        />
+
+        <button
+          type="button"
+          onClick={() => setShowCollaboration(true)}
+          className="inline-flex w-fit items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground transition hover:brightness-110"
+        >
+          <Search size={17} />
+          Find a collaboration
+          <ArrowRight size={16} />
+        </button>
       </div>
 
-      <div className="mt-7">
+      {/* =========================================================
+          ERROR
+      ========================================================= */}
+
+      {error && (
+        <div className="mb-6 rounded-xl bg-red-50 p-4 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
+      {/* =========================================================
+          METRICS
+      ========================================================= */}
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Metric
+          label="Open opportunities"
+          value={String(openProjects)}
+          detail="Projects seeking support"
+          icon={BriefcaseBusiness}
+          tone="primary"
+        />
+
+        <Metric
+          label="Supported by you"
+          value={String(supportedProjects)}
+          detail="Active collaborations"
+          icon={IndianRupee}
+          tone="orange"
+        />
+
+        <Metric
+          label="In progress"
+          value={String(inProgressProjects)}
+          detail="Currently active"
+          icon={Activity}
+          tone="blue"
+        />
+
+        <Metric
+          label="Completed"
+          value={String(completedProjects)}
+          detail="Successfully delivered"
+          icon={CheckCircle2}
+          tone="green"
+        />
+      </div>
+
+      {/* =========================================================
+          MAIN SECTION
+      ========================================================= */}
+
+      <div className="mt-7 grid gap-5 xl:grid-cols-[1.15fr_.85fr]">
+
+        {/* =======================================================
+            PROBLEMS NEEDING SUPPORT
+        ======================================================= */}
+
         <Card className="p-5 md:p-6">
-          <SectionTitle eyebrow="Open for support" title="Projects" description="Projects proposed by university teams from validated citizen problems." />
+          <SectionTitle
+            eyebrow="Community problems"
+            title="Problems that need support"
+            description="Validated problems where industry expertise, technology or implementation support can help."
+          />
 
-          {loading && <div className="py-10 text-center text-sm text-muted-foreground">Loading projects...</div>}
-          {error && <div className="rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</div>}
-
-          {!loading && !error && projects.length === 0 && (
-            <div className="py-10 text-center">
-              <BriefcaseBusiness className="mx-auto text-muted-foreground" size={32} />
-              <p className="mt-3 font-bold">No projects yet</p>
-              <p className="mt-1 text-sm text-muted-foreground">Once a university picks up a validated problem, it will appear here.</p>
+          {loading && (
+            <div className="py-10 text-center text-sm text-muted-foreground">
+              Loading opportunities...
             </div>
           )}
 
-          {!loading && !error && projects.length > 0 && (
-            <div className="space-y-2">
-              {projects.map((p) => (
-                <div key={p.id} className="flex items-center gap-3 rounded-xl border border-border p-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-orange-100 text-accent">
-                    <BriefcaseBusiness size={17} />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-bold">{p.projectName}</span>
-                    <span className="text-xs text-muted-foreground">{p.progress || 0}% complete</span>
-                  </span>
-                  <Badge tone="blue">{p.status || 'Proposed'}</Badge>
+          {!loading && problems.length === 0 && (
+            <div className="py-12 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
+                <Network size={25} className="text-primary" />
+              </div>
+
+              <p className="mt-4 font-bold">
+                No problems available yet
+              </p>
+
+              <p className="mt-1 text-sm text-muted-foreground">
+                Validated community problems will appear here.
+              </p>
+            </div>
+          )}
+
+          {!loading && problems.length > 0 && (
+            <div className="mt-5 space-y-3">
+              {problems.slice(0, 6).map((problem) => (
+                <button
+                  key={problem.id}
+                  type="button"
+                  onClick={() => setSelectedProblem(problem)}
+                  className="group flex w-full items-start gap-4 rounded-2xl border border-border bg-card p-4 text-left transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md"
+                >
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-orange-100 text-accent">
+                    <Network size={19} />
+                  </div>
+
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="truncate text-sm font-bold">
+                        {problem.title || 'Community problem'}
+                      </h3>
+
+                      <Badge tone="green">
+                        Validated
+                      </Badge>
+                    </div>
+
+                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
+                      {problem.description ||
+                        'Community problem requiring technology or implementation support.'}
+                    </p>
+
+                    <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
+                      <span className="inline-flex items-center gap-1">
+                        <MapPin size={13} />
+                        {problem.district || 'Jharkhand'}
+                      </span>
+
+                      <span className="inline-flex items-center gap-1">
+                        <Target size={13} />
+                        {problem.category || 'General'}
+                      </span>
+
+                      <span className="inline-flex items-center gap-1">
+                        <Users size={13} />
+                        {problem.people || 'Community'}
+                      </span>
+                    </div>
+                  </div>
+
+                  <ArrowRight
+                    size={18}
+                    className="mt-1 shrink-0 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary"
+                  />
+                </button>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        {/* =======================================================
+            COLLABORATION PANEL
+        ======================================================= */}
+
+        <Card className="p-5 md:p-6">
+          <SectionTitle
+            eyebrow="Your role"
+            title="How your organisation can contribute"
+            description="Connect your capabilities with problems that need practical support."
+          />
+
+          <div className="mt-5 space-y-3">
+            <div className="rounded-2xl border border-border bg-muted/30 p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary text-primary">
+                  <Zap size={18} />
+                </div>
+
+                <div>
+                  <h3 className="font-bold">
+                    Technology
+                  </h3>
+
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    Provide technical expertise, platforms, tools or
+                    infrastructure.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-muted/30 p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-100 text-accent">
+                  <IndianRupee size={18} />
+                </div>
+
+                <div>
+                  <h3 className="font-bold">
+                    Funding
+                  </h3>
+
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    Support promising projects through CSR or direct
+                    funding.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-muted/30 p-4">
+              <div className="flex items-start gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
+                  <HandHeart size={18} />
+                </div>
+
+                <div>
+                  <h3 className="font-bold">
+                    Implementation
+                  </h3>
+
+                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                    Help move solutions from prototype to real-world
+                    deployment.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowCollaboration(true)}
+            className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-primary px-4 py-3 text-sm font-bold text-primary transition hover:bg-primary hover:text-primary-foreground"
+          >
+            Explore opportunities
+            <ArrowRight size={16} />
+          </button>
+        </Card>
+      </div>
+
+      {/* =========================================================
+          CURRENT PROJECTS
+      ========================================================= */}
+
+      <div className="mt-7">
+        <Card className="p-5 md:p-6">
+          <SectionTitle
+            eyebrow="Project pipeline"
+            title="Projects open for industry support"
+            description="University-led projects connected to validated community problems."
+          />
+
+          {loading && (
+            <div className="py-10 text-center text-sm text-muted-foreground">
+              Loading projects...
+            </div>
+          )}
+
+          {!loading && projects.length === 0 && (
+            <div className="py-10 text-center">
+              <BriefcaseBusiness
+                className="mx-auto text-muted-foreground"
+                size={32}
+              />
+
+              <p className="mt-3 font-bold">
+                No projects yet
+              </p>
+
+              <p className="mt-1 text-sm text-muted-foreground">
+                Projects proposed by university teams will appear here.
+              </p>
+            </div>
+          )}
+
+          {!loading && projects.length > 0 && (
+            <div className="mt-5 grid gap-3 md:grid-cols-2">
+              {projects.slice(0, 6).map((project) => (
+                <div
+                  key={project.id}
+                  className="rounded-2xl border border-border p-4"
+                >
+                  <div className="flex items-start gap-3">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-100 text-accent">
+                      <BriefcaseBusiness size={18} />
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <h3 className="truncate font-bold">
+                        {project.projectName ||
+                          project.title ||
+                          'Innovation project'}
+                      </h3>
+
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {project.progress || 0}% complete
+                      </p>
+                    </div>
+
+                    <Badge tone="blue">
+                      {project.status || 'Proposed'}
+                    </Badge>
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </Card>
       </div>
+
+      {/* =========================================================
+          FIND A COLLABORATION MODAL
+      ========================================================= */}
+
+      {showCollaboration && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-3xl bg-background p-6 shadow-2xl md:p-8">
+
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-accent">
+                  Collaboration marketplace
+                </p>
+
+                <h2 className="mt-2 font-display text-3xl font-bold text-primary">
+                  Find a collaboration
+                </h2>
+
+                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                  Explore community challenges where your organisation can
+                  contribute technology, funding or implementation support.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setShowCollaboration(false)}
+                className="rounded-xl p-2 text-muted-foreground transition hover:bg-muted hover:text-primary"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* SEARCH / FILTERS */}
+
+            <div className="mt-6 flex flex-col gap-3 md:flex-row">
+              <div className="flex flex-1 items-center gap-2 rounded-xl border border-border bg-card px-4 py-3">
+                <Search
+                  size={17}
+                  className="text-muted-foreground"
+                />
+
+                <input
+                  type="text"
+                  placeholder="Search opportunities..."
+                  className="w-full bg-transparent text-sm outline-none"
+                />
+              </div>
+
+              <button
+                type="button"
+                className="inline-flex items-center justify-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-bold"
+              >
+                <Filter size={16} />
+                Filter
+              </button>
+            </div>
+
+            {/* OPPORTUNITIES */}
+
+            <div className="mt-6 grid gap-4 md:grid-cols-2">
+              {collaborationOptions.map((item) => {
+                const Icon = item.icon;
+
+                return (
+                  <div
+                    key={item.title}
+                    className="rounded-2xl border border-border bg-card p-5 transition hover:border-primary hover:shadow-md"
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-secondary text-primary">
+                        <Icon size={20} />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h3 className="font-bold">
+                            {item.title}
+                          </h3>
+
+                          <Badge tone="green">
+                            Open
+                          </Badge>
+                        </div>
+
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {item.category}
+                        </p>
+                      </div>
+                    </div>
+
+                    <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                      {item.description}
+                    </p>
+
+                    <div className="mt-4 space-y-2 text-xs">
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <MapPin size={14} />
+                        {item.district}, Jharkhand
+                      </div>
+
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Zap size={14} />
+                        {item.need}
+                      </div>
+
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <GraduationCap size={14} />
+                        {item.organization}
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowCollaboration(false);
+
+                        setSelectedProblem({
+                          title: item.title,
+                          category: item.category,
+                          district: item.district,
+                          description: item.description,
+                          location: item.district,
+                          urgency: 'Medium',
+                          people: 'Community',
+                          status: 'Open for collaboration',
+                        });
+                      }}
+                      className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground transition hover:brightness-110"
+                    >
+                      View opportunity
+                      <ArrowRight size={16} />
+                    </button>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================
+          PROBLEM DETAILS MODAL
+      ========================================================= */}
+
+      {selectedProblem && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
+          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl bg-background p-6 shadow-2xl md:p-8">
+
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-accent">
+                  Problem details
+                </p>
+
+                <h2 className="mt-2 font-display text-3xl font-bold text-primary">
+                  {selectedProblem.title ||
+                    selectedProblem.projectName ||
+                    'Community problem'}
+                </h2>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Badge tone="green">
+                    {selectedProblem.status ||
+                      selectedProblem.validationStatus ||
+                      'Validated'}
+                  </Badge>
+
+                  <Badge tone="blue">
+                    {selectedProblem.category || 'General'}
+                  </Badge>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedProblem(null)}
+                className="rounded-xl p-2 text-muted-foreground transition hover:bg-muted hover:text-primary"
+              >
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* DESCRIPTION */}
+
+            <div className="mt-7">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                Problem description
+              </p>
+
+              <p className="mt-2 text-sm leading-7 text-foreground">
+                {selectedProblem.description ||
+                  'No description available.'}
+              </p>
+            </div>
+
+            {/* DETAILS */}
+
+            <div className="mt-6 grid gap-4 sm:grid-cols-2">
+
+              <div className="rounded-2xl border border-border p-4">
+                <p className="text-xs font-bold text-muted-foreground">
+                  Category
+                </p>
+
+                <p className="mt-1 font-semibold">
+                  {selectedProblem.category ||
+                    'Not specified'}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-border p-4">
+                <p className="text-xs font-bold text-muted-foreground">
+                  District
+                </p>
+
+                <p className="mt-1 font-semibold">
+                  {selectedProblem.district ||
+                    'Jharkhand'}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-border p-4">
+                <p className="text-xs font-bold text-muted-foreground">
+                  Location
+                </p>
+
+                <p className="mt-1 font-semibold">
+                  {selectedProblem.location ||
+                    selectedProblem.district ||
+                    'Not specified'}
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-border p-4">
+                <p className="text-xs font-bold text-muted-foreground">
+                  Urgency
+                </p>
+
+                <p className="mt-1 font-semibold">
+                  {selectedProblem.urgency ||
+                    'Not specified'}
+                </p>
+              </div>
+
+            </div>
+
+            {/* PEOPLE AFFECTED */}
+
+            {selectedProblem.people && (
+              <div className="mt-6 rounded-2xl border border-border p-4">
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                  People affected
+                </p>
+
+                <p className="mt-2 text-sm">
+                  {selectedProblem.people}
+                </p>
+              </div>
+            )}
+
+            {/* COLLABORATION NEED */}
+
+            <div className="mt-6 rounded-2xl bg-secondary/40 p-5">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                Industry opportunity
+              </p>
+
+              <div className="mt-4 grid gap-4 sm:grid-cols-3">
+
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    Technology
+                  </p>
+
+                  <p className="mt-1 font-semibold">
+                    Required
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    Funding
+                  </p>
+
+                  <p className="mt-1 font-semibold">
+                    Open
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-xs text-muted-foreground">
+                    Implementation
+                  </p>
+
+                  <p className="mt-1 font-semibold">
+                    Required
+                  </p>
+                </div>
+
+              </div>
+            </div>
+
+            {/* ACTIONS */}
+
+            <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+
+              <button
+                type="button"
+                onClick={() => setSelectedProblem(null)}
+                className="rounded-xl border border-border px-5 py-3 text-sm font-bold transition hover:bg-muted"
+              >
+                Close
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedProblem(null);
+                  setShowCollaboration(true);
+                }}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground transition hover:brightness-110"
+              >
+                Take up as collaborative project
+                <ArrowRight size={16} />
+              </button>
+
+            </div>
+          </div>
+        </div>
+      )}
     </Shell>
   );
 }
