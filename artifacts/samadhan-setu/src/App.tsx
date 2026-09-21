@@ -204,6 +204,162 @@ function Shell({ children }: { children: ReactNode }) {
 }
 
 function LanguageSelector() { const { language, setLanguage, t } = useLanguage(); return <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-2.5 py-1.5"><label htmlFor="language-select" className="hidden text-xs font-semibold text-muted-foreground sm:block">{t('Choose your language')}</label><select id="language-select" value={language} onChange={e => setLanguage(e.target.value as 'en' | 'hi')} className="rounded-lg border border-input bg-background px-2 py-1 text-xs font-semibold text-foreground outline-none focus:border-primary" data-testid="select-language"><option value="en">English</option><option value="hi">हिंदी</option></select></div>; }
+function HelpPage() {
+  const [openQuestion, setOpenQuestion] = useState(0);
+
+  const questions = [
+    {
+      question: 'What happens after I report a problem?',
+      answer:
+        'A community manager checks the details, asks for more information when needed, and routes validated challenges to a relevant team. You can follow every step.',
+    },
+    {
+      question: 'Do I need a photo to submit a challenge?',
+      answer:
+        'A photo can help explain a community problem, but it is not required for every submission. You can provide the details of the problem and supporting information available to you.',
+    },
+    {
+      question: 'Who can join an innovation challenge?',
+      answer:
+        'Students and university teams can explore validated community challenges and work on practical solutions through research, innovation and implementation.',
+    },
+    {
+      question: 'Is the data on this demo real?',
+      answer:
+        'No. This demonstration uses sample data across Jharkhand districts. It does not contain real citizen complaints.',
+    },
+  ];
+
+  return (
+    <Shell>
+      <div className="mx-auto max-w-6xl">
+        {/* PAGE INTRO */}
+        <div className="mb-10">
+          <p className="text-xs font-bold uppercase tracking-[0.18em] text-accent">
+            Help & Support
+          </p>
+
+          <h1 className="mt-2 font-display text-4xl font-bold tracking-tight text-primary md:text-5xl">
+            You’re not alone in figuring it out.
+          </h1>
+
+          <p className="mt-2 text-base text-muted-foreground">
+            Find a quick answer or choose the right path to get support.
+          </p>
+        </div>
+
+        {/* MAIN CONTENT */}
+        <div className="grid gap-6 lg:grid-cols-[1.4fr_0.95fr]">
+          
+          {/* FAQ CARD */}
+          <Card className="p-6 md:p-8">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-accent">
+              Common questions
+            </p>
+
+            <h2 className="mt-2 font-display text-3xl font-bold text-primary">
+              Frequently asked
+            </h2>
+
+            <div className="mt-8">
+              {questions.map((item, index) => {
+                const isOpen = openQuestion === index;
+
+                return (
+                  <div
+                    key={item.question}
+                    className="border-b border-border last:border-b-0"
+                  >
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setOpenQuestion(
+                          isOpen ? -1 : index
+                        )
+                      }
+                      className="flex w-full items-center justify-between gap-4 py-5 text-left"
+                    >
+                      <span className="text-sm font-bold text-primary">
+                        {item.question}
+                      </span>
+
+                      <span className="shrink-0 text-muted-foreground">
+                        {isOpen ? '⌃' : '⌄'}
+                      </span>
+                    </button>
+
+                    {isOpen && (
+                      <div className="pb-5 pr-8 text-sm leading-6 text-muted-foreground">
+                        {item.answer}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </Card>
+
+          {/* RIGHT SIDE */}
+          <div className="space-y-5">
+
+            {/* HUMAN SUPPORT */}
+            <Card className="overflow-hidden border-0 bg-primary p-6 text-primary-foreground md:p-7">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-secondary text-primary">
+                ?
+              </div>
+
+              <h2 className="mt-6 font-display text-2xl font-bold">
+                Need a human path?
+              </h2>
+
+              <p className="mt-2 text-sm leading-6 text-primary-foreground/70">
+                Community coordinators are here to help you choose the right next step.
+              </p>
+
+              <button
+                type="button"
+                className="mt-6 inline-flex items-center gap-2 rounded-xl bg-secondary px-5 py-3 text-sm font-bold text-primary transition hover:brightness-105"
+              >
+                ✉ Send a message
+              </button>
+            </Card>
+
+            {/* SUPPORT DESK */}
+            <Card className="p-6 md:p-7">
+              <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">
+                Demo support desk
+              </p>
+
+              <div className="mt-5 space-y-4">
+                <div className="flex items-center gap-3">
+                  <span className="text-accent">✉</span>
+                  <span className="text-sm text-muted-foreground">
+                    support@samadhansetu.demo
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span className="text-accent">⌕</span>
+                  <span className="text-sm text-muted-foreground">
+                    0651 202 2600
+                  </span>
+                </div>
+
+                <div className="flex items-center gap-3">
+                  <span className="text-accent">◷</span>
+                  <span className="text-sm text-muted-foreground">
+                    Mon–Fri · 10:00–17:00
+                  </span>
+                </div>
+              </div>
+            </Card>
+
+          </div>
+        </div>
+      </div>
+    </Shell>
+  );
+}
 function PublicHeader() { const [location] = useLocation(); return <header className="mx-auto flex h-20 max-w-6xl items-center justify-between px-5 md:px-8"><Link href="/" className="flex items-center gap-2.5" data-testid="link-public-logo"><span className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-secondary"><img src="https://upload.wikimedia.org/wikipedia/commons/a/a9/Jharkhand_Rajakiya_Chihna.svg" alt="Jharkhand State Emblem" className="h-7 w-7 object-contain" /></span><span className="font-display text-xl font-bold">Samadhan <span className="text-accent">Setu</span></span></Link><div className="flex items-center gap-2">{location === '/login' && <LanguageSelector />}<Link href="/login" className="rounded-xl px-4 py-2 text-sm font-bold text-primary hover:bg-muted" data-testid="link-public-login">Login</Link></div></header>; }
 function Landing() { const [, setLocation] = useLocation(); const actions = [{ title: 'Report a Local Problem', description: 'Bring a challenge in your village or city ward to the right people.', icon: AlertCircle, href: '/role-selection?flow=report', tag: 'For citizens' }, { title: 'Manage Community Problems', description: 'Validate, prioritise and route problems with your community.', icon: ClipboardCheck, href: '/role-selection?flow=manage', tag: 'For Panchayats & ULBs' }, { title: 'Join an Innovation Challenge', description: 'Turn a real Jharkhand challenge into a project that matters.', icon: Lightbulb, href: '/role-selection?flow=innovation', tag: 'For universities' }, { title: 'Support or Monitor Projects', description: 'Help promising solutions move from prototype to the field.', icon: HandHeart, href: '/role-selection?flow=support', tag: 'For partners' }]; return <div className="min-h-[100dvh] bg-paper-grid"><PublicHeader /><main className="mx-auto max-w-6xl px-5 pb-16 pt-12 md:px-8 md:pt-20"><div className="grid items-end gap-12 lg:grid-cols-[1.04fr_.96fr]"><div className="rise-in"><div className="mb-6 inline-flex items-center gap-2 rounded-full border border-secondary/80 bg-secondary/25 px-3 py-1.5 text-xs font-bold text-primary"><span className="h-1.5 w-1.5 rounded-full bg-accent" />A civic innovation bridge for Jharkhand</div><h1 className="max-w-xl font-display text-5xl font-bold leading-[.99] tracking-[-.055em] text-primary md:text-7xl">Welcome to<br /><span className="text-accent">Samadhan Setu.</span></h1><p className="mt-6 max-w-lg text-lg leading-relaxed text-muted-foreground">A simple way to move from a community challenge to a visible, lasting solution.</p><div className="mt-8 flex flex-wrap items-center gap-3"><Link href="/register/citizen" className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3.5 text-sm font-bold text-primary-foreground transition hover:brightness-110" data-testid="link-create-account">Create an account <ArrowRight size={17} /></Link><Link href="/login" className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-5 py-3.5 text-sm font-bold transition hover:border-primary" data-testid="link-login">I already have an account</Link></div></div><div className="relative hidden min-h-[330px] lg:block rise-in rise-in-delay-2"><div className="absolute inset-8 rounded-[3rem] bg-primary" /><div className="absolute right-0 top-1 w-60 rounded-3xl border border-border bg-card p-4 leaf-shadow rotate-3"><div className="mb-5 flex items-center gap-2 text-xs font-bold"><span className="h-7 w-7 rounded-lg bg-secondary" /><span>Challenge map</span></div><div className="relative h-28 overflow-hidden rounded-2xl bg-[radial-gradient(circle_at_36%_38%,hsl(var(--accent))_0_5px,transparent_6px),radial-gradient(circle_at_60%_60%,hsl(var(--secondary))_0_5px,transparent_6px),linear-gradient(135deg,hsl(158_35%_91%),hsl(42_35%_93%))]"><div className="absolute left-8 top-10 h-12 w-24 rounded-[50%] border-2 border-primary/30 rotate-12" /><div className="absolute right-7 top-5 h-9 w-12 rounded-[50%] border-2 border-primary/25 -rotate-12" /></div><p className="mt-3 text-xs text-muted-foreground">12 districts connected</p></div><div className="absolute bottom-3 left-5 w-60 rounded-3xl border border-border bg-card p-4 leaf-shadow -rotate-3"><div className="flex items-center gap-3"><span className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-700"><Check size={20} /></span><div><p className="text-sm font-bold">Solution in motion</p><p className="text-xs text-muted-foreground">Smart Water Monitoring</p></div></div><div className="mt-4 h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full w-[68%] rounded-full bg-accent" /></div></div><div className="absolute left-24 top-14 flex h-36 w-36 items-center justify-center rounded-full border border-secondary bg-secondary/90 text-center text-xs font-bold text-primary shadow-xl"><span>People<br />+ ideas<br />+ action</span></div></div></div><div className="mt-20"><div className="mb-7 flex items-end justify-between"><div><p className="text-xs font-bold uppercase tracking-[.18em] text-accent">Start here</p><h2 className="mt-1 font-display text-3xl font-bold text-primary md:text-4xl">What would you like to do?</h2></div><span className="hidden text-sm text-muted-foreground md:block">Choose the path that fits your role</span></div><div className="grid gap-3 md:grid-cols-2">{actions.map((action, i) => <button key={action.title} onClick={() => setLocation(action.href)} className="group flex items-start gap-4 rounded-2xl border border-border bg-card p-5 text-left transition duration-300 hover:-translate-y-1 hover:border-primary hover:shadow-xl" data-testid={`button-action-${i}`}><div className={cx('flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl', i % 2 ? 'bg-secondary/45 text-primary' : 'bg-orange-100 text-accent')}><Icon icon={action.icon} size={23} /></div><div className="flex-1"><span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">{action.tag}</span><h3 className="mt-1 font-display text-lg font-bold">{action.title}</h3><p className="mt-1 text-sm leading-relaxed text-muted-foreground">{action.description}</p></div><ArrowRight className="mt-1 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary" size={19} /></button>)}</div></div><div className="mt-16 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-secondary/70 bg-secondary/20 p-5"><div className="flex items-center gap-3"><div className="flex -space-x-2"><Avatar role="citizen" name="AS" /><Avatar role="student" name="BT" /><Avatar role="industry" name="RK" /></div><p className="text-sm"><strong>Built with the people of Jharkhand.</strong><br /><span className="text-muted-foreground">Demo data across 12 districts. No real complaints.</span></p></div><Link href="/help" className="text-sm font-bold text-primary underline decoration-secondary decoration-2 underline-offset-4" data-testid="link-learn-more">How it works</Link></div></main></div>; }
 
@@ -3372,6 +3528,7 @@ function App() {
             <WouterRouter>
               <Switch>
                 <Route path="/" component={Landing} />
+                <Route path="/help" component={HelpPage} />
                 <Route path="/role-selection" component={RoleSelection} />
                 <Route path="/login" component={() => <Auth mode="login" />} />
                 <Route path="/login/:role" component={() => <Auth mode="login" />} />
