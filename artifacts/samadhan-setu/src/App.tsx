@@ -985,83 +985,72 @@ function UniversityDashboard() {
 
 function FacultyDashboard() {
   const user = readStore('ss-user', { name: 'User' });
+
   const [problems, setProblems] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
+  const [teams, setTeams] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const [dialogProblem, setDialogProblem] = useState<any>(null);
-  const [dialogAction, setDialogAction] = useState<'accept' | 'reject' | null>(null);
-  const [submitting, setSubmitting] = useState(false);
-  const [actionError, setActionError] = useState('');
+  useEffect(() => {
+    const load = async () => {
+      try {
+        setLoading(true);
+        setError('');
 
-  const dismissed: string[] = readStore('ss-faculty-dismissed', []);
+        const [problemsData, projectsData, teamsData] = await Promise.all([
+          apiRequest<any[]>('/problems'),
+          apiRequest<any[]>('/projects'),
+          apiRequest<any[]>('/teams'),
+        ]);
 
-  const load = async () => {
-    try {
-      setLoading(true);
-      setError('');
-      const [problemsData, projectsData] = await Promise.all([
-        apiRequest<any[]>('/problems'),
-        apiRequest<any[]>('/projects'),
-      ]);
-      setProblems(problemsData.filter((p) => p.validationStatus === 'validated'));
-      setProjects(projectsData);
-    } catch (err) {
-      console.error('Failed to load faculty queue:', err);
-      setError(err instanceof Error ? err.message : 'Unable to load challenges.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => { load(); }, []);
-
-  const projectProblemIds = new Set(projects.map((p) => p.problemId));
-  const pending = problems.filter((p) => !projectProblemIds.has(p.id) && !dismissed.includes(p.id));
-
-  const openDialog = (problem: any, action: 'accept' | 'reject') => {
-    setDialogProblem(problem);
-    setDialogAction(action);
-    setActionError('');
-  };
-
-  const closeDialog = () => {
-    if (submitting) return;
-    setDialogProblem(null);
-    setDialogAction(null);
-  };
-
-  const confirmAction = async () => {
-    if (!dialogProblem || !dialogAction) return;
-
-    try {
-      setSubmitting(true);
-      setActionError('');
-
-      if (dialogAction === 'accept') {
-        const created = await apiRequest<any>('/projects', {
-          method: 'POST',
-          body: JSON.stringify({
-            problemId: dialogProblem.id,
-            projectName: dialogProblem.title,
-            description: dialogProblem.description,
-          }),
-        });
-        setProjects((prev) => [created, ...prev]);
-      } else {
-        const list: string[] = readStore('ss-faculty-dismissed', []);
-        writeStore('ss-faculty-dismissed', [...list, dialogProblem.id]);
+        setProblems(problemsData);
+        setProjects(projectsData);
+        setTeams(teamsData);
+      } catch (err) {
+        console.error('Failed to load faculty workspace:', err);
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Unable to load faculty workspace.'
+        );
+      } finally {
+        setLoading(false);
       }
+    };
 
-      setDialogProblem(null);
-      setDialogAction(null);
-    } catch (err) {
-      console.error('Failed to save decision:', err);
-      setActionError(err instanceof Error ? err.message : 'Unable to save this decision.');
-    } finally {
-      setSubmitting(false);
-    }
+    load();
+  }, []);
+
+  const projectProblemIds = new Set(
+    projects.map((project) => project.problemId)
+  );
+
+  const researchOpportunities = problems.filter(
+    (problem) =>
+      problem.validationStatus === 'validated' &&
+      !projectProblemIds.has(problem.id)
+  );
+
+  const projectsNeedingReview = projects.filter(
+    (project) =>
+      !project.status ||
+      project.status === 'Proposed' ||
+      project.status === 'Pending'
+  );
+
+  const reviewProjects = () => {
+    document
+      .getElementById('faculty-review-desk')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const exploreOpportunity = (problem: any) => {
+    document
+      .getElementById('faculty-opportunities')
+      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    console.log('Selected research opportunity:', problem);
   };
 
   return (
@@ -1069,186 +1058,321 @@ function FacultyDashboard() {
       <PageIntro
         eyebrow="Faculty workspace"
         title={`Good morning, ${user?.name || 'User'}.`}
-        description="Review validated challenges and accept the ones your department will take on."
+        description="Review team progress, give timely feedback and open doors to research."
+        action={
+          <Button
+            variant="primary"
+            onClick={reviewProjects}
+          >
+            <ClipboardCheck size={17} />
+            Review projects
+          </Button>
+        }
       />
 
+      {error && (
+        <div className="mb-6 rounded-xl bg-red-50 p-4 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Metric label="Awaiting your review" value={String(pending.length)} detail="Validated challenges" icon={GraduationCap} tone="primary" />
-        <Metric label="Accepted as projects" value={String(projects.length)} detail="Created by your department" icon={CheckCircle2} tone="green" />
-        <Metric label="Teams formed" value="0" detail="Will connect next" icon={Users} tone="blue" />
         <Metric
-  label="Districts covered"
-  value={String(
-    new Set(
-      projects
-        .map((project) => {
-          const problem = problems.find(
-            (p) => p.id === project.problemId
-          );
-          return problem?.district;
-        })
-        .filter(Boolean)
-    ).size
-  )}
-  detail="Jharkhand districts"
-  icon={Target}
-  tone="orange"
-/>
+          label="Assigned challenges"
+          value={String(
+            problems.filter(
+              (problem) => problem.validationStatus === 'validated'
+            ).length
+          )}
+          detail={`${researchOpportunities.length} need review`}
+          icon={Lightbulb}
+          tone="orange"
+        />
+
+        <Metric
+          label="Student teams"
+          value={String(teams.length)}
+          detail={
+            teams.length === 0
+              ? 'No teams formed yet'
+              : `Across ${
+                  new Set(
+                    teams
+                      .map((team) => team.department)
+                      .filter(Boolean)
+                  ).size || 1
+                } departments`
+          }
+          icon={Users}
+          tone="blue"
+        />
+
+        <Metric
+          label="Mentored projects"
+          value={String(projects.length)}
+          detail={
+            projects.some(
+              (project) => project.status === 'In progress'
+            )
+              ? `${
+                  projects.filter(
+                    (project) => project.status === 'In progress'
+                  ).length
+                } in progress`
+              : 'Active university projects'
+          }
+          icon={Target}
+          tone="green"
+        />
+
+        <Metric
+          label="Pending approvals"
+          value={String(projectsNeedingReview.length)}
+          detail="Projects & milestones"
+          icon={ClipboardCheck}
+          tone="primary"
+        />
       </div>
 
-      <div className="mt-7">
-        <Card className="p-5 md:p-6">
-          <SectionTitle eyebrow="Open for review" title="Innovation challenges" description="Validated community challenges matched for university expertise. Review the problem and decide whether your department can take it up." />
+      <div className="mt-7 grid gap-6 lg:grid-cols-[1.25fr_.95fr]">
 
-          {loading && <div className="py-10 text-center text-sm text-muted-foreground">Loading challenges...</div>}
-          {error && <div className="rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</div>}
+        <Card
+          id="faculty-review-desk"
+          className="p-5 md:p-6"
+        >
+          <SectionTitle
+            eyebrow="Your review desk"
+            title="Problems that need you"
+            description="Review team progress, project proposals and milestones that need faculty attention."
+          />
 
-          {!loading && !error && pending.length === 0 && (
-            <div className="py-10 text-center">
-              <GraduationCap className="mx-auto text-muted-foreground" size={32} />
-              <p className="mt-3 font-bold">Nothing waiting for review</p>
-              <p className="mt-1 text-sm text-muted-foreground">New validated challenges will appear here.</p>
+          {loading && (
+            <div className="py-10 text-center text-sm text-muted-foreground">
+              Loading review items...
             </div>
           )}
 
-          {!loading && !error && pending.length > 0 && (
+          {!loading && projectsNeedingReview.length === 0 && (
+            <div className="py-10 text-center">
+              <CheckCircle2
+                className="mx-auto text-emerald-600"
+                size={34}
+              />
+
+              <p className="mt-3 font-bold">
+                Nothing needs your attention
+              </p>
+
+              <p className="mt-1 text-sm text-muted-foreground">
+                New project proposals and milestones will appear here.
+              </p>
+            </div>
+          )}
+
+          {!loading && projectsNeedingReview.length > 0 && (
             <div className="space-y-2">
-              {pending.map((p) => (
-                <div key={p.id} className="flex flex-wrap items-center gap-3 rounded-xl border border-border p-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary/45 text-primary">
-                    <Lightbulb size={17} />
+              {projectsNeedingReview.map((project) => (
+                <div
+                  key={project.id}
+                  className="flex items-center gap-3 rounded-xl border border-border p-3"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange-100 text-accent">
+                    <FileText size={18} />
                   </span>
+
                   <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-bold">{p.title}</span>
-                   <div className="mt-1 flex flex-wrap items-center gap-2">
-  <Badge tone="green">Validated</Badge>
+                    <span className="block truncate text-sm font-bold">
+                      {project.projectName || 'Untitled project'}
+                    </span>
 
-  <Badge tone="blue">
-    {p.category || 'General'}
-  </Badge>
-
-  <span className="text-xs text-muted-foreground">
-    📍 {p.district || 'Jharkhand'}
-  </span>
-
-  {p.people && (
-    <span className="text-xs text-muted-foreground">
-      👥 {p.people} affected
-    </span>
-  )}
-</div>
+                    <span className="mt-1 block text-xs text-muted-foreground">
+                      {project.status || 'Proposed'} ·{' '}
+                      {project.progress || 0}% complete
+                    </span>
                   </span>
-                  <div className="flex gap-2">
-                    <Button variant="primary" onClick={() => openDialog(p, 'accept')} data-testid={`button-accept-${p.id}`}>
-                      <CheckCircle2 size={16} />Accept
-                    </Button>
-                    <Button variant="danger" onClick={() => openDialog(p, 'reject')} data-testid={`button-reject-${p.id}`}>
-                      <X size={16} />Pass
-                    </Button>
+
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      document
+                        .getElementById(
+                          `faculty-project-${project.id}`
+                        )
+                        ?.scrollIntoView({
+                          behavior: 'smooth',
+                          block: 'center',
+                        });
+                    }}
+                  >
+                    Review
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+
+        <Card
+          id="faculty-opportunities"
+          className="p-5 md:p-6"
+        >
+          <SectionTitle
+            eyebrow="Open doors"
+            title="Research opportunities"
+            description="Validated community challenges that match university expertise and are ready to become projects."
+          />
+
+          {loading && (
+            <div className="py-10 text-center text-sm text-muted-foreground">
+              Loading opportunities...
+            </div>
+          )}
+
+          {!loading && researchOpportunities.length === 0 && (
+            <div className="py-10 text-center">
+              <Lightbulb
+                className="mx-auto text-muted-foreground"
+                size={34}
+              />
+
+              <p className="mt-3 font-bold">
+                No new opportunities
+              </p>
+
+              <p className="mt-1 text-sm text-muted-foreground">
+                New validated community challenges will appear here.
+              </p>
+            </div>
+          )}
+
+          {!loading && researchOpportunities.length > 0 && (
+            <div className="space-y-3">
+              {researchOpportunities.slice(0, 3).map((problem) => (
+                <div
+                  key={problem.id}
+                  className="rounded-2xl bg-secondary/60 p-5"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <h3 className="font-display text-xl font-bold">
+                        {problem.title}
+                      </h3>
+
+                      <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                        {problem.description ||
+                          'A validated community challenge available for university research.'}
+                      </p>
+                    </div>
+
+                    <Badge tone="green">
+                      Validated
+                    </Badge>
                   </div>
+
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Badge tone="blue">
+                      {problem.category || 'General'}
+                    </Badge>
+
+                    <Badge tone="muted">
+                      📍 {problem.district || 'Jharkhand'}
+                    </Badge>
+
+                    {problem.urgency && (
+                      <Badge tone="amber">
+                        {problem.urgency}
+                      </Badge>
+                    )}
+                  </div>
+
+                  <Button
+                    variant="outline"
+                    className="mt-4"
+                    onClick={() => exploreOpportunity(problem)}
+                  >
+                    Explore opportunity
+                    <ArrowRight size={16} />
+                  </Button>
                 </div>
               ))}
             </div>
           )}
         </Card>
       </div>
+
       <div className="mt-7">
-  <Card className="p-5 md:p-6">
-    <SectionTitle
-      eyebrow="Your work"
-      title="My active projects"
-      description="Projects accepted from validated community challenges."
-    />
+        <Card className="p-5 md:p-6">
+          <SectionTitle
+            eyebrow="Your work"
+            title="Mentored projects"
+            description="Projects accepted from validated community challenges."
+          />
 
-    {projects.length === 0 ? (
-      <div className="py-8 text-center">
-        <BriefcaseBusiness
-          className="mx-auto text-muted-foreground"
-          size={32}
-        />
-
-        <p className="mt-3 font-bold">
-          No projects yet
-        </p>
-
-        <p className="mt-1 text-sm text-muted-foreground">
-          Accept a validated challenge above to create your first project.
-        </p>
-      </div>
-    ) : (
-      <div className="space-y-2">
-        {projects.map((project) => (
-          <div
-            key={project.id}
-            className="flex items-center gap-3 rounded-xl border border-border p-3"
-          >
-            <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary/45 text-primary">
-              <BriefcaseBusiness size={17} />
-            </span>
-
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-sm font-bold">
-                {project.projectName}
-              </span>
-
-              <span className="text-xs text-muted-foreground">
-                {project.progress || 0}% complete
-                <span className="block text-xs text-muted-foreground">
-  {project.description || 'University-led community project'}
-</span>
-              </span>
-            </span>
-
-            <Badge
-              tone={
-                project.status === 'Completed'
-                  ? 'green'
-                  : project.status === 'In progress'
-                  ? 'blue'
-                  : 'amber'
-              }
-            >
-              {project.status || 'Proposed'}
-            </Badge>
-          </div>
-        ))}
-      </div>
-    )}
-  </Card>
-</div>
-
-      <Dialog open={dialogProblem !== null} onOpenChange={(open) => { if (!open) closeDialog(); }}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {dialogAction === 'accept' ? `Accept "${dialogProblem?.title}"?` : `Pass on "${dialogProblem?.title}"?`}
-            </DialogTitle>
-            <DialogDescription>
-              {dialogAction === 'accept'
-                ? 'This creates a real project in your database, linked to this problem.'
-                : 'This removes it from your review queue on this device.'}
-            </DialogDescription>
-          </DialogHeader>
-
-          {actionError && (
-            <p className="flex items-center gap-2 text-sm font-medium text-red-700">
-              <AlertCircle size={16} />{actionError}
-            </p>
+          {loading && (
+            <div className="py-8 text-center text-sm text-muted-foreground">
+              Loading projects...
+            </div>
           )}
 
-          <DialogFooter>
-            <Button variant="ghost" onClick={closeDialog} disabled={submitting}>Cancel</Button>
-            <Button
-              variant={dialogAction === 'reject' ? 'danger' : 'primary'}
-              onClick={confirmAction}
-              disabled={submitting}
-              data-testid="button-confirm-faculty-decision"
-            >
-              {submitting ? 'Saving...' : dialogAction === 'accept' ? 'Confirm accept' : 'Confirm pass'}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          {!loading && projects.length === 0 && (
+            <div className="py-10 text-center">
+              <BriefcaseBusiness
+                className="mx-auto text-muted-foreground"
+                size={34}
+              />
+
+              <p className="mt-3 font-bold">
+                No projects yet
+              </p>
+
+              <p className="mt-1 text-sm text-muted-foreground">
+                Projects accepted from validated challenges will appear here.
+              </p>
+            </div>
+          )}
+
+          {!loading && projects.length > 0 && (
+            <div className="space-y-2">
+              {projects.map((project) => (
+                <div
+                  id={`faculty-project-${project.id}`}
+                  key={project.id}
+                  className="flex flex-wrap items-center gap-3 rounded-xl border border-border p-3"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-secondary/45 text-primary">
+                    <BriefcaseBusiness size={17} />
+                  </span>
+
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-bold">
+                      {project.projectName}
+                    </span>
+
+                    <span className="mt-1 block text-xs text-muted-foreground">
+                      {project.progress || 0}% complete
+                      {project.description
+                        ? ` · ${project.description}`
+                        : ''}
+                    </span>
+                  </span>
+
+                  <Badge
+                    tone={
+                      project.status === 'Completed'
+                        ? 'green'
+                        : project.status === 'In progress'
+                        ? 'blue'
+                        : 'amber'
+                    }
+                  >
+                    {project.status || 'Proposed'}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      </div>
     </Shell>
   );
 }
