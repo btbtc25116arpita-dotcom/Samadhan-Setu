@@ -3229,12 +3229,40 @@ function IndustryDashboard() {
   const user = readStore('ss-user', { name: 'User' });
 
   const [projects, setProjects] = useState<any[]>([]);
-  const [problems, setProblems] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const [showCollaboration, setShowCollaboration] = useState(false);
-  const [selectedProblem, setSelectedProblem] = useState<any | null>(null);
+  const [screen, setScreen] = useState<
+    'dashboard' | 'collaboration' | 'project'
+  >('dashboard');
+
+  const [selectedProject, setSelectedProject] = useState<any>(null);
+
+  const [supportType, setSupportType] = useState('Mentorship');
+  const [budget, setBudget] = useState('');
+  const [timeline, setTimeline] = useState('');
+  const [expertise, setExpertise] = useState('');
+  const [supportSent, setSupportSent] = useState(false);
+
+  const [following, setFollowing] = useState(false);
+
+  const [communityMessage, setCommunityMessage] = useState('');
+  const [communityPosts, setCommunityPosts] = useState([
+    {
+      initials: 'A',
+      name: 'Field team update',
+      message:
+        'The first sensor batch has reached the field team in Khunti.',
+      tone: 'orange',
+    },
+    {
+      initials: 'N',
+      name: 'Dr. Nandini Prasad',
+      message:
+        'Can we review the maintenance plan with the village water committee?',
+      tone: 'blue',
+    },
+  ]);
 
   useEffect(() => {
     const load = async () => {
@@ -3242,19 +3270,15 @@ function IndustryDashboard() {
         setLoading(true);
         setError('');
 
-        const [projectsData, problemsData] = await Promise.all([
-          apiRequest<any[]>('/projects'),
-          apiRequest<any[]>('/problems'),
-        ]);
-
-        setProjects(projectsData || []);
-        setProblems(problemsData || []);
+        const data = await apiRequest<any[]>('/projects');
+        setProjects(data);
       } catch (err) {
-        console.error('Failed to load industry dashboard:', err);
+        console.error('Failed to load projects:', err);
+
         setError(
           err instanceof Error
             ? err.message
-            : 'Unable to load industry dashboard.'
+            : 'Unable to load projects.'
         );
       } finally {
         setLoading(false);
@@ -3264,132 +3288,931 @@ function IndustryDashboard() {
     load();
   }, []);
 
-  const openProjects = projects.length;
+  /*
+   * ---------------------------------------------------------
+   * DEMO PROJECT
+   * ---------------------------------------------------------
+   * Used when the database project does not contain all the
+   * fields required by the detailed project screen.
+   */
+  const getProjectDetails = (project: any) => {
+    const name =
+      project?.projectName ||
+      project?.title ||
+      'Smart Water Monitoring for Rural Villages';
 
-  const supportedProjects = projects.filter(
-    (p) =>
-      p.supportedByIndustry === true ||
-      p.supportStatus === 'Supported'
-  ).length;
+    const isWaterProject =
+      name.toLowerCase().includes('water');
 
-  const inProgressProjects = projects.filter(
-    (p) =>
-      p.status === 'In progress' ||
-      p.status === 'In Progress'
-  ).length;
+    if (isWaterProject) {
+      return {
+        title: name,
+        status: project?.status || 'Pilot running',
+        location:
+          project?.district ||
+          project?.location ||
+          'Khunti & Gumla',
 
-  const completedProjects = projects.filter(
-    (p) =>
-      p.status === 'Completed' ||
-      p.status === 'completed'
-  ).length;
+        updated: 'Updated 2 days ago',
+
+        description:
+          'A field-ready sensor and community dashboard being piloted across Khunti and Gumla.',
+
+        progress: project?.progress || 68,
+
+        journey: [
+          {
+            number: '✓',
+            label: 'Community need mapped',
+            complete: true,
+          },
+          {
+            number: '✓',
+            label: 'Prototype tested',
+            complete: true,
+          },
+          {
+            number: '3',
+            label: 'Pilot running',
+            complete: true,
+          },
+          {
+            number: '4',
+            label: 'Impact review',
+            complete: false,
+          },
+        ],
+
+        milestone: 'MILESTONE 3',
+        milestoneTitle: 'Pilot running',
+
+        milestoneDescription:
+          'The pilot is live across 8 villages. Community operators are checking water levels twice each day and the team is learning from every alert.',
+
+        impact: [
+          {
+            value: '1,240',
+            label: 'households',
+            highlight: true,
+          },
+          {
+            value: '18',
+            label: 'water points',
+            highlight: false,
+          },
+          {
+            value: '8',
+            label: 'villages',
+            highlight: false,
+          },
+          {
+            value: '31%',
+            label: 'fewer dry days',
+            highlight: false,
+          },
+        ],
+
+        people: [
+          {
+            initials: 'B',
+            name: 'Birsa Institute of Technology',
+            role: 'University team',
+            tone: 'blue',
+          },
+          {
+            initials: 'N',
+            name: 'Dr. Nandini Prasad',
+            role: 'Faculty mentor',
+            tone: 'blue',
+          },
+          {
+            initials: 'T',
+            name: 'Tata Steel Foundation',
+            role: 'Industry / CSR partner',
+            tone: 'purple',
+          },
+        ],
+
+        statement:
+          'Seasonal water stress makes it difficult for rural households to know which sources are safe and available.',
+
+        approach:
+          'Low-power sensors, a simple local dashboard and community-led maintenance routines.',
+
+        documents: [
+          'Pilot protocol.pdf',
+          'Field learning note.pdf',
+          'Prototype demo link',
+        ],
+      };
+    }
+
+    return {
+      title: name,
+      status: project?.status || 'Prototype',
+      location:
+        project?.district ||
+        project?.location ||
+        'Jharkhand',
+
+      updated: 'Updated recently',
+
+      description:
+        project?.description ||
+        'A university-led project developed in response to a validated community problem.',
+
+      progress: project?.progress || 44,
+
+      journey: [
+        {
+          number: '✓',
+          label: 'Community need mapped',
+          complete: true,
+        },
+        {
+          number: '✓',
+          label: 'Prototype tested',
+          complete: true,
+        },
+        {
+          number: '3',
+          label: 'Pilot running',
+          complete: true,
+        },
+        {
+          number: '4',
+          label: 'Impact review',
+          complete: false,
+        },
+      ],
+
+      milestone: 'MILESTONE 3',
+      milestoneTitle:
+        project?.status || 'Pilot running',
+
+      milestoneDescription:
+        project?.description ||
+        'The project is currently being developed and prepared for field implementation with university and industry partners.',
+
+      impact: [
+        {
+          value: '1,240',
+          label: 'people reached',
+          highlight: true,
+        },
+        {
+          value: '18',
+          label: 'field points',
+          highlight: false,
+        },
+        {
+          value: '8',
+          label: 'villages',
+          highlight: false,
+        },
+        {
+          value: '31%',
+          label: 'improvement',
+          highlight: false,
+        },
+      ],
+
+      people: [
+        {
+          initials: 'U',
+          name: 'University Project Team',
+          role: 'University team',
+          tone: 'blue',
+        },
+        {
+          initials: 'F',
+          name: 'Faculty Mentor',
+          role: 'Faculty mentor',
+          tone: 'blue',
+        },
+        {
+          initials: 'I',
+          name: 'Industry Partner',
+          role: 'Industry / CSR partner',
+          tone: 'purple',
+        },
+      ],
+
+      statement:
+        project?.description ||
+        'A validated local problem requiring technical and implementation support.',
+
+      approach:
+        'A collaborative approach combining university expertise, field implementation and industry support.',
+
+      documents: [
+        'Project brief.pdf',
+        'Field learning note.pdf',
+        'Prototype demo link',
+      ],
+    };
+  };
 
   /*
-   * SAMPLE INDUSTRY COLLABORATION DATA
-   * These cards are intentionally displayed even if the database
-   * does not yet contain collaboration records.
+   * ---------------------------------------------------------
+   * OPEN PROJECT DETAILS
+   * ---------------------------------------------------------
    */
-  const collaborationOptions = [
-    {
-      title: 'Smart Water Monitoring',
-      category: 'Water & Sanitation',
-      district: 'Ranchi',
-      description:
-        'Develop an affordable monitoring system for local water supply and quality.',
-      need: 'Technology + Implementation',
-      organization: 'University innovation team',
-      icon: Droplets,
-    },
-    {
-      title: 'Rural Learning Access',
-      category: 'Education',
-      district: 'Dumka',
-      description:
-        'Improve access to digital learning resources for students in underserved areas.',
-      need: 'Technology + Funding',
-      organization: 'University innovation team',
-      icon: GraduationCap,
-    },
-    {
-      title: 'Community Health Access',
-      category: 'Healthcare',
-      district: 'Hazaribagh',
-      description:
-        'Create a technology-enabled system to improve access to essential healthcare services.',
-      need: 'Implementation + Technology',
-      organization: 'University innovation team',
-      icon: ShieldCheck,
-    },
-    {
-      title: 'Sustainable Agriculture Support',
-      category: 'Agriculture',
-      district: 'Gumla',
-      description:
-        'Support farmers through better access to information, monitoring and field solutions.',
-      need: 'Technology + Field Support',
-      organization: 'University innovation team',
-      icon: Target,
-    },
-  ];
+  const openProject = (project: any) => {
+    setSelectedProject(project);
+    setFollowing(false);
+    setScreen('project');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
+  /*
+   * ---------------------------------------------------------
+   * OPEN COLLABORATION
+   * ---------------------------------------------------------
+   */
+  const openCollaboration = () => {
+    const firstProject =
+      selectedProject ||
+      projects[0] || {
+        projectName: 'Smart Water Monitoring for Rural Villages',
+        district: 'Khunti & Gumla',
+        status: 'Pilot running',
+        progress: 68,
+      };
+
+    setSelectedProject(firstProject);
+    setSupportSent(false);
+    setScreen('collaboration');
+
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  };
+
+  /*
+   * ---------------------------------------------------------
+   * BACK TO DASHBOARD
+   * ---------------------------------------------------------
+   */
+  const backToDashboard = () => {
+    setScreen('dashboard');
+    setSelectedProject(null);
+
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth',
+    });
+  };
+
+  /*
+   * ---------------------------------------------------------
+   * SUPPORT REQUEST
+   * ---------------------------------------------------------
+   */
+  const sendSupportRequest = () => {
+    setSupportSent(true);
+  };
+
+  /*
+   * =========================================================
+   * COLLABORATION SCREEN
+   * =========================================================
+   */
+  if (screen === 'collaboration') {
+    const project = getProjectDetails(selectedProject);
+
+    return (
+      <Shell>
+        <div className="min-h-[calc(100vh-80px)]">
+
+          <div className="mb-10">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-accent">
+              Industry & CSR workspace
+            </p>
+
+            <h1 className="mt-3 max-w-4xl font-display text-4xl font-bold tracking-tight text-primary md:text-5xl">
+              Start a useful conversation.
+            </h1>
+
+            <p className="mt-3 max-w-3xl text-base leading-7 text-muted-foreground md:text-lg">
+              Tell a project what you can bring. The team will receive a clear,
+              respectful request in this demo workspace.
+            </p>
+          </div>
+
+          <div className="grid gap-6 lg:grid-cols-[0.82fr_1.18fr]">
+
+            {/* SELECTED PROJECT */}
+            <Card className="p-7 md:p-8">
+              <p className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                Selected project
+              </p>
+
+              <h2 className="mt-4 font-display text-3xl font-bold leading-tight text-primary">
+                {project.title}
+              </h2>
+
+              <p className="mt-4 text-base leading-7 text-muted-foreground">
+                {project.description}
+              </p>
+
+              <div className="mt-8 rounded-2xl bg-[#fff0d2] p-5">
+                <p className="text-xs font-bold text-primary">
+                  The team is looking for
+                </p>
+
+                <p className="mt-3 text-sm font-semibold leading-6 text-primary">
+                  Testing partner · Prototype refinement · Deployment support
+                </p>
+              </div>
+            </Card>
+
+            {/* YOUR OFFER */}
+            <Card className="p-7 md:p-8">
+
+              <h2 className="font-display text-3xl font-bold text-primary">
+                Your offer
+              </h2>
+
+              {supportSent ? (
+                <div className="mt-8 rounded-2xl bg-[#e7f6ed] p-6">
+                  <CheckCircle2
+                    size={30}
+                    className="text-primary"
+                  />
+
+                  <h3 className="mt-4 text-xl font-bold text-primary">
+                    Support request sent
+                  </h3>
+
+                  <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                    The project team has received your request in this demo
+                    workspace.
+                  </p>
+
+                  <Button
+                    variant="primary"
+                    className="mt-6"
+                    onClick={backToDashboard}
+                  >
+                    Back to dashboard
+                  </Button>
+                </div>
+              ) : (
+                <div className="mt-7 space-y-6">
+
+                  <div>
+                    <label className="text-sm font-bold text-primary">
+                      How would you like to help?
+                    </label>
+
+                    <select
+                      value={supportType}
+                      onChange={(e) =>
+                        setSupportType(e.target.value)
+                      }
+                      className="mt-2 h-14 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none transition focus:border-primary"
+                    >
+                      <option>Mentorship</option>
+                      <option>Funding</option>
+                      <option>Technology</option>
+                      <option>Testing partner</option>
+                      <option>Deployment support</option>
+                      <option>CSR partnership</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-bold text-primary">
+                      Indicative budget{' '}
+                      <span className="font-normal text-muted-foreground">
+                        (optional)
+                      </span>
+                    </label>
+
+                    <input
+                      value={budget}
+                      onChange={(e) =>
+                        setBudget(e.target.value)
+                      }
+                      placeholder="Example: ₹4,00,000"
+                      className="mt-2 h-14 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none placeholder:text-muted-foreground focus:border-primary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-bold text-primary">
+                      Expected timeline
+                    </label>
+
+                    <input
+                      value={timeline}
+                      onChange={(e) =>
+                        setTimeline(e.target.value)
+                      }
+                      placeholder="Example: 8 weeks from June 2026"
+                      className="mt-2 h-14 w-full rounded-2xl border border-border bg-background px-4 text-sm outline-none placeholder:text-muted-foreground focus:border-primary"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-bold text-primary">
+                      Relevant expertise
+                    </label>
+
+                    <textarea
+                      value={expertise}
+                      onChange={(e) =>
+                        setExpertise(e.target.value)
+                      }
+                      placeholder="Tell the team what you can bring and what a first conversation could cover."
+                      className="mt-2 min-h-[130px] w-full resize-none rounded-2xl border border-border bg-background p-4 text-sm leading-6 outline-none placeholder:text-muted-foreground focus:border-primary"
+                    />
+                  </div>
+
+                  <Button
+                    variant="primary"
+                    className="w-full"
+                    onClick={sendSupportRequest}
+                  >
+                    <Send size={17} />
+                    Send support request
+                  </Button>
+
+                </div>
+              )}
+
+            </Card>
+          </div>
+        </div>
+      </Shell>
+    );
+  }
+
+  /*
+   * =========================================================
+   * PROJECT DETAIL SCREEN
+   * =========================================================
+   */
+  if (screen === 'project') {
+    const project = getProjectDetails(selectedProject);
+
+    return (
+      <Shell>
+        <div className="pb-12">
+
+          {/* PROJECT HEADER */}
+          <div className="mb-8">
+
+            <button
+              type="button"
+              onClick={backToDashboard}
+              className="mb-7 inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground transition hover:text-primary"
+            >
+              <ArrowLeft size={17} />
+              Project commons
+            </button>
+
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+
+              <div>
+                <Badge tone="green">
+                  {project.status}
+                </Badge>
+
+                <h1 className="mt-5 max-w-5xl font-display text-4xl font-bold leading-tight tracking-tight text-primary md:text-5xl">
+                  {project.title}
+                </h1>
+
+                <div className="mt-4 flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                  <MapPin size={16} />
+
+                  <span>{project.location}</span>
+
+                  <span>·</span>
+
+                  <span>{project.updated}</span>
+                </div>
+              </div>
+
+              <Button
+                variant={following ? 'outline' : 'primary'}
+                onClick={() => setFollowing(!following)}
+              >
+                <HandHeart size={17} />
+
+                {following
+                  ? 'Following project'
+                  : 'Follow project'}
+              </Button>
+
+            </div>
+          </div>
+
+          {/* MAIN PROJECT AREA */}
+          <div className="grid gap-6 xl:grid-cols-[1.35fr_0.85fr]">
+
+            {/* LEFT COLUMN */}
+            <div className="space-y-6">
+
+              {/* PROJECT JOURNEY */}
+              <Card className="overflow-hidden p-0">
+
+                <div className="bg-[#27684f] p-7 text-white md:p-9">
+
+                  <div className="flex items-start justify-between gap-5">
+
+                    <div>
+                      <p className="text-xs font-bold uppercase tracking-[0.18em] text-[#f4c24d]">
+                        Project journey
+                      </p>
+
+                      <p className="mt-3 text-sm text-white/75">
+                        From a local challenge to a field pilot
+                      </p>
+                    </div>
+
+                    <div className="text-4xl font-bold text-[#f4c24d]">
+                      {project.progress}%
+                    </div>
+
+                  </div>
+
+                  <div className="relative mt-12">
+
+                    {/* CONNECTING LINE */}
+                    <div className="absolute left-[12%] right-[12%] top-6 h-[2px] bg-white/25" />
+
+                    <div
+                      className="absolute left-[12%] top-6 h-[2px] bg-[#f4c24d]"
+                      style={{
+                        width: `${Math.max(
+                          0,
+                          Math.min(
+                            76,
+                            project.progress
+                          )
+                        )}%`,
+                      }}
+                    />
+
+                    <div className="relative grid grid-cols-4 gap-3">
+
+                      {project.journey.map(
+                        (step: any, index: number) => (
+                          <div
+                            key={step.label}
+                            className="flex flex-col items-center text-center"
+                          >
+                            <div
+                              className={`flex h-12 w-12 items-center justify-center rounded-full border-2 ${
+                                step.complete
+                                  ? 'border-[#f4c24d] bg-[#f4c24d] text-primary'
+                                  : 'border-white/30 bg-transparent text-white/60'
+                              } text-sm font-bold`}
+                            >
+                              {step.number}
+                            </div>
+
+                            <p
+                              className={`mt-4 max-w-[130px] text-xs font-semibold leading-4 ${
+                                step.complete
+                                  ? 'text-white'
+                                  : 'text-white/60'
+                              }`}
+                            >
+                              {step.label}
+                            </p>
+                          </div>
+                        )
+                      )}
+
+                    </div>
+                  </div>
+                </div>
+
+                {/* MILESTONE */}
+                <div className="p-7 md:p-9">
+
+                  <p className="text-xs font-bold uppercase tracking-[0.14em] text-accent">
+                    {project.milestone}
+                  </p>
+
+                  <h2 className="mt-3 font-display text-2xl font-bold text-primary">
+                    {project.milestoneTitle}
+                  </h2>
+
+                  <p className="mt-4 text-sm leading-7 text-muted-foreground">
+                    {project.milestoneDescription}
+                  </p>
+
+                </div>
+              </Card>
+
+              {/* PROJECT CONTEXT */}
+              <Card className="p-7 md:p-9">
+
+                <h2 className="font-display text-2xl font-bold text-primary">
+                  The project in context
+                </h2>
+
+                <div className="mt-7 grid gap-8 md:grid-cols-2">
+
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                      Statement
+                    </p>
+
+                    <p className="mt-3 text-sm leading-7 text-muted-foreground">
+                      {project.statement}
+                    </p>
+                  </div>
+
+                  <div>
+                    <p className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                      Approach
+                    </p>
+
+                    <p className="mt-3 text-sm leading-7 text-muted-foreground">
+                      {project.approach}
+                    </p>
+                  </div>
+
+                </div>
+              </Card>
+
+            </div>
+
+            {/* RIGHT COLUMN */}
+            <div className="space-y-6">
+
+              {/* IMPACT */}
+              <Card className="p-7">
+
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                  Impact so far
+                </p>
+
+                <div className="mt-5 grid grid-cols-2 gap-3">
+
+                  {project.impact.map((item: any) => (
+                    <div
+                      key={item.label}
+                      className={`rounded-2xl p-5 ${
+                        item.highlight
+                          ? 'bg-[#fff0d2]'
+                          : 'bg-muted/70'
+                      }`}
+                    >
+                      <p className="text-2xl font-bold text-primary">
+                        {item.value}
+                      </p>
+
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {item.label}
+                      </p>
+                    </div>
+                  ))}
+
+                </div>
+              </Card>
+
+              {/* PEOPLE */}
+              <Card className="p-7">
+
+                <p className="text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground">
+                  People behind it
+                </p>
+
+                <div className="mt-5 space-y-5">
+
+                  {project.people.map((person: any) => (
+                    <div
+                      key={person.name}
+                      className="flex items-center gap-4"
+                    >
+
+                      <div
+                        className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+                          person.tone === 'purple'
+                            ? 'bg-purple-100 text-purple-700'
+                            : 'bg-blue-100 text-blue-700'
+                        }`}
+                      >
+                        {person.initials}
+                      </div>
+
+                      <div>
+                        <p className="text-sm font-bold text-primary">
+                          {person.name}
+                        </p>
+
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          {person.role}
+                        </p>
+                      </div>
+
+                    </div>
+                  ))}
+
+                </div>
+              </Card>
+
+              {/* DOCUMENTS */}
+              <Card className="p-7">
+
+                <div className="flex items-center justify-between">
+                  <h2 className="font-display text-xl font-bold text-primary">
+                    Documents & prototype
+                  </h2>
+
+                  <MoreHorizontal
+                    size={19}
+                    className="text-muted-foreground"
+                  />
+                </div>
+
+                <div className="mt-5 space-y-1">
+
+                  {project.documents.map(
+                    (document: string) => (
+                      <button
+                        key={document}
+                        type="button"
+                        className="flex w-full items-center justify-between rounded-xl px-2 py-3 text-left transition hover:bg-muted"
+                      >
+
+                        <span className="flex items-center gap-3">
+                          <FileText
+                            size={17}
+                            className="text-accent"
+                          />
+
+                          <span className="text-sm font-semibold text-primary">
+                            {document}
+                          </span>
+                        </span>
+
+                        <ArrowRight
+                          size={16}
+                          className="text-muted-foreground"
+                        />
+
+                      </button>
+                    )
+                  )}
+
+                </div>
+              </Card>
+
+            </div>
+          </div>
+
+          {/* COMMUNITY COMMUNICATION */}
+          <Card className="mt-6 p-7 md:p-9">
+
+            <h2 className="font-display text-2xl font-bold text-primary">
+              Community communication
+            </h2>
+
+            <div className="mt-7 space-y-5">
+
+              {communityPosts.map((post, index) => (
+                <div
+                  key={`${post.name}-${index}`}
+                  className="flex items-start gap-4"
+                >
+
+                  <div
+                    className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-sm font-bold ${
+                      post.tone === 'orange'
+                        ? 'bg-orange-100 text-orange-700'
+                        : 'bg-blue-100 text-blue-700'
+                    }`}
+                  >
+                    {post.initials}
+                  </div>
+
+                  <div className="rounded-2xl bg-muted/80 px-5 py-4">
+
+                    <p className="text-sm font-bold text-primary">
+                      {post.name}
+                    </p>
+
+                    <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                      {post.message}
+                    </p>
+
+                  </div>
+
+                </div>
+              ))}
+
+            </div>
+
+            {/* POST BOX */}
+            <div className="mt-7 flex flex-col gap-3 md:flex-row">
+
+              <input
+                value={communityMessage}
+                onChange={(e) =>
+                  setCommunityMessage(e.target.value)
+                }
+                placeholder="Add an update or question"
+                className="h-14 flex-1 rounded-2xl border border-border bg-background px-4 text-sm outline-none placeholder:text-muted-foreground focus:border-primary"
+              />
+
+              <Button
+                variant="primary"
+                onClick={() => {
+                  if (!communityMessage.trim()) return;
+
+                  setCommunityPosts((current) => [
+                    ...current,
+                    {
+                      initials: 'A',
+                      name: user?.name || 'You',
+                      message: communityMessage.trim(),
+                      tone: 'orange',
+                    },
+                  ]);
+
+                  setCommunityMessage('');
+                }}
+              >
+                <Send size={17} />
+                Post
+              </Button>
+
+            </div>
+
+          </Card>
+
+        </div>
+      </Shell>
+    );
+  }
+
+  /*
+   * =========================================================
+   * ORIGINAL INDUSTRY DASHBOARD
+   * =========================================================
+   *
+   * The existing dashboard structure stays here.
+   * Only:
+   *   1. Find a collaboration opens the collaboration screen.
+   *   2. Project cards open the project detail screen.
+   */
   return (
     <Shell>
-      {/* =========================================================
-          HEADER
-      ========================================================= */}
 
-      <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+      <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+
         <PageIntro
           eyebrow="Industry workspace"
           title={`Good morning, ${user?.name || 'User'}.`}
-          description="Discover community problems where your technology, funding or implementation support can create measurable impact."
+          description="Projects that may need funding, technology or implementation support."
         />
 
-        <button
-          type="button"
-          onClick={() => setShowCollaboration(true)}
-          className="inline-flex w-fit items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground transition hover:brightness-110"
+        {/* FIND A COLLABORATION */}
+        <Button
+          variant="primary"
+          className="w-fit"
+          onClick={openCollaboration}
         >
-          <Search size={17} />
+          <Network size={17} />
           Find a collaboration
-          <ArrowRight size={16} />
-        </button>
+        </Button>
+
       </div>
 
-      {/* =========================================================
-          ERROR
-      ========================================================= */}
-
-      {error && (
-        <div className="mb-6 rounded-xl bg-red-50 p-4 text-sm text-red-700">
-          {error}
-        </div>
-      )}
-
-      {/* =========================================================
-          METRICS
-      ========================================================= */}
-
+      {/* METRICS */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+
         <Metric
-          label="Open opportunities"
-          value={String(openProjects)}
-          detail="Projects seeking support"
+          label="Open projects"
+          value={String(projects.length)}
+          detail="Across all universities"
           icon={BriefcaseBusiness}
           tone="primary"
         />
 
         <Metric
           label="Supported by you"
-          value={String(supportedProjects)}
-          detail="Active collaborations"
+          value="0"
+          detail="Will connect next"
           icon={IndianRupee}
           tone="orange"
         />
 
         <Metric
           label="In progress"
-          value={String(inProgressProjects)}
+          value={String(
+            projects.filter(
+              (p) => p.status === 'In progress'
+            ).length
+          )}
           detail="Currently active"
           icon={Activity}
           tone="blue"
@@ -3397,200 +4220,23 @@ function IndustryDashboard() {
 
         <Metric
           label="Completed"
-          value={String(completedProjects)}
-          detail="Successfully delivered"
+          value="0"
+          detail="Will connect next"
           icon={CheckCircle2}
           tone="green"
         />
+
       </div>
 
-      {/* =========================================================
-          MAIN SECTION
-      ========================================================= */}
-
-      <div className="mt-7 grid gap-5 xl:grid-cols-[1.15fr_.85fr]">
-
-        {/* =======================================================
-            PROBLEMS NEEDING SUPPORT
-        ======================================================= */}
-
-        <Card className="p-5 md:p-6">
-          <SectionTitle
-            eyebrow="Community problems"
-            title="Problems that need support"
-            description="Validated problems where industry expertise, technology or implementation support can help."
-          />
-
-          {loading && (
-            <div className="py-10 text-center text-sm text-muted-foreground">
-              Loading opportunities...
-            </div>
-          )}
-
-          {!loading && problems.length === 0 && (
-            <div className="py-12 text-center">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-muted">
-                <Network size={25} className="text-primary" />
-              </div>
-
-              <p className="mt-4 font-bold">
-                No problems available yet
-              </p>
-
-              <p className="mt-1 text-sm text-muted-foreground">
-                Validated community problems will appear here.
-              </p>
-            </div>
-          )}
-
-          {!loading && problems.length > 0 && (
-            <div className="mt-5 space-y-3">
-              {problems.slice(0, 6).map((problem) => (
-                <button
-                  key={problem.id}
-                  type="button"
-                  onClick={() => setSelectedProblem(problem)}
-                  className="group flex w-full items-start gap-4 rounded-2xl border border-border bg-card p-4 text-left transition hover:-translate-y-0.5 hover:border-primary hover:shadow-md"
-                >
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-orange-100 text-accent">
-                    <Network size={19} />
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="truncate text-sm font-bold">
-                        {problem.title || 'Community problem'}
-                      </h3>
-
-                      <Badge tone="green">
-                        Validated
-                      </Badge>
-                    </div>
-
-                    <p className="mt-1 line-clamp-2 text-sm text-muted-foreground">
-                      {problem.description ||
-                        'Community problem requiring technology or implementation support.'}
-                    </p>
-
-                    <div className="mt-3 flex flex-wrap gap-3 text-xs text-muted-foreground">
-                      <span className="inline-flex items-center gap-1">
-                        <MapPin size={13} />
-                        {problem.district || 'Jharkhand'}
-                      </span>
-
-                      <span className="inline-flex items-center gap-1">
-                        <Target size={13} />
-                        {problem.category || 'General'}
-                      </span>
-
-                      <span className="inline-flex items-center gap-1">
-                        <Users size={13} />
-                        {problem.people || 'Community'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <ArrowRight
-                    size={18}
-                    className="mt-1 shrink-0 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-primary"
-                  />
-                </button>
-              ))}
-            </div>
-          )}
-        </Card>
-
-        {/* =======================================================
-            COLLABORATION PANEL
-        ======================================================= */}
-
-        <Card className="p-5 md:p-6">
-          <SectionTitle
-            eyebrow="Your role"
-            title="How your organisation can contribute"
-            description="Connect your capabilities with problems that need practical support."
-          />
-
-          <div className="mt-5 space-y-3">
-            <div className="rounded-2xl border border-border bg-muted/30 p-4">
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-secondary text-primary">
-                  <Zap size={18} />
-                </div>
-
-                <div>
-                  <h3 className="font-bold">
-                    Technology
-                  </h3>
-
-                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                    Provide technical expertise, platforms, tools or
-                    infrastructure.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-border bg-muted/30 p-4">
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-100 text-accent">
-                  <IndianRupee size={18} />
-                </div>
-
-                <div>
-                  <h3 className="font-bold">
-                    Funding
-                  </h3>
-
-                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                    Support promising projects through CSR or direct
-                    funding.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-border bg-muted/30 p-4">
-              <div className="flex items-start gap-3">
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700">
-                  <HandHeart size={18} />
-                </div>
-
-                <div>
-                  <h3 className="font-bold">
-                    Implementation
-                  </h3>
-
-                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                    Help move solutions from prototype to real-world
-                    deployment.
-                  </p>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => setShowCollaboration(true)}
-            className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-primary px-4 py-3 text-sm font-bold text-primary transition hover:bg-primary hover:text-primary-foreground"
-          >
-            Explore opportunities
-            <ArrowRight size={16} />
-          </button>
-        </Card>
-      </div>
-
-      {/* =========================================================
-          CURRENT PROJECTS
-      ========================================================= */}
-
+      {/* PROJECTS */}
       <div className="mt-7">
+
         <Card className="p-5 md:p-6">
+
           <SectionTitle
-            eyebrow="Project pipeline"
-            title="Projects open for industry support"
-            description="University-led projects connected to validated community problems."
+            eyebrow="Open for support"
+            title="Projects"
+            description="Projects proposed by university teams from validated citizen problems."
           />
 
           {loading && (
@@ -3599,389 +4245,84 @@ function IndustryDashboard() {
             </div>
           )}
 
-          {!loading && projects.length === 0 && (
-            <div className="py-10 text-center">
-              <BriefcaseBusiness
-                className="mx-auto text-muted-foreground"
-                size={32}
-              />
-
-              <p className="mt-3 font-bold">
-                No projects yet
-              </p>
-
-              <p className="mt-1 text-sm text-muted-foreground">
-                Projects proposed by university teams will appear here.
-              </p>
+          {error && (
+            <div className="rounded-xl bg-red-50 p-4 text-sm text-red-700">
+              {error}
             </div>
           )}
 
-          {!loading && projects.length > 0 && (
-            <div className="mt-5 grid gap-3 md:grid-cols-2">
-              {projects.slice(0, 6).map((project) => (
-                <div
-                  key={project.id}
-                  className="rounded-2xl border border-border p-4"
-                >
-                  <div className="flex items-start gap-3">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-orange-100 text-accent">
-                      <BriefcaseBusiness size={18} />
-                    </div>
+          {!loading &&
+            !error &&
+            projects.length === 0 && (
+              <div className="py-10 text-center">
 
-                    <div className="min-w-0 flex-1">
-                      <h3 className="truncate font-bold">
-                        {project.projectName ||
-                          project.title ||
-                          'Innovation project'}
-                      </h3>
-
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {project.progress || 0}% complete
-                      </p>
-                    </div>
-
-                    <Badge tone="blue">
-                      {project.status || 'Proposed'}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </Card>
-      </div>
-
-      {/* =========================================================
-          FIND A COLLABORATION MODAL
-      ========================================================= */}
-
-      {showCollaboration && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-3xl bg-background p-6 shadow-2xl md:p-8">
-
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-accent">
-                  Collaboration marketplace
-                </p>
-
-                <h2 className="mt-2 font-display text-3xl font-bold text-primary">
-                  Find a collaboration
-                </h2>
-
-                <p className="mt-2 max-w-2xl text-sm leading-relaxed text-muted-foreground">
-                  Explore community challenges where your organisation can
-                  contribute technology, funding or implementation support.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setShowCollaboration(false)}
-                className="rounded-xl p-2 text-muted-foreground transition hover:bg-muted hover:text-primary"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* SEARCH / FILTERS */}
-
-            <div className="mt-6 flex flex-col gap-3 md:flex-row">
-              <div className="flex flex-1 items-center gap-2 rounded-xl border border-border bg-card px-4 py-3">
-                <Search
-                  size={17}
-                  className="text-muted-foreground"
+                <BriefcaseBusiness
+                  className="mx-auto text-muted-foreground"
+                  size={32}
                 />
 
-                <input
-                  type="text"
-                  placeholder="Search opportunities..."
-                  className="w-full bg-transparent text-sm outline-none"
-                />
-              </div>
-
-              <button
-                type="button"
-                className="inline-flex items-center justify-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-bold"
-              >
-                <Filter size={16} />
-                Filter
-              </button>
-            </div>
-
-            {/* OPPORTUNITIES */}
-
-            <div className="mt-6 grid gap-4 md:grid-cols-2">
-              {collaborationOptions.map((item) => {
-                const Icon = item.icon;
-
-                return (
-                  <div
-                    key={item.title}
-                    className="rounded-2xl border border-border bg-card p-5 transition hover:border-primary hover:shadow-md"
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-secondary text-primary">
-                        <Icon size={20} />
-                      </div>
-
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="font-bold">
-                            {item.title}
-                          </h3>
-
-                          <Badge tone="green">
-                            Open
-                          </Badge>
-                        </div>
-
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          {item.category}
-                        </p>
-                      </div>
-                    </div>
-
-                    <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-                      {item.description}
-                    </p>
-
-                    <div className="mt-4 space-y-2 text-xs">
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <MapPin size={14} />
-                        {item.district}, Jharkhand
-                      </div>
-
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <Zap size={14} />
-                        {item.need}
-                      </div>
-
-                      <div className="flex items-center gap-2 text-muted-foreground">
-                        <GraduationCap size={14} />
-                        {item.organization}
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setShowCollaboration(false);
-
-                        setSelectedProblem({
-                          title: item.title,
-                          category: item.category,
-                          district: item.district,
-                          description: item.description,
-                          location: item.district,
-                          urgency: 'Medium',
-                          people: 'Community',
-                          status: 'Open for collaboration',
-                        });
-                      }}
-                      className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-bold text-primary-foreground transition hover:brightness-110"
-                    >
-                      View opportunity
-                      <ArrowRight size={16} />
-                    </button>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* =========================================================
-          PROBLEM DETAILS MODAL
-      ========================================================= */}
-
-      {selectedProblem && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
-          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-3xl bg-background p-6 shadow-2xl md:p-8">
-
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-accent">
-                  Problem details
+                <p className="mt-3 font-bold">
+                  No projects yet
                 </p>
 
-                <h2 className="mt-2 font-display text-3xl font-bold text-primary">
-                  {selectedProblem.title ||
-                    selectedProblem.projectName ||
-                    'Community problem'}
-                </h2>
-
-                <div className="mt-3 flex flex-wrap gap-2">
-                  <Badge tone="green">
-                    {selectedProblem.status ||
-                      selectedProblem.validationStatus ||
-                      'Validated'}
-                  </Badge>
-
-                  <Badge tone="blue">
-                    {selectedProblem.category || 'General'}
-                  </Badge>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setSelectedProblem(null)}
-                className="rounded-xl p-2 text-muted-foreground transition hover:bg-muted hover:text-primary"
-              >
-                <X size={20} />
-              </button>
-            </div>
-
-            {/* DESCRIPTION */}
-
-            <div className="mt-7">
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">
-                Problem description
-              </p>
-
-              <p className="mt-2 text-sm leading-7 text-foreground">
-                {selectedProblem.description ||
-                  'No description available.'}
-              </p>
-            </div>
-
-            {/* DETAILS */}
-
-            <div className="mt-6 grid gap-4 sm:grid-cols-2">
-
-              <div className="rounded-2xl border border-border p-4">
-                <p className="text-xs font-bold text-muted-foreground">
-                  Category
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Once a university picks up a validated
+                  problem, it will appear here.
                 </p>
 
-                <p className="mt-1 font-semibold">
-                  {selectedProblem.category ||
-                    'Not specified'}
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-border p-4">
-                <p className="text-xs font-bold text-muted-foreground">
-                  District
-                </p>
-
-                <p className="mt-1 font-semibold">
-                  {selectedProblem.district ||
-                    'Jharkhand'}
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-border p-4">
-                <p className="text-xs font-bold text-muted-foreground">
-                  Location
-                </p>
-
-                <p className="mt-1 font-semibold">
-                  {selectedProblem.location ||
-                    selectedProblem.district ||
-                    'Not specified'}
-                </p>
-              </div>
-
-              <div className="rounded-2xl border border-border p-4">
-                <p className="text-xs font-bold text-muted-foreground">
-                  Urgency
-                </p>
-
-                <p className="mt-1 font-semibold">
-                  {selectedProblem.urgency ||
-                    'Not specified'}
-                </p>
-              </div>
-
-            </div>
-
-            {/* PEOPLE AFFECTED */}
-
-            {selectedProblem.people && (
-              <div className="mt-6 rounded-2xl border border-border p-4">
-                <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">
-                  People affected
-                </p>
-
-                <p className="mt-2 text-sm">
-                  {selectedProblem.people}
-                </p>
               </div>
             )}
 
-            {/* COLLABORATION NEED */}
+          {!loading &&
+            !error &&
+            projects.length > 0 && (
+              <div className="space-y-2">
 
-            <div className="mt-6 rounded-2xl bg-secondary/40 p-5">
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-muted-foreground">
-                Industry opportunity
-              </p>
+                {projects.map((p) => (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => openProject(p)}
+                    className="flex w-full items-center gap-3 rounded-xl border border-border p-3 text-left transition hover:bg-muted/50"
+                  >
 
-              <div className="mt-4 grid gap-4 sm:grid-cols-3">
+                    <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-orange-100 text-accent">
+                      <BriefcaseBusiness size={17} />
+                    </span>
 
-                <div>
-                  <p className="text-xs text-muted-foreground">
-                    Technology
-                  </p>
+                    <span className="min-w-0 flex-1">
 
-                  <p className="mt-1 font-semibold">
-                    Required
-                  </p>
-                </div>
+                      <span className="block truncate text-sm font-bold text-primary">
+                        {p.projectName ||
+                          p.title ||
+                          'Untitled project'}
+                      </span>
 
-                <div>
-                  <p className="text-xs text-muted-foreground">
-                    Funding
-                  </p>
+                      <span className="text-xs text-muted-foreground">
+                        {p.progress || 0}% complete
+                      </span>
 
-                  <p className="mt-1 font-semibold">
-                    Open
-                  </p>
-                </div>
+                    </span>
 
-                <div>
-                  <p className="text-xs text-muted-foreground">
-                    Implementation
-                  </p>
+                    <Badge tone="blue">
+                      {p.status || 'Proposed'}
+                    </Badge>
 
-                  <p className="mt-1 font-semibold">
-                    Required
-                  </p>
-                </div>
+                    <ArrowRight
+                      size={17}
+                      className="shrink-0 text-muted-foreground"
+                    />
+
+                  </button>
+                ))}
 
               </div>
-            </div>
+            )}
 
-            {/* ACTIONS */}
+        </Card>
 
-            <div className="mt-7 flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
+      </div>
 
-              <button
-                type="button"
-                onClick={() => setSelectedProblem(null)}
-                className="rounded-xl border border-border px-5 py-3 text-sm font-bold transition hover:bg-muted"
-              >
-                Close
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedProblem(null);
-                  setShowCollaboration(true);
-                }}
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground transition hover:brightness-110"
-              >
-                Take up as collaborative project
-                <ArrowRight size={16} />
-              </button>
-
-            </div>
-          </div>
-        </div>
-      )}
     </Shell>
   );
 }
