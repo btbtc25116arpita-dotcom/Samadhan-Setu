@@ -3523,13 +3523,16 @@ function GovernmentDashboard() {
           description="A district-wide view of citizen problems and the projects solving them."
         />
 
-        <a
-          href="/government/analytics"
-          className="inline-flex w-fit items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground transition hover:brightness-110"
-        >
-          <BarChart3 size={17} />
-          Open analytics
-        </a>
+       <button
+          type="button"
+          onClick={() => {
+              window.location.href = '/government/analytics';
+        }}
+        className="inline-flex w-fit items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground transition hover:brightness-110"
+    >
+        <BarChart3 size={17} />
+        Open analytics
+    </button> 
       </div>
 
       {/* SUMMARY METRICS */}
