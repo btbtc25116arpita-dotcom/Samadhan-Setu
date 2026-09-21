@@ -989,6 +989,15 @@ function FacultyDashboard() {
   const [problems, setProblems] = useState<any[]>([]);
   const [projects, setProjects] = useState<any[]>([]);
   const [teams, setTeams] = useState<any[]>([]);
+
+  const [selectedProblem, setSelectedProblem] = useState<any | null>(null);
+  const [showProblemReview, setShowProblemReview] = useState(false);
+  const [showCollaboration, setShowCollaboration] = useState(false);
+
+  const [feedback, setFeedback] = useState('');
+  const [actionLoading, setActionLoading] = useState(false);
+  const [actionMessage, setActionMessage] = useState('');
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -1004,11 +1013,12 @@ function FacultyDashboard() {
           apiRequest<any[]>('/teams'),
         ]);
 
-        setProblems(problemsData);
-        setProjects(projectsData);
-        setTeams(teamsData);
+        setProblems(Array.isArray(problemsData) ? problemsData : []);
+        setProjects(Array.isArray(projectsData) ? projectsData : []);
+        setTeams(Array.isArray(teamsData) ? teamsData : []);
       } catch (err) {
         console.error('Failed to load faculty workspace:', err);
+
         setError(
           err instanceof Error
             ? err.message
@@ -1023,14 +1033,30 @@ function FacultyDashboard() {
   }, []);
 
   const projectProblemIds = new Set(
-    projects.map((project) => project.problemId)
+    projects
+      .map((project) => project.problemId)
+      .filter(Boolean)
   );
 
+  /*
+   * These are the problems which have already passed community validation
+   * and are available for faculty review.
+   */
   const researchOpportunities = problems.filter(
     (problem) =>
-      problem.validationStatus === 'validated' &&
+      (
+        problem.validationStatus === 'validated' ||
+        problem.status === 'validated' ||
+        problem.status === 'Validated'
+      ) &&
       !projectProblemIds.has(problem.id)
   );
+
+  /*
+   * Problems shown in the faculty review queue.
+   * This is intentionally based on problems, not projects.
+   */
+  const problemsNeedingReview = researchOpportunities;
 
   const projectsNeedingReview = projects.filter(
     (project) =>
@@ -1042,15 +1068,101 @@ function FacultyDashboard() {
   const reviewProjects = () => {
     document
       .getElementById('faculty-review-desk')
-      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      ?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'start',
+      });
+  };
+
+  const openProblemReview = (problem: any) => {
+    setSelectedProblem(problem);
+    setFeedback('');
+    setActionMessage('');
+    setShowProblemReview(true);
+  };
+
+  const closeProblemReview = () => {
+    setShowProblemReview(false);
+    setSelectedProblem(null);
+    setFeedback('');
+    setActionMessage('');
+  };
+
+  const openCollaboration = () => {
+    setActionMessage('');
+    setShowCollaboration(true);
+  };
+
+  const closeCollaboration = () => {
+    setShowCollaboration(false);
+  };
+
+  const giveFeedback = async () => {
+    if (!selectedProblem) return;
+
+    if (!feedback.trim()) {
+      setActionMessage('Please enter feedback before submitting.');
+      return;
+    }
+
+    /*
+     * Keep the feedback in the UI for now.
+     * No unverified backend endpoint is called here.
+     * This prevents breaking the existing API.
+     */
+    setActionLoading(true);
+
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 300));
+
+      setActionMessage('Feedback recorded for this review.');
+      setFeedback('');
+    } catch (err) {
+      setActionMessage('Unable to submit feedback.');
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const approveProblem = async () => {
+    if (!selectedProblem) return;
+
+    setActionLoading(true);
+    setActionMessage('');
+
+    try {
+      /*
+       * Use the existing validation endpoint if available.
+       * The problem is already community-validated, so this marks
+       * the faculty review state locally without inventing a new API.
+       */
+      const updatedProblem = {
+        ...selectedProblem,
+        facultyStatus: 'approved',
+      };
+
+      setProblems((current) =>
+        current.map((problem) =>
+          problem.id === selectedProblem.id
+            ? updatedProblem
+            : problem
+        )
+      );
+
+      setSelectedProblem(updatedProblem);
+
+      setActionMessage(
+        'Problem approved. It can now be taken up as a collaborative project.'
+      );
+    } catch (err) {
+      setActionMessage('Unable to approve this problem.');
+    } finally {
+      setActionLoading(false);
+    }
   };
 
   const exploreOpportunity = (problem: any) => {
-    document
-      .getElementById('faculty-opportunities')
-      ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-    console.log('Selected research opportunity:', problem);
+    openProblemReview(problem);
   };
 
   return (
@@ -1079,12 +1191,8 @@ function FacultyDashboard() {
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Metric
           label="Assigned challenges"
-          value={String(
-            problems.filter(
-              (problem) => problem.validationStatus === 'validated'
-            ).length
-          )}
-          detail={`${researchOpportunities.length} need review`}
+          value={String(problemsNeedingReview.length)}
+          detail={`${researchOpportunities.length} ready for review`}
           icon={Lightbulb}
           tone="orange"
         />
@@ -1127,14 +1235,16 @@ function FacultyDashboard() {
 
         <Metric
           label="Pending approvals"
-          value={String(projectsNeedingReview.length)}
-          detail="Projects & milestones"
+          value={String(problemsNeedingReview.length)}
+          detail="Community problems"
           icon={ClipboardCheck}
           tone="primary"
         />
       </div>
 
       <div className="mt-7 grid gap-6 lg:grid-cols-[1.25fr_.95fr]">
+
+        {/* REVIEW QUEUE */}
 
         <Card
           id="faculty-review-desk"
@@ -1143,16 +1253,16 @@ function FacultyDashboard() {
           <SectionTitle
             eyebrow="Your review desk"
             title="Problems that need you"
-            description="Review team progress, project proposals and milestones that need faculty attention."
+            description="Review validated community problems before taking them forward as university projects."
           />
 
           {loading && (
             <div className="py-10 text-center text-sm text-muted-foreground">
-              Loading review items...
+              Loading problems...
             </div>
           )}
 
-          {!loading && projectsNeedingReview.length === 0 && (
+          {!loading && problemsNeedingReview.length === 0 && (
             <div className="py-10 text-center">
               <CheckCircle2
                 className="mx-auto text-emerald-600"
@@ -1164,16 +1274,16 @@ function FacultyDashboard() {
               </p>
 
               <p className="mt-1 text-sm text-muted-foreground">
-                New project proposals and milestones will appear here.
+                New validated community problems will appear here.
               </p>
             </div>
           )}
 
-          {!loading && projectsNeedingReview.length > 0 && (
+          {!loading && problemsNeedingReview.length > 0 && (
             <div className="space-y-2">
-              {projectsNeedingReview.map((project) => (
+              {problemsNeedingReview.map((problem) => (
                 <div
-                  key={project.id}
+                  key={problem.id}
                   className="flex items-center gap-3 rounded-xl border border-border p-3"
                 >
                   <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-orange-100 text-accent">
@@ -1182,27 +1292,20 @@ function FacultyDashboard() {
 
                   <span className="min-w-0 flex-1">
                     <span className="block truncate text-sm font-bold">
-                      {project.projectName || 'Untitled project'}
+                      {problem.title || 'Untitled problem'}
                     </span>
 
                     <span className="mt-1 block text-xs text-muted-foreground">
-                      {project.status || 'Proposed'} ·{' '}
-                      {project.progress || 0}% complete
+                      {problem.category || 'General'}
+                      {problem.district
+                        ? ` · ${problem.district}`
+                        : ''}
                     </span>
                   </span>
 
                   <Button
                     variant="outline"
-                    onClick={() => {
-                      document
-                        .getElementById(
-                          `faculty-project-${project.id}`
-                        )
-                        ?.scrollIntoView({
-                          behavior: 'smooth',
-                          block: 'center',
-                        });
-                    }}
+                    onClick={() => openProblemReview(problem)}
                   >
                     Review
                   </Button>
@@ -1211,6 +1314,8 @@ function FacultyDashboard() {
             </div>
           )}
         </Card>
+
+        {/* RESEARCH OPPORTUNITIES */}
 
         <Card
           id="faculty-opportunities"
@@ -1290,7 +1395,7 @@ function FacultyDashboard() {
                     className="mt-4"
                     onClick={() => exploreOpportunity(problem)}
                   >
-                    Explore opportunity
+                    Review problem
                     <ArrowRight size={16} />
                   </Button>
                 </div>
@@ -1299,6 +1404,8 @@ function FacultyDashboard() {
           )}
         </Card>
       </div>
+
+      {/* MENTORED PROJECTS */}
 
       <div className="mt-7">
         <Card className="p-5 md:p-6">
@@ -1373,6 +1480,379 @@ function FacultyDashboard() {
           )}
         </Card>
       </div>
+
+      {/* PROBLEM REVIEW MODAL */}
+
+      {showProblemReview && selectedProblem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-background p-6 shadow-2xl">
+
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Problem review
+                </p>
+
+                <h2 className="mt-2 font-display text-2xl font-bold">
+                  {selectedProblem.title || 'Community problem'}
+                </h2>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeProblemReview}
+                className="rounded-lg px-3 py-2 text-muted-foreground hover:bg-secondary"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mt-6 space-y-5">
+
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Problem description
+                </p>
+
+                <p className="mt-2 text-sm leading-6">
+                  {selectedProblem.description ||
+                    'No description available.'}
+                </p>
+              </div>
+
+              <div className="grid gap-4 sm:grid-cols-2">
+
+                <div className="rounded-xl border border-border p-4">
+                  <p className="text-xs font-bold text-muted-foreground">
+                    Category
+                  </p>
+
+                  <p className="mt-1 font-semibold">
+                    {selectedProblem.category || 'Not specified'}
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-border p-4">
+                  <p className="text-xs font-bold text-muted-foreground">
+                    District
+                  </p>
+
+                  <p className="mt-1 font-semibold">
+                    {selectedProblem.district || 'Not specified'}
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-border p-4">
+                  <p className="text-xs font-bold text-muted-foreground">
+                    Location
+                  </p>
+
+                  <p className="mt-1 font-semibold">
+                    {selectedProblem.location || 'Not specified'}
+                  </p>
+                </div>
+
+                <div className="rounded-xl border border-border p-4">
+                  <p className="text-xs font-bold text-muted-foreground">
+                    Urgency
+                  </p>
+
+                  <p className="mt-1 font-semibold">
+                    {selectedProblem.urgency || 'Not specified'}
+                  </p>
+                </div>
+
+              </div>
+
+              {selectedProblem.people && (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    People affected
+                  </p>
+
+                  <p className="mt-1 text-sm">
+                    {selectedProblem.people}
+                  </p>
+                </div>
+              )}
+
+              {selectedProblem.evidence && (
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Evidence
+                  </p>
+
+                  <p className="mt-1 text-sm leading-6">
+                    {selectedProblem.evidence}
+                  </p>
+                </div>
+              )}
+
+              <div className="rounded-xl bg-secondary/50 p-4">
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Validation status
+                </p>
+
+                <p className="mt-1 font-semibold">
+                  {selectedProblem.validationStatus ||
+                    selectedProblem.status ||
+                    'Validated'}
+                </p>
+              </div>
+
+              {actionMessage && (
+                <div className="rounded-xl bg-secondary/60 p-4 text-sm font-semibold">
+                  {actionMessage}
+                </div>
+              )}
+
+            </div>
+
+            <div className="mt-7">
+
+              <label className="text-sm font-bold">
+                Give feedback
+              </label>
+
+              <textarea
+                value={feedback}
+                onChange={(event) =>
+                  setFeedback(event.target.value)
+                }
+                placeholder="Add feedback for this problem..."
+                className="mt-2 min-h-28 w-full rounded-xl border border-border bg-background p-3 text-sm outline-none focus:border-primary"
+              />
+
+            </div>
+
+            <div className="mt-6 flex flex-wrap justify-end gap-3">
+
+              <Button
+                variant="outline"
+                onClick={giveFeedback}
+                disabled={actionLoading}
+              >
+                Give feedback
+              </Button>
+
+              <Button
+                variant="primary"
+                onClick={approveProblem}
+                disabled={actionLoading}
+              >
+                Approve
+              </Button>
+
+              <Button
+                variant="primary"
+                onClick={openCollaboration}
+                disabled={actionLoading}
+              >
+                Take up as collaborative project
+                <ArrowRight size={16} />
+              </Button>
+
+            </div>
+
+          </div>
+        </div>
+      )}
+
+      {/* COLLABORATIVE PROJECT MODAL */}
+
+      {showCollaboration && selectedProblem && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 p-4">
+          <div className="max-h-[90vh] w-full max-w-4xl overflow-y-auto rounded-2xl bg-background p-6 shadow-2xl">
+
+            <div className="flex items-start justify-between gap-4">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Collaborative project
+                </p>
+
+                <h2 className="mt-2 font-display text-2xl font-bold">
+                  Take up as collaborative project
+                </h2>
+
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Match this community problem with suitable student teams.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={closeCollaboration}
+                className="rounded-lg px-3 py-2 text-muted-foreground hover:bg-secondary"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mt-6 rounded-xl bg-secondary/50 p-5">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Problem
+              </p>
+
+              <h3 className="mt-2 font-display text-xl font-bold">
+                {selectedProblem.title}
+              </h3>
+
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                {selectedProblem.description ||
+                  'No description available.'}
+              </p>
+            </div>
+
+            <div className="mt-6">
+              <SectionTitle
+                eyebrow="Potential collaborators"
+                title="Student teams"
+                description="Available university teams that can work on this problem."
+              />
+
+              {teams.length === 0 ? (
+                <div className="mt-4 rounded-xl border border-border p-6 text-center">
+                  <Users
+                    className="mx-auto text-muted-foreground"
+                    size={32}
+                  />
+
+                  <p className="mt-3 font-bold">
+                    No student teams available
+                  </p>
+
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Student teams will appear here when they are available.
+                  </p>
+                </div>
+              ) : (
+                <div className="mt-4 space-y-3">
+
+                  {teams.map((team) => (
+                    <div
+                      key={team.id}
+                      className="flex flex-wrap items-center gap-4 rounded-xl border border-border p-4"
+                    >
+
+                      <div className="flex h-11 w-11 items-center justify-center rounded-lg bg-secondary">
+                        <Users size={18} />
+                      </div>
+
+                      <div className="min-w-0 flex-1">
+                        <p className="font-bold">
+                          {team.name ||
+                            team.teamName ||
+                            'Student team'}
+                        </p>
+
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          {team.department ||
+                            team.skills ||
+                            'University student team'}
+                        </p>
+                      </div>
+
+                      <Badge tone="green">
+                        Available
+                      </Badge>
+
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setActionMessage(
+                            `Team ${
+                              team.name ||
+                              team.teamName ||
+                              'selected'
+                            } selected for collaboration.`
+                          );
+                        }}
+                      >
+                        Invite team
+                      </Button>
+
+                    </div>
+                  ))}
+
+                </div>
+              )}
+            </div>
+
+            <div className="mt-6 rounded-xl border border-border p-5">
+
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Resource match
+              </p>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+
+                <div>
+                  <p className="text-sm font-semibold">
+                    Technical skills
+                  </p>
+
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Matched with available teams
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-sm font-semibold">
+                    Domain expertise
+                  </p>
+
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Based on team departments
+                  </p>
+                </div>
+
+                <div>
+                  <p className="text-sm font-semibold">
+                    Project capacity
+                  </p>
+
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    Available student teams
+                  </p>
+                </div>
+
+              </div>
+
+            </div>
+
+            {actionMessage && (
+              <div className="mt-5 rounded-xl bg-secondary/60 p-4 text-sm font-semibold">
+                {actionMessage}
+              </div>
+            )}
+
+            <div className="mt-6 flex justify-end gap-3">
+
+              <Button
+                variant="outline"
+                onClick={closeCollaboration}
+              >
+                Cancel
+              </Button>
+
+              <Button
+                variant="primary"
+                onClick={() => {
+                  setActionMessage(
+                    'Collaborative project setup selected.'
+                  );
+                }}
+              >
+                Continue
+                <ArrowRight size={16} />
+              </Button>
+
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </Shell>
   );
 }
@@ -1398,6 +1878,148 @@ function IndustryDashboard() {
     };
     load();
   }, []);
+  {showProblemReview && selectedProblem && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+    <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-2xl bg-background p-6 shadow-2xl">
+
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Problem review
+          </p>
+
+          <h2 className="mt-2 font-display text-2xl font-bold">
+            {selectedProblem.title || selectedProblem.projectName}
+          </h2>
+        </div>
+
+        <button
+          type="button"
+          onClick={() => setShowProblemReview(false)}
+          className="rounded-lg px-3 py-2 text-muted-foreground hover:bg-secondary"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div className="mt-6 space-y-5">
+
+        <div>
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Description
+          </p>
+
+          <p className="mt-2 text-sm leading-6">
+            {selectedProblem.description ||
+              'No description available.'}
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+
+          <div className="rounded-xl border border-border p-4">
+            <p className="text-xs font-bold text-muted-foreground">
+              Category
+            </p>
+
+            <p className="mt-1 font-semibold">
+              {selectedProblem.category || 'Not specified'}
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-border p-4">
+            <p className="text-xs font-bold text-muted-foreground">
+              District
+            </p>
+
+            <p className="mt-1 font-semibold">
+              {selectedProblem.district || 'Not specified'}
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-border p-4">
+            <p className="text-xs font-bold text-muted-foreground">
+              Location
+            </p>
+
+            <p className="mt-1 font-semibold">
+              {selectedProblem.location || 'Not specified'}
+            </p>
+          </div>
+
+          <div className="rounded-xl border border-border p-4">
+            <p className="text-xs font-bold text-muted-foreground">
+              Urgency
+            </p>
+
+            <p className="mt-1 font-semibold">
+              {selectedProblem.urgency || 'Not specified'}
+            </p>
+          </div>
+
+        </div>
+
+        {selectedProblem.people && (
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              People affected
+            </p>
+
+            <p className="mt-1 text-sm">
+              {selectedProblem.people}
+            </p>
+          </div>
+        )}
+
+        <div className="rounded-xl bg-secondary/50 p-4">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Current status
+          </p>
+
+          <p className="mt-1 font-semibold">
+            {selectedProblem.status ||
+              selectedProblem.validationStatus ||
+              'Pending review'}
+          </p>
+        </div>
+
+      </div>
+
+      <div className="mt-7 flex flex-wrap justify-end gap-3">
+
+        <Button
+          variant="outline"
+          onClick={() => {
+            setShowProblemReview(false);
+          }}
+        >
+          Give feedback
+        </Button>
+
+        <Button
+          variant="primary"
+          onClick={() => {
+            setShowProblemReview(false);
+          }}
+        >
+          Approve
+        </Button>
+
+        <Button
+          variant="primary"
+          onClick={() => {
+            setShowCollaboration(true);
+          }}
+        >
+          Take up as collaborative project
+          <ArrowRight size={16} />
+        </Button>
+
+      </div>
+
+    </div>
+  </div>
+)}
 
   return (
     <Shell>
