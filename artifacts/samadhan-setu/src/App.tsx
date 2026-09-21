@@ -3441,6 +3441,163 @@ function IndustryDashboard() {
     </Shell>
   );
 }
+function GovernmentAnalytics() {
+  return (
+    <Shell>
+      <PageIntro
+        eyebrow="Government workspace"
+        title="State analytics"
+        description="A state-wide view of community problems, response patterns and project activity."
+      />
+
+      <div className="mt-7 grid gap-4 md:grid-cols-3">
+        <Card className="p-5">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            District
+          </p>
+
+          <select className="mt-3 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm">
+            <option>All districts</option>
+            <option>Ranchi</option>
+            <option>Dhanbad</option>
+            <option>Gumla</option>
+            <option>Hazaribagh</option>
+            <option>Deoghar</option>
+            <option>Jamshedpur</option>
+          </select>
+        </Card>
+
+        <Card className="p-5">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Domain
+          </p>
+
+          <select className="mt-3 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm">
+            <option>All domains</option>
+            <option>Education</option>
+            <option>Healthcare</option>
+            <option>Agriculture</option>
+            <option>Water & sanitation</option>
+            <option>Environment</option>
+          </select>
+        </Card>
+
+        <Card className="p-5">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Time range
+          </p>
+
+          <select className="mt-3 w-full rounded-xl border border-border bg-background px-4 py-3 text-sm">
+            <option>Last 6 months</option>
+            <option>Last 12 months</option>
+            <option>This year</option>
+            <option>All time</option>
+          </select>
+        </Card>
+      </div>
+
+      <div className="mt-7 grid gap-6 lg:grid-cols-2">
+        <Card className="p-6">
+          <SectionTitle
+            eyebrow="Citizen voice"
+            title="From voice to outcome"
+            description="How reported community problems move through validation and action."
+          />
+
+          <div className="mt-6 space-y-4">
+            <div className="flex items-center justify-between rounded-xl bg-muted/50 p-4">
+              <span className="text-sm font-semibold">
+                Problems reported
+              </span>
+              <span className="font-display text-xl font-bold">
+                428
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between rounded-xl bg-muted/50 p-4">
+              <span className="text-sm font-semibold">
+                Problems validated
+              </span>
+              <span className="font-display text-xl font-bold">
+                284
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between rounded-xl bg-muted/50 p-4">
+              <span className="text-sm font-semibold">
+                Projects initiated
+              </span>
+              <span className="font-display text-xl font-bold">
+                64
+              </span>
+            </div>
+
+            <div className="flex items-center justify-between rounded-xl bg-muted/50 p-4">
+              <span className="text-sm font-semibold">
+                Projects in progress
+              </span>
+              <span className="font-display text-xl font-bold">
+                31
+              </span>
+            </div>
+          </div>
+        </Card>
+
+        <Card className="p-6">
+          <SectionTitle
+            eyebrow="Problem landscape"
+            title="What citizens are asking for"
+            description="Distribution of reported community challenges by domain."
+          />
+
+          <div className="mt-6 space-y-4">
+            {[
+              ['Water & sanitation', 38],
+              ['Education', 24],
+              ['Healthcare', 18],
+              ['Agriculture', 12],
+              ['Environment', 8],
+            ].map(([domain, value]) => (
+              <div key={domain as string}>
+                <div className="mb-2 flex items-center justify-between text-sm">
+                  <span className="font-semibold">
+                    {domain}
+                  </span>
+                  <span className="text-muted-foreground">
+                    {value}%
+                  </span>
+                </div>
+
+                <div className="h-2 overflow-hidden rounded-full bg-muted">
+                  <div
+                    className="h-full rounded-full bg-primary"
+                    style={{ width: `${value}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </Card>
+      </div>
+
+      <Card className="mt-6 p-6">
+        <SectionTitle
+          eyebrow="Insight"
+          title="Where attention is concentrated"
+          description="A summary view to help government teams identify areas requiring continued monitoring."
+        />
+
+        <div className="mt-5 rounded-2xl bg-secondary/30 p-5">
+          <p className="text-sm leading-7 text-muted-foreground">
+            Water and sanitation currently represent the largest share
+            of reported challenges, while Ranchi has the highest
+            concentration of activity in this illustrative analytics view.
+          </p>
+        </div>
+      </Card>
+    </Shell>
+  );
+}
 function GovernmentDashboard() {
   const user = readStore('ss-user', { name: 'User' });
 
@@ -3840,6 +3997,7 @@ function App() {
                 <Route path="/faculty/dashboard" component={FacultyDashboard} />
 <Route path="/industry/dashboard" component={IndustryDashboard} />
 <Route path="/government/dashboard" component={GovernmentDashboard} />
+<Route path="/government/analytics" component={GovernmentAnalytics} />
                 <Route component={Dashboard} />
               </Switch>
             </WouterRouter>
