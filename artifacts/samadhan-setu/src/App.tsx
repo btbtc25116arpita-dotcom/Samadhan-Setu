@@ -910,26 +910,783 @@ function CommunityDashboard() {
 }
 function UniversityDashboard() {
   const user = readStore('ss-user', { name: 'User' });
+
   const [problems, setProblems] = useState<any[]>([]);
+  const [teams, setTeams] = useState<any[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const [selectedProblem, setSelectedProblem] = useState<any | null>(null);
+  const [showBrief, setShowBrief] = useState(false);
+  const [applicationStarted, setApplicationStarted] = useState(false);
+
+  const [showTeamPage, setShowTeamPage] = useState(false);
+  const [editingTeam, setEditingTeam] = useState<any | null>(null);
+  const [savingTeam, setSavingTeam] = useState(false);
+
+  const emptyMember = {
+    name: '',
+    rollNumber: '',
+    department: '',
+    year: '',
+    skills: '',
+  };
+
+  const [teamForm, setTeamForm] = useState({
+    teamName: '',
+    challengeId: '',
+    challengeTitle: '',
+    department: '',
+    members: [
+      { ...emptyMember },
+      { ...emptyMember },
+      { ...emptyMember },
+      { ...emptyMember },
+    ],
+  });
 
   useEffect(() => {
     const load = async () => {
       try {
         setLoading(true);
         setError('');
-        const data = await apiRequest<any[]>('/problems');
-        setProblems(data.filter((p) => p.validationStatus === 'validated'));
+
+        const [problemsData, teamsData] = await Promise.all([
+          apiRequest<any[]>('/problems'),
+          apiRequest<any[]>('/teams'),
+        ]);
+
+        setProblems(
+          problemsData.filter(
+            (p) => p.validationStatus === 'validated'
+          )
+        );
+
+        setTeams(Array.isArray(teamsData) ? teamsData : []);
       } catch (err) {
-        console.error('Failed to load innovation challenges:', err);
-        setError(err instanceof Error ? err.message : 'Unable to load challenges.');
+        console.error('Failed to load university workspace:', err);
+
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Unable to load university workspace.'
+        );
       } finally {
         setLoading(false);
       }
     };
+
     load();
   }, []);
+
+  const openProblem = (problem: any) => {
+    setSelectedProblem(problem);
+    setShowBrief(false);
+    setApplicationStarted(false);
+  };
+
+  const closeProblem = () => {
+    setSelectedProblem(null);
+    setShowBrief(false);
+    setApplicationStarted(false);
+  };
+
+  const startApplication = () => {
+    setApplicationStarted(true);
+  };
+
+  const openCreateTeam = () => {
+    setEditingTeam(null);
+
+    setTeamForm({
+      teamName: '',
+      challengeId: '',
+      challengeTitle: '',
+      department: '',
+      members: [
+        { ...emptyMember },
+        { ...emptyMember },
+        { ...emptyMember },
+        { ...emptyMember },
+      ],
+    });
+
+    setShowTeamPage(true);
+  };
+
+  const openManageTeam = (team: any) => {
+    setEditingTeam(team);
+
+    const existingMembers = Array.isArray(team.members)
+      ? team.members
+      : [];
+
+    const members = [
+      ...existingMembers,
+      ...Array.from(
+        {
+          length: Math.max(
+            0,
+            4 - existingMembers.length
+          ),
+        },
+        () => ({ ...emptyMember })
+      ),
+    ];
+
+    setTeamForm({
+      teamName: team.teamName || team.name || '',
+      challengeId: team.challengeId || team.problemId || '',
+      challengeTitle:
+        team.challengeTitle ||
+        team.projectName ||
+        '',
+      department: team.department || '',
+      members: members.slice(0, 4).map((member: any) => ({
+        name: member?.name || '',
+        rollNumber:
+          member?.rollNumber ||
+          member?.roll_number ||
+          '',
+        department: member?.department || '',
+        year: member?.year || '',
+        skills: member?.skills || '',
+      })),
+    });
+
+    setShowTeamPage(true);
+  };
+
+  const updateMember = (
+    index: number,
+    field: string,
+    value: string
+  ) => {
+    setTeamForm((current) => ({
+      ...current,
+      members: current.members.map((member, memberIndex) =>
+        memberIndex === index
+          ? {
+              ...member,
+              [field]: value,
+            }
+          : member
+      ),
+    }));
+  };
+
+  const saveTeam = async () => {
+    if (!teamForm.teamName.trim()) {
+      setError('Please enter a team name.');
+      return;
+    }
+
+    const activeMembers = teamForm.members.filter(
+      (member) =>
+        member.name.trim() ||
+        member.rollNumber.trim() ||
+        member.department.trim() ||
+        member.year.trim() ||
+        member.skills.trim()
+    );
+
+    if (activeMembers.length === 0) {
+      setError('Please enter at least one student.');
+      return;
+    }
+
+    try {
+      setSavingTeam(true);
+      setError('');
+
+      const payload = {
+        teamName: teamForm.teamName.trim(),
+        name: teamForm.teamName.trim(),
+        challengeId:
+          teamForm.challengeId || null,
+        problemId:
+          teamForm.challengeId || null,
+        challengeTitle:
+          teamForm.challengeTitle || null,
+        department:
+          teamForm.department || null,
+        members: activeMembers,
+        createdBy: user?.name || 'User',
+      };
+
+      if (editingTeam) {
+        const updatedTeam = await apiRequest<any>(
+          `/teams/${editingTeam.id}`,
+          {
+            method: 'PATCH',
+            body: JSON.stringify(payload),
+          }
+        );
+
+        setTeams((current) =>
+          current.map((team) =>
+            team.id === editingTeam.id
+              ? updatedTeam
+              : team
+          )
+        );
+      } else {
+        const createdTeam = await apiRequest<any>(
+          '/teams',
+          {
+            method: 'POST',
+            body: JSON.stringify(payload),
+          }
+        );
+
+        setTeams((current) => [
+          ...current,
+          createdTeam,
+        ]);
+      }
+
+      setShowTeamPage(false);
+      setEditingTeam(null);
+    } catch (err) {
+      console.error('Failed to save team:', err);
+
+      setError(
+        err instanceof Error
+          ? err.message
+          : 'Unable to save team.'
+      );
+    } finally {
+      setSavingTeam(false);
+    }
+  };
+
+  /*
+   * ---------------------------------------------------------
+   * TEAM CREATE / MANAGE PAGE
+   * ---------------------------------------------------------
+   */
+
+  if (showTeamPage) {
+    return (
+      <Shell>
+        <PageIntro
+          eyebrow="University workspace"
+          title={
+            editingTeam
+              ? 'Manage your team'
+              : 'Create a team'
+          }
+          description={
+            editingTeam
+              ? 'Update your team and student details.'
+              : 'Bring your student team together for community innovation projects.'
+          }
+          action={
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowTeamPage(false);
+                setEditingTeam(null);
+              }}
+            >
+              Back
+            </Button>
+          }
+        />
+
+        {error && (
+          <div className="mb-6 rounded-xl bg-red-50 p-4 text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
+        <Card className="p-5 md:p-6">
+          <SectionTitle
+            eyebrow="Team details"
+            title="Your team"
+            description="Enter the details of the students who are part of this team."
+          />
+
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-bold">
+                Team name
+              </label>
+
+              <input
+                value={teamForm.teamName}
+                onChange={(e) =>
+                  setTeamForm((current) => ({
+                    ...current,
+                    teamName: e.target.value,
+                  }))
+                }
+                placeholder="e.g. Jal Saathi Collective"
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+
+            <div>
+              <label className="mb-2 block text-sm font-bold">
+                Department
+              </label>
+
+              <input
+                value={teamForm.department}
+                onChange={(e) =>
+                  setTeamForm((current) => ({
+                    ...current,
+                    department: e.target.value,
+                  }))
+                }
+                placeholder="e.g. Computer Science"
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+
+            <div className="md:col-span-2">
+              <label className="mb-2 block text-sm font-bold">
+                Challenge / Project
+              </label>
+
+              <select
+                value={teamForm.challengeId}
+                onChange={(e) => {
+                  const problem = problems.find(
+                    (p) => p.id === e.target.value
+                  );
+
+                  setTeamForm((current) => ({
+                    ...current,
+                    challengeId: e.target.value,
+                    challengeTitle:
+                      problem?.title || '',
+                  }));
+                }}
+                className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
+              >
+                <option value="">
+                  Select a challenge
+                </option>
+
+                {problems.map((problem) => (
+                  <option
+                    key={problem.id}
+                    value={problem.id}
+                  >
+                    {problem.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <div className="mt-8">
+            <SectionTitle
+              eyebrow="Student members"
+              title="Team members"
+              description="Add the students who will work on this project."
+            />
+
+            <div className="mt-5 space-y-5">
+              {teamForm.members.map(
+                (member, index) => (
+                  <div
+                    key={index}
+                    className="rounded-2xl border border-border p-5"
+                  >
+                    <div className="mb-4 flex items-center gap-3">
+                      <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary/60 text-primary">
+                        <Users size={17} />
+                      </span>
+
+                      <div>
+                        <p className="font-bold">
+                          Student {index + 1}
+                        </p>
+
+                        <p className="text-xs text-muted-foreground">
+                          Student information
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <label className="mb-2 block text-sm font-bold">
+                          Student name
+                        </label>
+
+                        <input
+                          value={member.name}
+                          onChange={(e) =>
+                            updateMember(
+                              index,
+                              'name',
+                              e.target.value
+                            )
+                          }
+                          placeholder="Full name"
+                          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-bold">
+                          Roll number
+                        </label>
+
+                        <input
+                          value={member.rollNumber}
+                          onChange={(e) =>
+                            updateMember(
+                              index,
+                              'rollNumber',
+                              e.target.value
+                            )
+                          }
+                          placeholder="Roll number"
+                          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-bold">
+                          Department
+                        </label>
+
+                        <input
+                          value={member.department}
+                          onChange={(e) =>
+                            updateMember(
+                              index,
+                              'department',
+                              e.target.value
+                            )
+                          }
+                          placeholder="Department"
+                          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-bold">
+                          Year
+                        </label>
+
+                        <input
+                          value={member.year}
+                          onChange={(e) =>
+                            updateMember(
+                              index,
+                              'year',
+                              e.target.value
+                            )
+                          }
+                          placeholder="e.g. 2nd Year"
+                          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
+                        />
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="mb-2 block text-sm font-bold">
+                          Skills
+                        </label>
+
+                        <input
+                          value={member.skills}
+                          onChange={(e) =>
+                            updateMember(
+                              index,
+                              'skills',
+                              e.target.value
+                            )
+                          }
+                          placeholder="e.g. React, IoT, data analysis"
+                          className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )
+              )}
+            </div>
+          </div>
+
+          <div className="mt-7 flex justify-end gap-3">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowTeamPage(false);
+                setEditingTeam(null);
+              }}
+            >
+              Cancel
+            </Button>
+
+            <Button
+              variant="primary"
+              onClick={saveTeam}
+              disabled={savingTeam}
+            >
+              {savingTeam
+                ? 'Saving...'
+                : editingTeam
+                ? 'Save changes'
+                : 'Create team'}
+            </Button>
+          </div>
+        </Card>
+      </Shell>
+    );
+  }
+
+  /*
+   * ---------------------------------------------------------
+   * DETAILED CHALLENGE BRIEF
+   * ---------------------------------------------------------
+   */
+
+  if (selectedProblem && showBrief) {
+    return (
+      <Shell>
+        <div className="mb-6">
+          <Button
+            variant="outline"
+            onClick={() => setShowBrief(false)}
+          >
+            ← Back to challenge
+          </Button>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+          <Card className="p-6 md:p-8">
+            <Badge tone="green">
+              {selectedProblem.category ||
+                'Community challenge'}
+            </Badge>
+
+            <h1 className="mt-5 font-display text-3xl font-bold md:text-4xl">
+              {selectedProblem.title}
+            </h1>
+
+            <p className="mt-3 text-sm text-muted-foreground">
+              📍 {selectedProblem.district ||
+                'Jharkhand'}
+            </p>
+
+            <div className="mt-8">
+              <h2 className="font-display text-2xl font-bold">
+                The opportunity
+              </h2>
+
+              <p className="mt-4 leading-7 text-muted-foreground">
+                {selectedProblem.description ||
+                  'This validated community problem is ready to be explored by a student team through research, innovation and practical implementation.'}
+              </p>
+            </div>
+
+            <div className="mt-8">
+              <h3 className="text-lg font-bold">
+                What a strong response explores
+              </h3>
+
+              <div className="mt-4 space-y-3 text-sm text-muted-foreground">
+                <p>✓ Understands the local community context.</p>
+                <p>✓ Can be tested through a practical student project.</p>
+                <p>✓ Uses appropriate technical and local knowledge.</p>
+              </div>
+            </div>
+          </Card>
+
+          <div>
+            <Card className="p-6">
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Challenge at a glance
+              </p>
+
+              <div className="mt-6 space-y-5">
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-sm text-muted-foreground">
+                    Category
+                  </span>
+
+                  <span className="text-right text-sm font-bold">
+                    {selectedProblem.category ||
+                      'General'}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-sm text-muted-foreground">
+                    Location
+                  </span>
+
+                  <span className="text-right text-sm font-bold">
+                    {selectedProblem.district ||
+                      'Jharkhand'}
+                  </span>
+                </div>
+
+                <div className="flex items-center justify-between gap-4">
+                  <span className="text-sm text-muted-foreground">
+                    Stage
+                  </span>
+
+                  <Badge tone="green">
+                    Validated
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="mt-7">
+                {applicationStarted ? (
+                  <div className="rounded-xl bg-emerald-50 p-4 text-center text-sm font-bold text-emerald-700">
+                    Application started
+                  </div>
+                ) : (
+                  <Button
+                    variant="primary"
+                    className="w-full"
+                    onClick={startApplication}
+                  >
+                    Apply with a team
+                  </Button>
+                )}
+              </div>
+            </Card>
+          </div>
+        </div>
+      </Shell>
+    );
+  }
+
+  /*
+   * ---------------------------------------------------------
+   * CHALLENGE DETAIL PAGE
+   * ---------------------------------------------------------
+   */
+
+  if (selectedProblem) {
+    return (
+      <Shell>
+        <div className="mb-6">
+          <Button
+            variant="outline"
+            onClick={closeProblem}
+          >
+            ← All innovation challenges
+          </Button>
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+          <Card className="p-6 md:p-8">
+            <Badge tone="green">
+              {selectedProblem.category ||
+                'Community challenge'}
+            </Badge>
+
+            <h1 className="mt-5 font-display text-3xl font-bold md:text-4xl">
+              {selectedProblem.title}
+            </h1>
+
+            <p className="mt-3 text-sm text-muted-foreground">
+              📍 {selectedProblem.district ||
+                'Jharkhand'}
+            </p>
+
+            <div className="mt-8">
+              <h2 className="font-display text-2xl font-bold">
+                The opportunity
+              </h2>
+
+              <p className="mt-4 leading-7 text-muted-foreground">
+                {selectedProblem.description ||
+                  'A validated community challenge ready for student teams to explore through research and innovation.'}
+              </p>
+            </div>
+
+            <Button
+              variant="outline"
+              className="mt-7"
+              onClick={() => setShowBrief(true)}
+            >
+              View brief
+            </Button>
+          </Card>
+
+          <Card className="h-fit p-6">
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Challenge at a glance
+            </p>
+
+            <div className="mt-6 space-y-5">
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-sm text-muted-foreground">
+                  Category
+                </span>
+
+                <span className="text-right text-sm font-bold">
+                  {selectedProblem.category ||
+                    'General'}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-sm text-muted-foreground">
+                  Location
+                </span>
+
+                <span className="text-right text-sm font-bold">
+                  {selectedProblem.district ||
+                    'Jharkhand'}
+                </span>
+              </div>
+
+              <div className="flex items-center justify-between gap-4">
+                <span className="text-sm text-muted-foreground">
+                  Stage
+                </span>
+
+                <Badge tone="green">
+                  Open
+                </Badge>
+              </div>
+            </div>
+
+            <div className="mt-7">
+              {applicationStarted ? (
+                <div className="rounded-xl bg-emerald-50 p-4 text-center text-sm font-bold text-emerald-700">
+                  Application started
+                </div>
+              ) : (
+                <Button
+                  variant="primary"
+                  className="w-full"
+                  onClick={startApplication}
+                >
+                  Apply as a team
+                </Button>
+              )}
+            </div>
+          </Card>
+        </div>
+      </Shell>
+    );
+  }
+
+  /*
+   * ---------------------------------------------------------
+   * MAIN STUDENT / UNIVERSITY DASHBOARD
+   * ---------------------------------------------------------
+   */
+
+  const districtsCovered = new Set(
+    problems
+      .map((problem) => problem.district)
+      .filter(Boolean)
+  ).size;
 
   return (
     <Shell>
@@ -937,44 +1694,246 @@ function UniversityDashboard() {
         eyebrow="University workspace"
         title={`Good morning, ${user?.name || 'User'}.`}
         description="Validated citizen problems ready to become innovation projects."
+        action={
+          <Button
+            variant="primary"
+            onClick={openCreateTeam}
+          >
+            + Create a team
+          </Button>
+        }
       />
 
+      {error && (
+        <div className="mb-6 rounded-xl bg-red-50 p-4 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Metric label="Validated challenges" value={String(problems.length)} detail="Ready to pick up" icon={GraduationCap} tone="primary" />
-        <Metric label="Active projects" value="0" detail="Will connect next" icon={Lightbulb} tone="orange" />
-        <Metric label="Teams formed" value="0" detail="Will connect next" icon={Users} tone="blue" />
-        <Metric label="Districts covered" value="0" detail="Will connect next" icon={Target} tone="green" />
+        <Metric
+          label="Validated challenges"
+          value={String(problems.length)}
+          detail="Ready to pick up"
+          icon={GraduationCap}
+          tone="primary"
+        />
+
+        <Metric
+          label="Active projects"
+          value="0"
+          detail="Will connect next"
+          icon={Lightbulb}
+          tone="orange"
+        />
+
+        <Metric
+          label="Teams formed"
+          value={String(teams.length)}
+          detail={
+            teams.length === 0
+              ? 'Create your first team'
+              : 'Student teams'
+          }
+          icon={Users}
+          tone="blue"
+        />
+
+        <Metric
+          label="Districts covered"
+          value={String(districtsCovered)}
+          detail="Across validated challenges"
+          icon={Target}
+          tone="green"
+        />
       </div>
 
       <div className="mt-7">
         <Card className="p-5 md:p-6">
-          <SectionTitle eyebrow="Open for pickup" title="Innovation challenges" description="Problems validated by Panchayat/ULB and available to your department." />
+          <SectionTitle
+            eyebrow="Open for pickup"
+            title="Innovation challenges"
+            description="Problems validated by Panchayat/ULB and available to student teams."
+          />
 
-          {loading && <div className="py-10 text-center text-sm text-muted-foreground">Loading challenges...</div>}
-          {error && <div className="rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</div>}
-
-          {!loading && !error && problems.length === 0 && (
-            <div className="py-10 text-center">
-              <GraduationCap className="mx-auto text-muted-foreground" size={32} />
-              <p className="mt-3 font-bold">No validated challenges yet</p>
-              <p className="mt-1 text-sm text-muted-foreground">Once Panchayat/ULB validates a problem, it will appear here.</p>
+          {loading && (
+            <div className="py-10 text-center text-sm text-muted-foreground">
+              Loading challenges...
             </div>
           )}
 
-          {!loading && !error && problems.length > 0 && (
-            <div className="space-y-2">
-              {problems.map((p) => (
-                <div key={p.id} className="flex items-center gap-3 rounded-xl border border-border p-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary/45 text-primary">
-                    <Lightbulb size={17} />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-bold">{p.title}</span>
-                    <span className="text-xs text-muted-foreground">{p.district || 'Jharkhand'} · {p.category}</span>
-                  </span>
-                  <Badge tone="green">Validated</Badge>
-                </div>
-              ))}
+          {!loading &&
+            !error &&
+            problems.length === 0 && (
+              <div className="py-10 text-center">
+                <GraduationCap
+                  className="mx-auto text-muted-foreground"
+                  size={32}
+                />
+
+                <p className="mt-3 font-bold">
+                  No validated challenges yet
+                </p>
+
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Once Panchayat/ULB validates a problem,
+                  it will appear here.
+                </p>
+              </div>
+            )}
+
+          {!loading &&
+            !error &&
+            problems.length > 0 && (
+              <div className="space-y-3">
+                {problems.map((problem) => (
+                  <button
+                    key={problem.id}
+                    type="button"
+                    onClick={() => openProblem(problem)}
+                    className="flex w-full items-center gap-4 rounded-2xl border border-border p-4 text-left transition hover:bg-secondary/40"
+                  >
+                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-secondary/60 text-primary">
+                      <Lightbulb size={19} />
+                    </span>
+
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-bold">
+                        {problem.title}
+                      </span>
+
+                      <span className="mt-1 block text-xs text-muted-foreground">
+                        {problem.district ||
+                          'Jharkhand'}{' '}
+                        ·{' '}
+                        {problem.category ||
+                          'General'}
+                      </span>
+                    </span>
+
+                    <Badge tone="green">
+                      Validated
+                    </Badge>
+
+                    <span className="text-lg text-muted-foreground">
+                      →
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+        </Card>
+      </div>
+
+      <div className="mt-7">
+        <Card className="p-5 md:p-6">
+          <div className="flex flex-wrap items-start justify-between gap-4">
+            <SectionTitle
+              eyebrow="University workspace"
+              title="Your teams"
+              description="Bring the right mix of student skills and knowledge together."
+            />
+
+            <Button
+              variant="primary"
+              onClick={openCreateTeam}
+            >
+              + Create a team
+            </Button>
+          </div>
+
+          {teams.length === 0 ? (
+            <div className="py-10 text-center">
+              <Users
+                className="mx-auto text-muted-foreground"
+                size={34}
+              />
+
+              <p className="mt-3 font-bold">
+                No teams yet
+              </p>
+
+              <p className="mt-1 text-sm text-muted-foreground">
+                Create a team to start working on an
+                innovation challenge.
+              </p>
+
+              <Button
+                variant="outline"
+                className="mt-5"
+                onClick={openCreateTeam}
+              >
+                + Create a team
+              </Button>
+            </div>
+          ) : (
+            <div className="mt-5 grid gap-4 md:grid-cols-2">
+              {teams.map((team) => {
+                const members = Array.isArray(
+                  team.members
+                )
+                  ? team.members
+                  : [];
+
+                return (
+                  <Card
+                    key={team.id}
+                    className="p-5"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex items-start gap-3">
+                        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-primary">
+                          <Users size={19} />
+                        </span>
+
+                        <div>
+                          <h3 className="font-display text-xl font-bold">
+                            {team.teamName ||
+                              team.name ||
+                              'Unnamed team'}
+                          </h3>
+
+                          <p className="mt-1 text-sm text-muted-foreground">
+                            {team.challengeTitle ||
+                              team.projectName ||
+                              'No challenge selected'}
+                          </p>
+                        </div>
+                      </div>
+
+                      <Badge
+                        tone={
+                          team.status ===
+                          'Application submitted'
+                            ? 'green'
+                            : 'muted'
+                        }
+                      >
+                        {team.status ||
+                          'Draft'}
+                      </Badge>
+                    </div>
+
+                    <div className="mt-5 border-t border-border pt-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm text-muted-foreground">
+                          👥 {members.length || 0}{' '}
+                          members
+                        </span>
+
+                        <Button
+                          variant="outline"
+                          onClick={() =>
+                            openManageTeam(team)
+                          }
+                        >
+                          Manage
+                        </Button>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
             </div>
           )}
         </Card>
