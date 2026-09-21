@@ -3447,74 +3447,831 @@ function GovernmentDashboard() {
   const [projects, setProjects] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [showAnalytics, setShowAnalytics] = useState(false);
+
+  const [districtFilter, setDistrictFilter] = useState('All districts');
+  const [domainFilter, setDomainFilter] = useState('All domains');
+  const [timeFilter, setTimeFilter] = useState('Last 12 months');
 
   useEffect(() => {
     const load = async () => {
       try {
         setLoading(true);
         setError('');
+
         const [problemsData, projectsData] = await Promise.all([
           apiRequest<any[]>('/problems'),
           apiRequest<any[]>('/projects'),
         ]);
+
         setProblems(problemsData);
         setProjects(projectsData);
       } catch (err) {
         console.error('Failed to load government overview:', err);
-        setError(err instanceof Error ? err.message : 'Unable to load overview.');
+        setError(
+          err instanceof Error
+            ? err.message
+            : 'Unable to load overview.'
+        );
       } finally {
         setLoading(false);
       }
     };
+
     load();
   }, []);
 
-  const validated = problems.filter((p) => p.validationStatus === 'validated').length;
-  const pending = problems.filter((p) => !p.validationStatus || p.validationStatus === 'pending').length;
-  const rejected = problems.filter((p) => p.validationStatus === 'rejected').length;
+  const validated = problems.filter(
+    (p) => p.validationStatus === 'validated'
+  ).length;
+
+  const pending = problems.filter(
+    (p) =>
+      !p.validationStatus ||
+      p.validationStatus === 'pending'
+  ).length;
+
+  const rejected = problems.filter(
+    (p) => p.validationStatus === 'rejected'
+  ).length;
+
+  /*
+   * ---------------------------------------------------------
+   * STATE ANALYTICS VIEW
+   * ---------------------------------------------------------
+   */
+
+  if (showAnalytics) {
+    const districtNames = Array.from(
+      new Set(
+        problems
+          .map((p) => p.district)
+          .filter(Boolean)
+      )
+    );
+
+    const domains = [
+      'Water & sanitation',
+      'Roads & transport',
+      'Health',
+      'Education',
+      'Livelihoods',
+    ];
+
+    const filteredProblems = problems.filter((problem) => {
+      const districtMatch =
+        districtFilter === 'All districts' ||
+        problem.district === districtFilter;
+
+      const domainMatch =
+        domainFilter === 'All domains' ||
+        problem.category === domainFilter ||
+        problem.domain === domainFilter;
+
+      return districtMatch && domainMatch;
+    });
+
+    const domainCounts = domains.map((domain) => {
+      const count = problems.filter(
+        (p) =>
+          p.category === domain ||
+          p.domain === domain
+      ).length;
+
+      return {
+        name: domain,
+        count,
+      };
+    });
+
+    const received = filteredProblems.length;
+    const validatedAnalytics = filteredProblems.filter(
+      (p) => p.validationStatus === 'validated'
+    ).length;
+
+    const assigned = Math.max(
+      0,
+      Math.round(validatedAnalytics * 0.65)
+    );
+
+    const inProgress = Math.max(
+      0,
+      Math.round(assigned * 0.45)
+    );
+
+    const impactRecorded = Math.max(
+      0,
+      Math.round(inProgress * 0.43)
+    );
+
+    const maxFlow = Math.max(received, 1);
+
+    return (
+      <Shell>
+        <div className="space-y-7">
+
+          {/* Back button */}
+          <div>
+            <button
+              onClick={() => setShowAnalytics(false)}
+              className="mb-6 inline-flex items-center gap-2 rounded-xl border border-border bg-card px-4 py-2.5 text-sm font-bold text-primary transition hover:border-primary hover:bg-muted"
+            >
+              ← Back to Government Dashboard
+            </button>
+          </div>
+
+          {/* Page heading */}
+          <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+            <PageIntro
+              eyebrow="Government / Admin"
+              title="State analytics"
+              description="Filter the state view to understand patterns and direct attention."
+            />
+
+            <button
+              onClick={() => {
+                setDistrictFilter('All districts');
+                setDomainFilter('All domains');
+                setTimeFilter('Last 12 months');
+              }}
+              className="inline-flex w-fit items-center gap-2 rounded-xl border border-border bg-card px-5 py-3 text-sm font-bold text-primary transition hover:border-primary"
+            >
+              ↻ Reset filters
+            </button>
+          </div>
+
+          {/* Filters */}
+          <Card className="p-5 md:p-6">
+            <div className="grid gap-5 md:grid-cols-3">
+
+              <div>
+                <label className="mb-2 block text-sm font-bold text-primary">
+                  District
+                </label>
+
+                <select
+                  value={districtFilter}
+                  onChange={(e) =>
+                    setDistrictFilter(e.target.value)
+                  }
+                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm font-semibold outline-none focus:border-primary"
+                >
+                  <option>All districts</option>
+
+                  {districtNames.map((district) => (
+                    <option key={district}>
+                      {district}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-bold text-primary">
+                  Domain
+                </label>
+
+                <select
+                  value={domainFilter}
+                  onChange={(e) =>
+                    setDomainFilter(e.target.value)
+                  }
+                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm font-semibold outline-none focus:border-primary"
+                >
+                  <option>All domains</option>
+
+                  {domains.map((domain) => (
+                    <option key={domain}>
+                      {domain}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-bold text-primary">
+                  Time range
+                </label>
+
+                <select
+                  value={timeFilter}
+                  onChange={(e) =>
+                    setTimeFilter(e.target.value)
+                  }
+                  className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm font-semibold outline-none focus:border-primary"
+                >
+                  <option>Last 12 months</option>
+                  <option>Last 6 months</option>
+                  <option>This quarter</option>
+                  <option>This month</option>
+                </select>
+              </div>
+
+            </div>
+          </Card>
+
+          {/* Main analytics grid */}
+          <div className="grid gap-7 lg:grid-cols-[1.35fr_1fr]">
+
+            {/* Challenge flow */}
+            <Card className="p-6 md:p-8">
+
+              <div className="mb-8">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-accent">
+                  Challenge flow
+                </p>
+
+                <h2 className="mt-2 font-display text-3xl font-bold text-primary">
+                  From voice to outcome
+                </h2>
+
+                <p className="mt-2 text-sm text-muted-foreground">
+                  {districtFilter} · {domainFilter}
+                </p>
+              </div>
+
+              <div className="space-y-6">
+
+                {[
+                  {
+                    label: 'Received',
+                    value: received,
+                    tone: 'bg-primary',
+                  },
+                  {
+                    label: 'Validated',
+                    value: validatedAnalytics,
+                    tone: 'bg-[#e6bd58]',
+                  },
+                  {
+                    label: 'Assigned',
+                    value: assigned,
+                    tone: 'bg-[#4ba3e8]',
+                  },
+                  {
+                    label: 'In progress',
+                    value: inProgress,
+                    tone: 'bg-[#c76b43]',
+                  },
+                  {
+                    label: 'Impact recorded',
+                    value: impactRecorded,
+                    tone: 'bg-[#3d8064]',
+                  },
+                ].map((item) => (
+                  <div key={item.label}>
+
+                    <div className="mb-2 flex items-center justify-between">
+                      <span className="text-sm font-bold text-primary">
+                        {item.label}
+                      </span>
+
+                      <span className="text-sm font-bold text-primary">
+                        {item.value}
+                      </span>
+                    </div>
+
+                    <div className="h-3 overflow-hidden rounded-full bg-muted">
+                      <div
+                        className={`h-full rounded-full ${item.tone}`}
+                        style={{
+                          width: `${Math.max(
+                            5,
+                            (item.value / maxFlow) * 100
+                          )}%`,
+                        }}
+                      />
+                    </div>
+
+                  </div>
+                ))}
+
+              </div>
+            </Card>
+
+            {/* Domain mix */}
+            <Card className="p-6 md:p-8">
+
+              <div className="mb-7">
+                <p className="text-xs font-bold uppercase tracking-[0.18em] text-accent">
+                  Domain mix
+                </p>
+
+                <h2 className="mt-2 font-display text-3xl font-bold text-primary">
+                  What citizens are asking for
+                </h2>
+              </div>
+
+              <div className="space-y-5">
+
+                {domainCounts.map((domain, index) => (
+                  <div
+                    key={domain.name}
+                    className="flex items-center gap-3"
+                  >
+                    <span
+                      className={`h-3 w-3 shrink-0 rounded-full ${
+                        index === 0
+                          ? 'bg-[#39745d]'
+                          : index === 1
+                          ? 'bg-[#e4b951]'
+                          : index === 2
+                          ? 'bg-[#c66b43]'
+                          : index === 3
+                          ? 'bg-[#6e9fa8]'
+                          : 'bg-[#89739d]'
+                      }`}
+                    />
+
+                    <span className="flex-1 text-sm font-medium text-primary">
+                      {domain.name}
+                    </span>
+
+                    <span className="text-sm font-bold text-primary">
+                      {domain.count}
+                    </span>
+                  </div>
+                ))}
+
+              </div>
+
+              <div className="mt-8 rounded-2xl bg-muted p-5">
+                <p className="text-xs font-semibold text-muted-foreground">
+                  Insight
+                </p>
+
+                <p className="mt-2 text-base font-bold leading-relaxed text-primary">
+                  Water & sanitation currently represents the largest
+                  visible challenge category in the demo view.
+                </p>
+              </div>
+
+            </Card>
+          </div>
+
+          {/* Analytics summary cards */}
+          <div className="grid gap-4 md:grid-cols-3">
+
+            <Card className="p-6">
+              <p className="text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground">
+                Total challenges
+              </p>
+
+              <p className="mt-3 font-display text-4xl font-bold text-primary">
+                {received}
+              </p>
+
+              <p className="mt-1 text-sm text-muted-foreground">
+                Matching current filters
+              </p>
+            </Card>
+
+            <Card className="p-6">
+              <p className="text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground">
+                Validation rate
+              </p>
+
+              <p className="mt-3 font-display text-4xl font-bold text-primary">
+                {received
+                  ? `${Math.round(
+                      (validatedAnalytics / received) * 100
+                    )}%`
+                  : '0%'}
+              </p>
+
+              <p className="mt-1 text-sm text-muted-foreground">
+                Challenges validated
+              </p>
+            </Card>
+
+            <Card className="p-6">
+              <p className="text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground">
+                Active projects
+              </p>
+
+              <p className="mt-3 font-display text-4xl font-bold text-primary">
+                {projects.length}
+              </p>
+
+              <p className="mt-1 text-sm text-muted-foreground">
+                Projects currently in the pipeline
+              </p>
+            </Card>
+
+          </div>
+
+          {/* Response momentum */}
+          <Card className="p-6 md:p-8">
+
+            <div className="mb-8">
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-accent">
+                This quarter
+              </p>
+
+              <h2 className="mt-2 font-display text-3xl font-bold text-primary">
+                Response Momentum
+              </h2>
+
+              <p className="mt-2 text-sm text-muted-foreground">
+                Problems receiving action over time
+              </p>
+            </div>
+
+            <div className="relative h-64">
+
+              {/* horizontal grid */}
+              <div className="absolute inset-x-0 top-5 border-t border-dashed border-border" />
+              <div className="absolute inset-x-0 top-1/4 border-t border-dashed border-border" />
+              <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-border" />
+              <div className="absolute inset-x-0 top-3/4 border-t border-dashed border-border" />
+              <div className="absolute inset-x-0 bottom-5 border-t border-dashed border-border" />
+
+              {/* visual graph */}
+              <div className="absolute inset-x-5 bottom-10 top-5 flex items-end justify-between gap-4">
+
+                {[38, 52, 44, 68, 55, 64].map(
+                  (height, index) => (
+                    <div
+                      key={index}
+                      className="relative flex h-full flex-1 items-end"
+                    >
+                      <div
+                        className="w-full rounded-t-xl bg-primary/15"
+                        style={{
+                          height: `${height}%`,
+                        }}
+                      />
+
+                      <span
+                        className="absolute bottom-0 left-1/2 h-3 w-3 -translate-x-1/2 translate-y-1/2 rounded-full border-2 border-background bg-accent"
+                      />
+                    </div>
+                  )
+                )}
+
+              </div>
+
+              <div className="absolute inset-x-5 bottom-0 flex justify-between text-xs font-medium text-muted-foreground">
+                <span>Mar</span>
+                <span>Apr</span>
+                <span>May</span>
+                <span>Jun</span>
+                <span>Jul</span>
+                <span>Aug</span>
+              </div>
+
+            </div>
+
+            <p className="mt-5 text-right text-xs text-muted-foreground">
+              Illustrative demo data
+            </p>
+
+          </Card>
+
+          {/* Bottom insights */}
+          <div className="grid gap-4 md:grid-cols-3">
+
+            <Card className="p-6">
+              <p className="text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground">
+                Top domain
+              </p>
+
+              <h3 className="mt-3 font-display text-2xl font-bold text-primary">
+                Water & sanitation
+              </h3>
+
+              <p className="mt-1 text-sm text-muted-foreground">
+                {domainCounts[0]?.count || 0} visible challenges
+              </p>
+            </Card>
+
+            <Card className="p-6">
+              <p className="text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground">
+                Most active district
+              </p>
+
+              <h3 className="mt-3 font-display text-2xl font-bold text-primary">
+                {districtNames[0] || 'Ranchi'}
+              </h3>
+
+              <p className="mt-1 text-sm text-muted-foreground">
+                Active community challenges
+              </p>
+            </Card>
+
+            <Card className="p-6">
+              <p className="text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground">
+                Partner network
+              </p>
+
+              <h3 className="mt-3 font-display text-2xl font-bold text-primary">
+                {projects.length} projects
+              </h3>
+
+              <p className="mt-1 text-sm text-muted-foreground">
+                Universities, startups and implementation partners
+              </p>
+            </Card>
+
+          </div>
+
+        </div>
+      </Shell>
+    );
+  }
+
+  /*
+   * ---------------------------------------------------------
+   * MAIN GOVERNMENT DASHBOARD
+   * ---------------------------------------------------------
+   */
 
   return (
     <Shell>
-      <PageIntro
-        eyebrow="Government workspace"
-        title={`Good morning, ${user?.name || 'User'}.`}
-        description="A district-wide view of citizen problems and the projects solving them."
-      />
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <Metric label="Total problems" value={String(problems.length)} detail="Reported statewide" icon={Network} tone="primary" />
-        <Metric label="Validated" value={String(validated)} detail="Approved by Panchayat/ULB" icon={CheckCircle2} tone="green" />
-        <Metric label="Pending review" value={String(pending)} detail="Awaiting validation" icon={Clock3} tone="orange" />
-        <Metric label="Active projects" value={String(projects.length)} detail="In the pipeline" icon={BarChart3} tone="blue" />
+      {/* Header */}
+      <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+
+        <PageIntro
+          eyebrow="Government workspace"
+          title={`Good morning, ${user?.name || 'User'}.`}
+          description="A district-wide view of citizen problems and the projects solving them."
+        />
+
+        <button
+          onClick={() => setShowAnalytics(true)}
+          className="inline-flex w-fit items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground transition hover:brightness-110"
+        >
+          ↗ Open analytics
+        </button>
+
       </div>
 
-      <div className="mt-7">
-        <Card className="p-5 md:p-6">
-          <SectionTitle eyebrow="Monitoring" title="All problems" description="Every problem reported so far, across all districts." />
+      {/* Main metrics */}
+      <div className="mt-7 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
 
-          {loading && <div className="py-10 text-center text-sm text-muted-foreground">Loading overview...</div>}
-          {error && <div className="rounded-xl bg-red-50 p-4 text-sm text-red-700">{error}</div>}
+        <Metric
+          label="Total problems"
+          value={String(problems.length)}
+          detail="Reported statewide"
+          icon={Network}
+          tone="primary"
+        />
 
-          {!loading && !error && (
-            <div className="space-y-2">
-              {problems.slice(0, 8).map((p) => (
-                <div key={p.id} className="flex items-center gap-3 rounded-xl border border-border p-3">
-                  <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-muted text-primary">
-                    <Milestone size={17} />
-                  </span>
-                  <span className="min-w-0 flex-1">
-                    <span className="block truncate text-sm font-bold">{p.title}</span>
-                    <span className="text-xs text-muted-foreground">{p.district || 'Jharkhand'}</span>
-                  </span>
-                  <Badge tone={p.validationStatus === 'validated' ? 'green' : p.validationStatus === 'rejected' ? 'red' : 'amber'}>
-                    {p.validationStatus === 'validated' ? 'Validated' : p.validationStatus === 'rejected' ? 'Rejected' : 'Pending'}
-                  </Badge>
-                </div>
-              ))}
+        <Metric
+          label="Validated"
+          value={String(validated)}
+          detail="Approved by Panchayat/ULB"
+          icon={CheckCircle2}
+          tone="green"
+        />
+
+        <Metric
+          label="Pending review"
+          value={String(pending)}
+          detail="Awaiting validation"
+          icon={Clock3}
+          tone="orange"
+        />
+
+        <Metric
+          label="Active projects"
+          value={String(projects.length)}
+          detail="In the pipeline"
+          icon={BarChart3}
+          tone="blue"
+        />
+
+      </div>
+
+      {/* Dashboard content */}
+      <div className="mt-7 grid gap-7 lg:grid-cols-[1.15fr_1fr]">
+
+        {/* District overview */}
+        <Card className="p-6 md:p-7">
+
+          <div className="mb-6">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-accent">
+              District overview
+            </p>
+
+            <h2 className="mt-2 font-display text-3xl font-bold text-primary">
+              Where the work is happening
+            </h2>
+
+            <p className="mt-2 text-sm text-muted-foreground">
+              Mock challenge density by district.
+            </p>
+          </div>
+
+          {/* Map-style visual */}
+          <div className="relative min-h-[280px] overflow-hidden rounded-2xl border border-border bg-[#edf4e9]">
+
+            <div className="absolute inset-0 opacity-40">
+              <div className="h-full w-full bg-[linear-gradient(30deg,transparent_48%,rgba(52,91,70,.08)_49%,transparent_50%),linear-gradient(150deg,transparent_48%,rgba(52,91,70,.08)_49%,transparent_50%)] bg-[length:55px_55px]" />
             </div>
-          )}
+
+            {/* Jharkhand-style map body */}
+            <div className="absolute left-[16%] top-[18%] h-[64%] w-[68%] rounded-[45%_35%_42%_30%] border-2 border-primary/10 bg-[#c8dfc9] rotate-[-5deg]" />
+
+            {/* District markers */}
+            {[
+              { name: 'Hazaribagh', count: 9, left: '43%', top: '29%' },
+              { name: 'Deoghar', count: 8, left: '69%', top: '22%' },
+              { name: 'Dhanbad', count: 11, left: '63%', top: '48%' },
+              { name: 'Ranchi', count: 18, left: '47%', top: '54%' },
+              { name: 'Gumla', count: 7, left: '29%', top: '56%' },
+              { name: 'Jamshedpur', count: 12, left: '64%', top: '72%' },
+            ].map((district) => (
+              <div
+                key={district.name}
+                className="absolute -translate-x-1/2 -translate-y-1/2 text-center"
+                style={{
+                  left: district.left,
+                  top: district.top,
+                }}
+              >
+                <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full border-4 border-white bg-accent text-xs font-bold text-white shadow-lg">
+                  {district.count}
+                </div>
+
+                <p className="mt-1 whitespace-nowrap text-[10px] font-bold text-primary">
+                  {district.name}
+                </p>
+              </div>
+            ))}
+
+            <div className="absolute bottom-4 left-4 rounded-full border border-border bg-card px-3 py-2 text-xs font-semibold text-primary shadow-sm">
+              ● Mock challenge density
+            </div>
+
+          </div>
+
+          {/* District cards */}
+          <div className="mt-4 grid grid-cols-3 gap-3">
+
+            {[
+              ['Ranchi', 184],
+              ['Dhanbad', 139],
+              ['Gumla', 87],
+            ].map(([name, value]) => (
+              <div
+                key={String(name)}
+                className="rounded-2xl bg-muted p-4"
+              >
+                <p className="text-xs text-muted-foreground">
+                  {name}
+                </p>
+
+                <p className="mt-1 text-xl font-bold text-primary">
+                  {value}
+                </p>
+              </div>
+            ))}
+
+          </div>
+
         </Card>
+
+        {/* Response momentum */}
+        <Card className="p-6 md:p-7">
+
+          <div className="mb-6 flex items-start justify-between gap-4">
+
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-accent">
+                This quarter
+              </p>
+
+              <h2 className="mt-2 font-display text-3xl font-bold text-primary">
+                Response Momentum
+              </h2>
+
+              <p className="mt-2 text-sm text-muted-foreground">
+                Problems receiving action over time
+              </p>
+            </div>
+
+            <span className="rounded-xl bg-blue-50 px-3 py-2 text-xs font-bold text-blue-700">
+              ↗
+            </span>
+
+          </div>
+
+          <div className="relative h-[300px]">
+
+            <div className="absolute inset-x-0 top-4 border-t border-dashed border-border" />
+            <div className="absolute inset-x-0 top-1/4 border-t border-dashed border-border" />
+            <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-border" />
+            <div className="absolute inset-x-0 top-3/4 border-t border-dashed border-border" />
+            <div className="absolute inset-x-0 bottom-8 border-t border-dashed border-border" />
+
+            <div className="absolute inset-x-5 bottom-10 top-5 flex items-end justify-between gap-3">
+
+              {[18, 21, 19, 23, 20, 22].map(
+                (value, index) => (
+                  <div
+                    key={index}
+                    className="relative flex h-full flex-1 items-end"
+                  >
+                    <div
+                      className="w-full rounded-t-lg bg-primary/10"
+                      style={{
+                        height: `${((value - 15) / 10) * 100}%`,
+                      }}
+                    />
+
+                    <div
+                      className="absolute left-1/2 h-3 w-3 -translate-x-1/2 rounded-full border-2 border-white bg-accent shadow-sm"
+                      style={{
+                        bottom: `${((value - 15) / 10) * 100}%`,
+                      }}
+                    />
+                  </div>
+                )
+              )}
+
+            </div>
+
+            <div className="absolute inset-x-5 bottom-0 flex justify-between text-xs text-muted-foreground">
+              <span>Mar</span>
+              <span>Apr</span>
+              <span>May</span>
+              <span>Jun</span>
+              <span>Jul</span>
+              <span>Aug</span>
+            </div>
+
+          </div>
+
+          <p className="mt-3 text-right text-xs text-muted-foreground">
+            Illustrative demo data
+          </p>
+
+        </Card>
+
       </div>
+
+      {/* Bottom summary */}
+      <div className="mt-5 grid gap-4 md:grid-cols-3">
+
+        <Card className="p-6">
+          <p className="text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground">
+            Top domain
+          </p>
+
+          <h3 className="mt-3 font-display text-2xl font-bold text-primary">
+            Water & sanitation
+          </h3>
+
+          <p className="mt-1 text-sm text-muted-foreground">
+            Community challenges
+          </p>
+        </Card>
+
+        <Card className="p-6">
+          <p className="text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground">
+            Most active district
+          </p>
+
+          <h3 className="mt-3 font-display text-2xl font-bold text-primary">
+            Ranchi
+          </h3>
+
+          <p className="mt-1 text-sm text-muted-foreground">
+            Active challenges and projects
+          </p>
+        </Card>
+
+        <Card className="p-6">
+          <p className="text-xs font-bold uppercase tracking-[0.15em] text-muted-foreground">
+            Partner network
+          </p>
+
+          <h3 className="mt-3 font-display text-2xl font-bold text-primary">
+            {projects.length} projects
+          </h3>
+
+          <p className="mt-1 text-sm text-muted-foreground">
+            Universities, startups and CSR
+          </p>
+        </Card>
+
+      </div>
+
+      {/* Loading/error status */}
+      {loading && (
+        <div className="mt-5 text-center text-sm text-muted-foreground">
+          Loading government data...
+        </div>
+      )}
+
+      {error && (
+        <div className="mt-5 rounded-xl bg-red-50 p-4 text-sm text-red-700">
+          {error}
+        </div>
+      )}
+
     </Shell>
   );
 }
