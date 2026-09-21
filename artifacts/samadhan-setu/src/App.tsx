@@ -917,13 +917,18 @@ function UniversityDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  const [selectedProblem, setSelectedProblem] = useState<any | null>(null);
+  const [selectedProblem, setSelectedProblem] =
+    useState<any | null>(null);
   const [showBrief, setShowBrief] = useState(false);
-  const [applicationStarted, setApplicationStarted] = useState(false);
+  const [applicationStarted, setApplicationStarted] =
+    useState(false);
 
-  const [showTeamPage, setShowTeamPage] = useState(false);
-  const [editingTeam, setEditingTeam] = useState<any | null>(null);
-  const [savingTeam, setSavingTeam] = useState(false);
+  const [showTeamPage, setShowTeamPage] =
+    useState(false);
+  const [editingTeam, setEditingTeam] =
+    useState<any | null>(null);
+  const [savingTeam, setSavingTeam] =
+    useState(false);
 
   const emptyMember = {
     name: '',
@@ -946,26 +951,41 @@ function UniversityDashboard() {
     ],
   });
 
+  /*
+   * ---------------------------------------------------------
+   * LOAD CHALLENGES + TEAMS
+   * ---------------------------------------------------------
+   */
+
   useEffect(() => {
     const load = async () => {
       try {
         setLoading(true);
         setError('');
 
-        const [problemsData, teamsData] = await Promise.all([
-          apiRequest<any[]>('/problems'),
-          apiRequest<any[]>('/teams'),
-        ]);
+        const [problemsData, teamsData] =
+          await Promise.all([
+            apiRequest<any[]>('/problems'),
+            apiRequest<any[]>('/teams'),
+          ]);
 
         setProblems(
           problemsData.filter(
-            (p) => p.validationStatus === 'validated'
+            (p) =>
+              p.validationStatus === 'validated'
           )
         );
 
-        setTeams(Array.isArray(teamsData) ? teamsData : []);
+        setTeams(
+          Array.isArray(teamsData)
+            ? teamsData
+            : []
+        );
       } catch (err) {
-        console.error('Failed to load university workspace:', err);
+        console.error(
+          'Failed to load university workspace:',
+          err
+        );
 
         setError(
           err instanceof Error
@@ -979,6 +999,12 @@ function UniversityDashboard() {
 
     load();
   }, []);
+
+  /*
+   * ---------------------------------------------------------
+   * CHALLENGE ACTIONS
+   * ---------------------------------------------------------
+   */
 
   const openProblem = (problem: any) => {
     setSelectedProblem(problem);
@@ -995,6 +1021,12 @@ function UniversityDashboard() {
   const startApplication = () => {
     setApplicationStarted(true);
   };
+
+  /*
+   * ---------------------------------------------------------
+   * CREATE TEAM
+   * ---------------------------------------------------------
+   */
 
   const openCreateTeam = () => {
     setEditingTeam(null);
@@ -1015,12 +1047,19 @@ function UniversityDashboard() {
     setShowTeamPage(true);
   };
 
+  /*
+   * ---------------------------------------------------------
+   * MANAGE EXISTING TEAM
+   * ---------------------------------------------------------
+   */
+
   const openManageTeam = (team: any) => {
     setEditingTeam(team);
 
-    const existingMembers = Array.isArray(team.members)
-      ? team.members
-      : [];
+    const existingMembers =
+      Array.isArray(team.members)
+        ? team.members
+        : [];
 
     const members = [
       ...existingMembers,
@@ -1036,27 +1075,59 @@ function UniversityDashboard() {
     ];
 
     setTeamForm({
-      teamName: team.teamName || team.name || '',
-      challengeId: team.challengeId || team.problemId || '',
+      teamName:
+        team.teamName ||
+        team.name ||
+        '',
+
+      challengeId:
+        team.challengeId ||
+        team.problemId ||
+        '',
+
       challengeTitle:
         team.challengeTitle ||
         team.projectName ||
         '',
-      department: team.department || '',
-      members: members.slice(0, 4).map((member: any) => ({
-        name: member?.name || '',
-        rollNumber:
-          member?.rollNumber ||
-          member?.roll_number ||
-          '',
-        department: member?.department || '',
-        year: member?.year || '',
-        skills: member?.skills || '',
-      })),
+
+      department:
+        team.department ||
+        '',
+
+      members: members
+        .slice(0, 4)
+        .map((member: any) => ({
+          name:
+            member?.name ||
+            '',
+
+          rollNumber:
+            member?.rollNumber ||
+            member?.roll_number ||
+            '',
+
+          department:
+            member?.department ||
+            '',
+
+          year:
+            member?.year ||
+            '',
+
+          skills:
+            member?.skills ||
+            '',
+        })),
     });
 
     setShowTeamPage(true);
   };
+
+  /*
+   * ---------------------------------------------------------
+   * UPDATE MEMBER
+   * ---------------------------------------------------------
+   */
 
   const updateMember = (
     index: number,
@@ -1065,34 +1136,47 @@ function UniversityDashboard() {
   ) => {
     setTeamForm((current) => ({
       ...current,
-      members: current.members.map((member, memberIndex) =>
-        memberIndex === index
-          ? {
-              ...member,
-              [field]: value,
-            }
-          : member
+
+      members: current.members.map(
+        (member, memberIndex) =>
+          memberIndex === index
+            ? {
+                ...member,
+                [field]: value,
+              }
+            : member
       ),
     }));
   };
 
+  /*
+   * ---------------------------------------------------------
+   * SAVE TEAM
+   * ---------------------------------------------------------
+   */
+
   const saveTeam = async () => {
     if (!teamForm.teamName.trim()) {
-      setError('Please enter a team name.');
+      setError(
+        'Please enter a team name.'
+      );
       return;
     }
 
-    const activeMembers = teamForm.members.filter(
-      (member) =>
-        member.name.trim() ||
-        member.rollNumber.trim() ||
-        member.department.trim() ||
-        member.year.trim() ||
-        member.skills.trim()
-    );
+    const activeMembers =
+      teamForm.members.filter(
+        (member) =>
+          member.name.trim() ||
+          member.rollNumber.trim() ||
+          member.department.trim() ||
+          member.year.trim() ||
+          member.skills.trim()
+      );
 
     if (activeMembers.length === 0) {
-      setError('Please enter at least one student.');
+      setError(
+        'Please enter at least one student.'
+      );
       return;
     }
 
@@ -1101,44 +1185,67 @@ function UniversityDashboard() {
       setError('');
 
       const payload = {
-        teamName: teamForm.teamName.trim(),
-        name: teamForm.teamName.trim(),
+        teamName:
+          teamForm.teamName.trim(),
+
+        name:
+          teamForm.teamName.trim(),
+
         challengeId:
-          teamForm.challengeId || null,
+          teamForm.challengeId ||
+          null,
+
         problemId:
-          teamForm.challengeId || null,
+          teamForm.challengeId ||
+          null,
+
         challengeTitle:
-          teamForm.challengeTitle || null,
+          teamForm.challengeTitle ||
+          null,
+
         department:
-          teamForm.department || null,
-        members: activeMembers,
-        createdBy: user?.name || 'User',
+          teamForm.department ||
+          null,
+
+        members:
+          activeMembers,
+
+        createdBy:
+          user?.name ||
+          'User',
       };
 
       if (editingTeam) {
-        const updatedTeam = await apiRequest<any>(
-          `/teams/${editingTeam.id}`,
-          {
-            method: 'PATCH',
-            body: JSON.stringify(payload),
-          }
-        );
+        const updatedTeam =
+          await apiRequest<any>(
+            `/teams/${editingTeam.id}`,
+            {
+              method: 'PATCH',
+              body: JSON.stringify(
+                payload
+              ),
+            }
+          );
 
         setTeams((current) =>
           current.map((team) =>
-            team.id === editingTeam.id
+            team.id ===
+            editingTeam.id
               ? updatedTeam
               : team
           )
         );
       } else {
-        const createdTeam = await apiRequest<any>(
-          '/teams',
-          {
-            method: 'POST',
-            body: JSON.stringify(payload),
-          }
-        );
+        const createdTeam =
+          await apiRequest<any>(
+            '/teams',
+            {
+              method: 'POST',
+              body: JSON.stringify(
+                payload
+              ),
+            }
+          );
 
         setTeams((current) => [
           ...current,
@@ -1149,7 +1256,10 @@ function UniversityDashboard() {
       setShowTeamPage(false);
       setEditingTeam(null);
     } catch (err) {
-      console.error('Failed to save team:', err);
+      console.error(
+        'Failed to save team:',
+        err
+      );
 
       setError(
         err instanceof Error
@@ -1209,6 +1319,7 @@ function UniversityDashboard() {
           />
 
           <div className="mt-6 grid gap-4 md:grid-cols-2">
+
             <div>
               <label className="mb-2 block text-sm font-bold">
                 Team name
@@ -1217,10 +1328,13 @@ function UniversityDashboard() {
               <input
                 value={teamForm.teamName}
                 onChange={(e) =>
-                  setTeamForm((current) => ({
-                    ...current,
-                    teamName: e.target.value,
-                  }))
+                  setTeamForm(
+                    (current) => ({
+                      ...current,
+                      teamName:
+                        e.target.value,
+                    })
+                  )
                 }
                 placeholder="e.g. Jal Saathi Collective"
                 className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20"
@@ -1233,12 +1347,17 @@ function UniversityDashboard() {
               </label>
 
               <input
-                value={teamForm.department}
+                value={
+                  teamForm.department
+                }
                 onChange={(e) =>
-                  setTeamForm((current) => ({
-                    ...current,
-                    department: e.target.value,
-                  }))
+                  setTeamForm(
+                    (current) => ({
+                      ...current,
+                      department:
+                        e.target.value,
+                    })
+                  )
                 }
                 placeholder="e.g. Computer Science"
                 className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:ring-2 focus:ring-primary/20"
@@ -1251,18 +1370,29 @@ function UniversityDashboard() {
               </label>
 
               <select
-                value={teamForm.challengeId}
+                value={
+                  teamForm.challengeId
+                }
                 onChange={(e) => {
-                  const problem = problems.find(
-                    (p) => p.id === e.target.value
-                  );
+                  const problem =
+                    problems.find(
+                      (p) =>
+                        p.id ===
+                        e.target.value
+                    );
 
-                  setTeamForm((current) => ({
-                    ...current,
-                    challengeId: e.target.value,
-                    challengeTitle:
-                      problem?.title || '',
-                  }));
+                  setTeamForm(
+                    (current) => ({
+                      ...current,
+
+                      challengeId:
+                        e.target.value,
+
+                      challengeTitle:
+                        problem?.title ||
+                        '',
+                    })
+                  );
                 }}
                 className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
               >
@@ -1270,14 +1400,20 @@ function UniversityDashboard() {
                   Select a challenge
                 </option>
 
-                {problems.map((problem) => (
-                  <option
-                    key={problem.id}
-                    value={problem.id}
-                  >
-                    {problem.title}
-                  </option>
-                ))}
+                {problems.map(
+                  (problem) => (
+                    <option
+                      key={
+                        problem.id
+                      }
+                      value={
+                        problem.id
+                      }
+                    >
+                      {problem.title}
+                    </option>
+                  )
+                )}
               </select>
             </div>
           </div>
@@ -1298,12 +1434,15 @@ function UniversityDashboard() {
                   >
                     <div className="mb-4 flex items-center gap-3">
                       <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary/60 text-primary">
-                        <Users size={17} />
+                        <Users
+                          size={17}
+                        />
                       </span>
 
                       <div>
                         <p className="font-bold">
-                          Student {index + 1}
+                          Student{' '}
+                          {index + 1}
                         </p>
 
                         <p className="text-xs text-muted-foreground">
@@ -1313,18 +1452,22 @@ function UniversityDashboard() {
                     </div>
 
                     <div className="grid gap-4 md:grid-cols-2">
+
                       <div>
                         <label className="mb-2 block text-sm font-bold">
                           Student name
                         </label>
 
                         <input
-                          value={member.name}
+                          value={
+                            member.name
+                          }
                           onChange={(e) =>
                             updateMember(
                               index,
                               'name',
-                              e.target.value
+                              e.target
+                                .value
                             )
                           }
                           placeholder="Full name"
@@ -1338,12 +1481,15 @@ function UniversityDashboard() {
                         </label>
 
                         <input
-                          value={member.rollNumber}
+                          value={
+                            member.rollNumber
+                          }
                           onChange={(e) =>
                             updateMember(
                               index,
                               'rollNumber',
-                              e.target.value
+                              e.target
+                                .value
                             )
                           }
                           placeholder="Roll number"
@@ -1357,12 +1503,15 @@ function UniversityDashboard() {
                         </label>
 
                         <input
-                          value={member.department}
+                          value={
+                            member.department
+                          }
                           onChange={(e) =>
                             updateMember(
                               index,
                               'department',
-                              e.target.value
+                              e.target
+                                .value
                             )
                           }
                           placeholder="Department"
@@ -1376,12 +1525,15 @@ function UniversityDashboard() {
                         </label>
 
                         <input
-                          value={member.year}
+                          value={
+                            member.year
+                          }
                           onChange={(e) =>
                             updateMember(
                               index,
                               'year',
-                              e.target.value
+                              e.target
+                                .value
                             )
                           }
                           placeholder="e.g. 2nd Year"
@@ -1395,18 +1547,22 @@ function UniversityDashboard() {
                         </label>
 
                         <input
-                          value={member.skills}
+                          value={
+                            member.skills
+                          }
                           onChange={(e) =>
                             updateMember(
                               index,
                               'skills',
-                              e.target.value
+                              e.target
+                                .value
                             )
                           }
                           placeholder="e.g. React, IoT, data analysis"
                           className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none"
                         />
                       </div>
+
                     </div>
                   </div>
                 )
@@ -1448,19 +1604,25 @@ function UniversityDashboard() {
    * ---------------------------------------------------------
    */
 
-  if (selectedProblem && showBrief) {
+  if (
+    selectedProblem &&
+    showBrief
+  ) {
     return (
       <Shell>
         <div className="mb-6">
           <Button
             variant="outline"
-            onClick={() => setShowBrief(false)}
+            onClick={() =>
+              setShowBrief(false)
+            }
           >
             ← Back to challenge
           </Button>
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+
           <Card className="p-6 md:p-8">
             <Badge tone="green">
               {selectedProblem.category ||
@@ -1472,7 +1634,8 @@ function UniversityDashboard() {
             </h1>
 
             <p className="mt-3 text-sm text-muted-foreground">
-              📍 {selectedProblem.district ||
+              📍{' '}
+              {selectedProblem.district ||
                 'Jharkhand'}
             </p>
 
@@ -1493,9 +1656,17 @@ function UniversityDashboard() {
               </h3>
 
               <div className="mt-4 space-y-3 text-sm text-muted-foreground">
-                <p>✓ Understands the local community context.</p>
-                <p>✓ Can be tested through a practical student project.</p>
-                <p>✓ Uses appropriate technical and local knowledge.</p>
+                <p>
+                  ✓ Understands the local community context.
+                </p>
+
+                <p>
+                  ✓ Can be tested through a practical student project.
+                </p>
+
+                <p>
+                  ✓ Uses appropriate technical and local knowledge.
+                </p>
               </div>
             </div>
           </Card>
@@ -1507,6 +1678,7 @@ function UniversityDashboard() {
               </p>
 
               <div className="mt-6 space-y-5">
+
                 <div className="flex items-center justify-between gap-4">
                   <span className="text-sm text-muted-foreground">
                     Category
@@ -1538,6 +1710,7 @@ function UniversityDashboard() {
                     Validated
                   </Badge>
                 </div>
+
               </div>
 
               <div className="mt-7">
@@ -1549,7 +1722,9 @@ function UniversityDashboard() {
                   <Button
                     variant="primary"
                     className="w-full"
-                    onClick={startApplication}
+                    onClick={
+                      startApplication
+                    }
                   >
                     Apply with a team
                   </Button>
@@ -1581,6 +1756,7 @@ function UniversityDashboard() {
         </div>
 
         <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
+
           <Card className="p-6 md:p-8">
             <Badge tone="green">
               {selectedProblem.category ||
@@ -1592,7 +1768,8 @@ function UniversityDashboard() {
             </h1>
 
             <p className="mt-3 text-sm text-muted-foreground">
-              📍 {selectedProblem.district ||
+              📍{' '}
+              {selectedProblem.district ||
                 'Jharkhand'}
             </p>
 
@@ -1610,7 +1787,9 @@ function UniversityDashboard() {
             <Button
               variant="outline"
               className="mt-7"
-              onClick={() => setShowBrief(true)}
+              onClick={() =>
+                setShowBrief(true)
+              }
             >
               View brief
             </Button>
@@ -1622,6 +1801,7 @@ function UniversityDashboard() {
             </p>
 
             <div className="mt-6 space-y-5">
+
               <div className="flex items-center justify-between gap-4">
                 <span className="text-sm text-muted-foreground">
                   Category
@@ -1653,6 +1833,7 @@ function UniversityDashboard() {
                   Open
                 </Badge>
               </div>
+
             </div>
 
             <div className="mt-7">
@@ -1664,7 +1845,9 @@ function UniversityDashboard() {
                 <Button
                   variant="primary"
                   className="w-full"
-                  onClick={startApplication}
+                  onClick={
+                    startApplication
+                  }
                 >
                   Apply as a team
                 </Button>
@@ -1678,21 +1861,27 @@ function UniversityDashboard() {
 
   /*
    * ---------------------------------------------------------
-   * MAIN STUDENT / UNIVERSITY DASHBOARD
+   * MAIN UNIVERSITY / STUDENT DASHBOARD
    * ---------------------------------------------------------
    */
 
-  const districtsCovered = new Set(
-    problems
-      .map((problem) => problem.district)
-      .filter(Boolean)
-  ).size;
+  const districtsCovered =
+    new Set(
+      problems
+        .map(
+          (problem) =>
+            problem.district
+        )
+        .filter(Boolean)
+    ).size;
 
   return (
     <Shell>
       <PageIntro
         eyebrow="University workspace"
-        title={`Good morning, ${user?.name || 'User'}.`}
+        title={`Good morning, ${
+          user?.name || 'User'
+        }.`}
         description="Validated citizen problems ready to become innovation projects."
         action={
           <Button
@@ -1711,9 +1900,12 @@ function UniversityDashboard() {
       )}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+
         <Metric
           label="Validated challenges"
-          value={String(problems.length)}
+          value={String(
+            problems.length
+          )}
           detail="Ready to pick up"
           icon={GraduationCap}
           tone="primary"
@@ -1729,7 +1921,9 @@ function UniversityDashboard() {
 
         <Metric
           label="Teams formed"
-          value={String(teams.length)}
+          value={String(
+            teams.length
+          )}
           detail={
             teams.length === 0
               ? 'Create your first team'
@@ -1741,7 +1935,9 @@ function UniversityDashboard() {
 
         <Metric
           label="Districts covered"
-          value={String(districtsCovered)}
+          value={String(
+            districtsCovered
+          )}
           detail="Across validated challenges"
           icon={Target}
           tone="green"
@@ -1750,6 +1946,7 @@ function UniversityDashboard() {
 
       <div className="mt-7">
         <Card className="p-5 md:p-6">
+
           <SectionTitle
             eyebrow="Open for pickup"
             title="Innovation challenges"
@@ -1776,8 +1973,7 @@ function UniversityDashboard() {
                 </p>
 
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Once Panchayat/ULB validates a problem,
-                  it will appear here.
+                  Once Panchayat/ULB validates a problem, it will appear here.
                 </p>
               </div>
             )}
@@ -1786,48 +1982,69 @@ function UniversityDashboard() {
             !error &&
             problems.length > 0 && (
               <div className="space-y-3">
-                {problems.map((problem) => (
-                  <button
-                    key={problem.id}
-                    type="button"
-                    onClick={() => openProblem(problem)}
-                    className="flex w-full items-center gap-4 rounded-2xl border border-border p-4 text-left transition hover:bg-secondary/40"
-                  >
-                    <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-secondary/60 text-primary">
-                      <Lightbulb size={19} />
-                    </span>
 
-                    <span className="min-w-0 flex-1">
-                      <span className="block text-sm font-bold">
-                        {problem.title}
+                {problems.map(
+                  (problem) => (
+                    <button
+                      key={
+                        problem.id
+                      }
+                      type="button"
+                      onClick={() =>
+                        openProblem(
+                          problem
+                        )
+                      }
+                      className="flex w-full items-center gap-4 rounded-2xl border border-border p-4 text-left transition hover:bg-secondary/40"
+                    >
+                      <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-secondary/60 text-primary">
+                        <Lightbulb
+                          size={19}
+                        />
                       </span>
 
-                      <span className="mt-1 block text-xs text-muted-foreground">
-                        {problem.district ||
-                          'Jharkhand'}{' '}
-                        ·{' '}
-                        {problem.category ||
-                          'General'}
+                      <span className="min-w-0 flex-1">
+                        <span className="block text-sm font-bold">
+                          {
+                            problem.title
+                          }
+                        </span>
+
+                        <span className="mt-1 block text-xs text-muted-foreground">
+                          {
+                            problem.district ||
+                              'Jharkhand'
+                          }{' '}
+                          ·{' '}
+                          {
+                            problem.category ||
+                              'General'
+                          }
+                        </span>
                       </span>
-                    </span>
 
-                    <Badge tone="green">
-                      Validated
-                    </Badge>
+                      <Badge tone="green">
+                        Validated
+                      </Badge>
 
-                    <span className="text-lg text-muted-foreground">
-                      →
-                    </span>
-                  </button>
-                ))}
+                      <span className="text-lg text-muted-foreground">
+                        →
+                      </span>
+                    </button>
+                  )
+                )}
+
               </div>
             )}
+
         </Card>
       </div>
 
       <div className="mt-7">
         <Card className="p-5 md:p-6">
+
           <div className="flex flex-wrap items-start justify-between gap-4">
+
             <SectionTitle
               eyebrow="University workspace"
               title="Your teams"
@@ -1836,14 +2053,18 @@ function UniversityDashboard() {
 
             <Button
               variant="primary"
-              onClick={openCreateTeam}
+              onClick={
+                openCreateTeam
+              }
             >
               + Create a team
             </Button>
+
           </div>
 
           {teams.length === 0 ? (
             <div className="py-10 text-center">
+
               <Users
                 className="mx-auto text-muted-foreground"
                 size={34}
@@ -1854,94 +2075,127 @@ function UniversityDashboard() {
               </p>
 
               <p className="mt-1 text-sm text-muted-foreground">
-                Create a team to start working on an
-                innovation challenge.
+                Create a team to start working on an innovation challenge.
               </p>
 
               <Button
                 variant="outline"
                 className="mt-5"
-                onClick={openCreateTeam}
+                onClick={
+                  openCreateTeam
+                }
               >
                 + Create a team
               </Button>
+
             </div>
           ) : (
             <div className="mt-5 grid gap-4 md:grid-cols-2">
-              {teams.map((team) => {
-                const members = Array.isArray(
-                  team.members
-                )
-                  ? team.members
-                  : [];
 
-                return (
-                  <Card
-                    key={team.id}
-                    className="p-5"
-                  >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex items-start gap-3">
-                        <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-primary">
-                          <Users size={19} />
-                        </span>
+              {teams.map(
+                (team) => {
+                  const members =
+                    Array.isArray(
+                      team.members
+                    )
+                      ? team.members
+                      : [];
 
-                        <div>
-                          <h3 className="font-display text-xl font-bold">
-                            {team.teamName ||
-                              team.name ||
-                              'Unnamed team'}
-                          </h3>
+                  return (
+                    <Card
+                      key={
+                        team.id
+                      }
+                      className="p-5"
+                    >
 
-                          <p className="mt-1 text-sm text-muted-foreground">
-                            {team.challengeTitle ||
-                              team.projectName ||
-                              'No challenge selected'}
-                          </p>
+                      <div className="flex items-start justify-between gap-3">
+
+                        <div className="flex items-start gap-3">
+
+                          <span className="flex h-11 w-11 items-center justify-center rounded-xl bg-blue-50 text-primary">
+                            <Users
+                              size={19}
+                            />
+                          </span>
+
+                          <div>
+
+                            <h3 className="font-display text-xl font-bold">
+                              {
+                                team.teamName ||
+                                team.name ||
+                                'Unnamed team'
+                              }
+                            </h3>
+
+                            <p className="mt-1 text-sm text-muted-foreground">
+                              {
+                                team.challengeTitle ||
+                                team.projectName ||
+                                'No challenge selected'
+                              }
+                            </p>
+
+                          </div>
+                        </div>
+
+                        <Badge
+                          tone={
+                            team.status ===
+                            'Application submitted'
+                              ? 'green'
+                              : 'muted'
+                          }
+                        >
+                          {
+                            team.status ||
+                            'Draft'
+                          }
+                        </Badge>
+
+                      </div>
+
+                      <div className="mt-5 border-t border-border pt-4">
+
+                        <div className="flex items-center justify-between">
+
+                          <span className="text-sm text-muted-foreground">
+                            👥{' '}
+                            {
+                              members.length ||
+                              0
+                            }{' '}
+                            members
+                          </span>
+
+                          <Button
+                            variant="outline"
+                            onClick={() =>
+                              openManageTeam(
+                                team
+                              )
+                            }
+                          >
+                            Manage
+                          </Button>
+
                         </div>
                       </div>
 
-                      <Badge
-                        tone={
-                          team.status ===
-                          'Application submitted'
-                            ? 'green'
-                            : 'muted'
-                        }
-                      >
-                        {team.status ||
-                          'Draft'}
-                      </Badge>
-                    </div>
+                    </Card>
+                  );
+                }
+              )}
 
-                    <div className="mt-5 border-t border-border pt-4">
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm text-muted-foreground">
-                          👥 {members.length || 0}{' '}
-                          members
-                        </span>
-
-                        <Button
-                          variant="outline"
-                          onClick={() =>
-                            openManageTeam(team)
-                          }
-                        >
-                          Manage
-                        </Button>
-                      </div>
-                    </div>
-                  </Card>
-                );
-              })}
             </div>
           )}
+
         </Card>
       </div>
     </Shell>
   );
 }
-
 function FacultyDashboard() {
   const user = readStore('ss-user', { name: 'User' });
 
