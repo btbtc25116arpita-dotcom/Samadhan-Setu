@@ -607,6 +607,92 @@ function Report() {
   const [, setLocation] = useLocation(); const [step, setStep] = useState(1); const [submitted, setSubmitted] = useState(false); const [analyzing, setAnalyzing] = useState(false); const [error, setError] = useState(''); const [isListening, setIsListening] = useState(false);
 const recognitionRef = useRef<any>(null);const [form, setForm] = useState({ title: '', description: '', district: 'Ranchi', category: categories[0], location: '', urgency: 'Medium', people: '10–50', evidence: '' });
   const update = (key: keyof typeof form, value: string) => setForm(prev => ({ ...prev, [key]: value }));
+  const toggleVoiceInput = () => {
+  const SpeechRecognition =
+    (window as any).SpeechRecognition ||
+    (window as any).webkitSpeechRecognition;
+
+  if (!SpeechRecognition) {
+    setError(
+      'Voice input is not supported in this browser. Please use Chrome or Edge.'
+    );
+    return;
+  }
+
+  if (isListening) {
+    recognitionRef.current?.stop();
+    return;
+  }
+
+  setError('');
+
+  const recognition = new SpeechRecognition();
+
+  recognition.lang = navigator.language || 'en-IN';
+  recognition.continuous = true;
+  recognition.interimResults = false;
+
+  recognition.onresult = (event: any) => {
+    let spokenText = '';
+
+    for (
+      let i = event.resultIndex;
+      i < event.results.length;
+      i += 1
+    ) {
+      if (event.results[i].isFinal) {
+        spokenText += event.results[i][0].transcript;
+      }
+    }
+
+    if (spokenText.trim()) {
+      setForm((prev) => ({
+        ...prev,
+        description: `${prev.description}${
+          prev.description.trim() ? ' ' : ''
+        }${spokenText.trim()}`.slice(0, 500),
+      }));
+    }
+  };
+
+  recognition.onerror = (event: any) => {
+    console.error('Speech recognition error:', event.error);
+    setIsListening(false);
+
+    if (
+      event.error === 'not-allowed' ||
+      event.error === 'service-not-allowed'
+    ) {
+      setError(
+        'Microphone permission was denied. Please allow microphone access and try again.'
+      );
+    } else if (event.error !== 'aborted') {
+      setError('Voice input stopped. Please try again.');
+    }
+  };
+
+  recognition.onend = () => {
+    setIsListening(false);
+    recognitionRef.current = null;
+  };
+
+  recognitionRef.current = recognition;
+  setIsListening(true);
+
+  try {
+    recognition.start();
+  } catch (error) {
+    console.error('Unable to start voice input:', error);
+    setIsListening(false);
+    recognitionRef.current = null;
+  }
+};
+
+useEffect(() => {
+  return () => {
+    recognitionRef.current?.stop();
+  };
+}, []);
   const assessment = {
     summary: `A local ${form.category.toLowerCase()} challenge in ${form.district} may affect ${form.people} residents and warrants ${form.urgency.toLowerCase()}-priority community follow-up.`,
     problemType: ({ 'Water & sanitation': 'Public Water Infrastructure', 'Roads & transport': 'Local Mobility & Road Safety', Health: 'Community Health Access', Education: 'Public Education Services', Livelihoods: 'Local Livelihood Support', Environment: 'Local Environmental Management' } as Record<string, string>)[form.category] || 'Community Service Access',
