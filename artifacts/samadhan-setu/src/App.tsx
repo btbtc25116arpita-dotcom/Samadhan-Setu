@@ -7,12 +7,12 @@ import { TooltipProvider } from '@/components/ui/tooltip';
 import { Link, Route, Switch, useLocation, useParams, Router as WouterRouter } from 'wouter';
 import { LanguageProvider, LanguageSync, useLanguage } from './i18n';
 import {
-  Activity, AlertCircle, ArrowLeft, ArrowRight, BarChart3, Bell, Building2, CalendarDays,
-  Check, CheckCircle2, ChevronDown, ClipboardCheck, Clock3, FileText, Filter, GraduationCap,
-  HandHeart, HelpCircle, House, IndianRupee, LayoutDashboard, Lightbulb, ListChecks, LockKeyhole,
-  LogIn, LogOut, Mail, MapPin, MessageSquare, Milestone, MoreHorizontal, Network,
-  Pencil, Phone, Plus, Search, Send, Settings, ShieldCheck, Sparkles, Target, TrendingUp,
-  Upload, UserCircle2, Users, X, Zap, Droplets, Landmark, BriefcaseBusiness,Mic, MicOff
+ Activity, AlertCircle, ArrowLeft, ArrowRight, BarChart3, Bell, Building2, CalendarDays,
+Camera, Check, CheckCircle2, ChevronDown, ClipboardCheck, Clock3, FileText, Filter, GraduationCap,
+HandHeart, HelpCircle, House, IndianRupee, LayoutDashboard, Lightbulb, ListChecks, LockKeyhole,
+LogIn, LogOut, Mail, MapPin, MessageSquare, Mic, MicOff, Milestone, MoreHorizontal, Network,
+Pencil, Phone, Plus, Search, Send, Settings, ShieldCheck, Sparkles, Target, TrendingUp,
+Upload, UserCircle2, Users, X, Zap, Droplets, Landmark, BriefcaseBusiness
 } from 'lucide-react';
 
 const queryClient = new QueryClient();
