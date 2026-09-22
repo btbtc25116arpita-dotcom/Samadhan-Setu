@@ -3254,9 +3254,9 @@ function UniversityDashboard() {
     <Shell>
       <PageIntro
         eyebrow="University workspace"
-        title={`Good morning, ${
-          user?.name || 'User'
-        }.`}
+        title={`${getGreeting()}, ${
+  user?.name || 'User'
+}.`}
         description="Validated citizen problems ready to become innovation projects."
         action={
           <Button
