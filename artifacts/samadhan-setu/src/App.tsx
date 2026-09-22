@@ -14,6 +14,23 @@ LogIn, LogOut, Mail, MapPin, MessageSquare, Mic, MicOff, Milestone, MoreHorizont
 Pencil, Phone, Plus, Search, Send, Settings, ShieldCheck, Sparkles, Target, TrendingUp,
 Upload, UserCircle2, Users, X, Zap, Droplets, Landmark, BriefcaseBusiness
 } from 'lucide-react';
+function getGreeting() {
+  const hour = new Date().getHours();
+
+  if (hour >= 5 && hour < 12) {
+    return "Good morning";
+  }
+
+  if (hour >= 12 && hour < 17) {
+    return "Good afternoon";
+  }
+
+  if (hour >= 17 && hour < 21) {
+    return "Good evening";
+  }
+
+  return "Good night";
+}
 
 const queryClient = new QueryClient();
 const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL || '').replace(/\/$/, '');
