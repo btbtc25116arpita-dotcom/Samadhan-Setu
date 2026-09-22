@@ -5780,7 +5780,7 @@ function GovernmentDashboard() {
       <div className="mb-8 flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
         <PageIntro
           eyebrow="Government workspace"
-          title={`Good morning, ${user?.name || 'User'}.`}
+         title={`${getGreeting()}, ${user?.name || 'User'}.`}
           description="A district-wide view of citizen problems and the projects solving them."
         />
 
