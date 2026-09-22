@@ -2159,7 +2159,7 @@ function CommunityDashboard() {
     <Shell>
       <PageIntro
         eyebrow="Community manager"
-        title={`Good morning, ${user?.name || 'User'}.`}
+        title={`${getGreeting()}, ${user?.name || 'User'}.`}
         description="A clear view of the challenges waiting for a fair, local response."
         action={
           <Link
