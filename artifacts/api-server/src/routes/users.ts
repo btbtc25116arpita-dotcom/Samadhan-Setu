@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { eq } from "drizzle-orm";
 import { randomBytes, randomUUID, scryptSync } from "node:crypto";
 import { db, users } from "@workspace/db";
 
@@ -174,7 +175,107 @@ router.post("/login", async (req, res) => {
     });
   }
 });
+// UPDATE USER PROFILE
+router.patch("/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, email, phone } = req.body;
 
+    if (!id) {
+      return res.status(400).json({
+        error: "User ID is required",
+      });
+    }
+
+    if (name !== undefined && !String(name).trim()) {
+      return res.status(400).json({
+        error: "Name cannot be empty",
+      });
+    }
+
+    if (email !== undefined && !String(email).trim()) {
+      return res.status(400).json({
+        error: "Email cannot be empty",
+      });
+    }
+
+    if (email !== undefined) {
+      const existingUser = await db
+        .select({
+          id: users.id,
+        })
+        .from(users)
+        .where(eq(users.email, String(email).trim().toLowerCase()));
+
+      if (existingUser.length > 0 && existingUser[0].id !== id) {
+        return res.status(409).json({
+          error: "A user with this email already exists",
+        });
+      }
+    }
+
+    const updateData: {
+      name?: string;
+      email?: string;
+      phone?: string | null;
+      updatedAt?: Date;
+    } = {
+      updatedAt: new Date(),
+    };
+
+    if (name !== undefined) {
+      updateData.name = String(name).trim();
+    }
+
+    if (email !== undefined) {
+      updateData.email = String(email).trim().toLowerCase();
+    }
+
+    if (phone !== undefined) {
+      updateData.phone = phone ? String(phone).trim() : null;
+    }
+
+    const [updatedUser] = await db
+      .update(users)
+      .set(updateData)
+      .where(eq(users.id, id))
+      .returning({
+        id: users.id,
+        name: users.name,
+        email: users.email,
+        phone: users.phone,
+        role: users.role,
+        district: users.district,
+        organizationName: users.organizationName,
+        verified: users.verified,
+        createdAt: users.createdAt,
+        updatedAt: users.updatedAt,
+      });
+
+    if (!updatedUser) {
+      return res.status(404).json({
+        error: "User not found",
+      });
+    }
+
+    return res.json(updatedUser);
+  } catch (error: any) {
+    console.error("Error updating user:", error);
+
+    if (error?.code === "23505") {
+      return res.status(409).json({
+        error: "A user with this email already exists",
+      });
+    }
+
+    return res.status(500).json({
+      error: "Failed to update profile",
+    });
+  }
+});
+
+// GET USERS
+router.get("/", async (_req, res) => {
 // GET USERS
 router.get("/", async (_req, res) => {
   try {
