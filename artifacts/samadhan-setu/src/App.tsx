@@ -123,10 +123,6 @@ const [editValue, setEditValue] = useState('');
 const [savingProfile, setSavingProfile] = useState(false);
 const [profileError, setProfileError] = useState('');
 
-  const [editingField, setEditingField] = useState<
-    'name' | 'email' | 'phone' | null
-  >(null);
-
   const [editValue, setEditValue] = useState('');
   const [savingProfile, setSavingProfile] = useState(false);
   const [profileError, setProfileError] = useState('');
@@ -227,51 +223,6 @@ const [profileError, setProfileError] = useState('');
     setSavingProfile(false);
   }
 };
-
-  const saveProfileField = async () => {
-    if (!user?.id) {
-      setProfileError('User information is missing. Please log in again.');
-      return;
-    }
-
-    if (!editValue.trim()) {
-      setProfileError(
-        `${editingField === 'name'
-          ? 'Name'
-          : editingField === 'email'
-            ? 'Email'
-            : 'Mobile number'} cannot be empty.`
-      );
-      return;
-    }
-
-    if (
-      editingField === 'phone' &&
-      !/^[0-9]{10}$/.test(editValue.trim())
-    ) {
-      setProfileError('Please enter a valid 10 digit mobile number.');
-      return;
-    }
-
-    if (
-      editingField === 'email' &&
-      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editValue.trim())
-    ) {
-      setProfileError('Please enter a valid email address.');
-      return;
-    }
-
-    setSavingProfile(true);
-    setProfileError('');
-
-    try {
-      const payload =
-        editingField === 'name'
-          ? { name: editValue.trim() }
-          : editingField === 'email'
-            ? { email: editValue.trim() }
-            : { phone: editValue.trim() };
-
       const updatedUser = await apiRequest<any>(
         `/users/${user.id}`,
         {
