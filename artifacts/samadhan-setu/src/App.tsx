@@ -12,7 +12,7 @@ import {
   HandHeart, HelpCircle, House, IndianRupee, LayoutDashboard, Lightbulb, ListChecks, LockKeyhole,
   LogIn, LogOut, Mail, MapPin, MessageSquare, Milestone, MoreHorizontal, Network,
   Pencil, Phone, Plus, Search, Send, Settings, ShieldCheck, Sparkles, Target, TrendingUp,
-  Upload, UserCircle2, Users, X, Zap, Droplets, Landmark, BriefcaseBusiness
+  Upload, UserCircle2, Users, X, Zap, Droplets, Landmark, BriefcaseBusiness,Mic, MicOff
 } from 'lucide-react';
 
 const queryClient = new QueryClient();
