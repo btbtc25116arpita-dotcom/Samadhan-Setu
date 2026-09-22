@@ -123,10 +123,6 @@ const [editValue, setEditValue] = useState('');
 const [savingProfile, setSavingProfile] = useState(false);
 const [profileError, setProfileError] = useState('');
 
-  const [editValue, setEditValue] = useState('');
-  const [savingProfile, setSavingProfile] = useState(false);
-  const [profileError, setProfileError] = useState('');
-
   const role = currentRole();
   const info = roleInfo[role];
   const unread = readStore<number>('ss-unread', 3);
