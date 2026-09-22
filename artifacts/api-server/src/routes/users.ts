@@ -11,7 +11,10 @@ function hashPassword(password: string): string {
   return `${salt}:${hash}`;
 }
 
-function verifyPassword(password: string, storedPassword: string): boolean {
+function verifyPassword(
+  password: string,
+  storedPassword: string,
+): boolean {
   const [salt, storedHash] = storedPassword.split(":");
 
   if (!salt || !storedHash) return false;
@@ -123,7 +126,8 @@ router.post("/login", async (req, res) => {
 
     const user = allUsers.find(
       (u) =>
-        u.email.toLowerCase() === String(identifier).toLowerCase() ||
+        u.email.toLowerCase() ===
+          String(identifier).toLowerCase() ||
         u.phone === String(identifier),
     );
 
@@ -135,11 +139,15 @@ router.post("/login", async (req, res) => {
 
     if (!user.passwordHash) {
       return res.status(401).json({
-        error: "This account does not have a password. Please register again.",
+        error:
+          "This account does not have a password. Please register again.",
       });
     }
 
-    const valid = verifyPassword(password, user.passwordHash);
+    const valid = verifyPassword(
+      password,
+      user.passwordHash,
+    );
 
     if (!valid) {
       return res.status(401).json({
@@ -175,6 +183,7 @@ router.post("/login", async (req, res) => {
     });
   }
 });
+
 // UPDATE USER PROFILE
 router.patch("/:id", async (req, res) => {
   try {
@@ -187,29 +196,43 @@ router.patch("/:id", async (req, res) => {
       });
     }
 
-    if (name !== undefined && !String(name).trim()) {
+    if (
+      name !== undefined &&
+      !String(name).trim()
+    ) {
       return res.status(400).json({
         error: "Name cannot be empty",
       });
     }
 
-    if (email !== undefined && !String(email).trim()) {
+    if (
+      email !== undefined &&
+      !String(email).trim()
+    ) {
       return res.status(400).json({
         error: "Email cannot be empty",
       });
     }
 
     if (email !== undefined) {
+      const normalizedEmail = String(email)
+        .trim()
+        .toLowerCase();
+
       const existingUser = await db
         .select({
           id: users.id,
         })
         .from(users)
-        .where(eq(users.email, String(email).trim().toLowerCase()));
+        .where(eq(users.email, normalizedEmail));
 
-      if (existingUser.length > 0 && existingUser[0].id !== id) {
+      if (
+        existingUser.length > 0 &&
+        existingUser[0].id !== id
+      ) {
         return res.status(409).json({
-          error: "A user with this email already exists",
+          error:
+            "A user with this email already exists",
         });
       }
     }
@@ -228,11 +251,15 @@ router.patch("/:id", async (req, res) => {
     }
 
     if (email !== undefined) {
-      updateData.email = String(email).trim().toLowerCase();
+      updateData.email = String(email)
+        .trim()
+        .toLowerCase();
     }
 
     if (phone !== undefined) {
-      updateData.phone = phone ? String(phone).trim() : null;
+      updateData.phone = phone
+        ? String(phone).trim()
+        : null;
     }
 
     const [updatedUser] = await db
@@ -264,7 +291,8 @@ router.patch("/:id", async (req, res) => {
 
     if (error?.code === "23505") {
       return res.status(409).json({
-        error: "A user with this email already exists",
+        error:
+          "A user with this email already exists",
       });
     }
 
@@ -274,8 +302,6 @@ router.patch("/:id", async (req, res) => {
   }
 });
 
-// GET USERS
-router.get("/", async (_req, res) => {
 // GET USERS
 router.get("/", async (_req, res) => {
   try {
