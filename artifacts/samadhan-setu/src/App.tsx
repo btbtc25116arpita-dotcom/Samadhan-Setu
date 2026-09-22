@@ -604,208 +604,927 @@ function MapMock({ filter = 'All' }: { filter?: string }) {
 function Dashboard() { const role = currentRole(); if (role === 'government') return <GovernmentDashboard />; if (role === 'industry') return <IndustryDashboard />; if (role === 'faculty') return <FacultyDashboard />; if (role === 'student') return <UniversityDashboard />; if ((role === 'panchayat' || role === 'ulb')) return <CommunityDashboard />; const [, setLocation] = useLocation(); const problems = readStore('ss-problems', initialProblems); return <Shell><PageIntro eyebrow="Citizen workspace" title={`Good morning, ${readStore('ss-user', { name: 'User' })?.name || 'User'}.`} description="Small observations become shared action. Here’s what’s moving in your communities." action={<Link href="/citizen/report" className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition hover:brightness-110" data-testid="link-report-header"><Plus size={17} />Report a problem</Link>} /><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><Metric label="My submissions" value="06" detail="+2 since last month" icon={FileText} tone="primary" /><Metric label="Community votes" value="148" detail="Across 4 challenges" icon={Users} tone="orange" /><Metric label="In motion" value="03" detail="Projects near you" icon={Activity} tone="green" /><Metric label="Impact reached" value="1,240" detail="Households in pilot" icon={Target} tone="blue" /></div><div className="mt-7 grid gap-6 lg:grid-cols-[1.35fr_.65fr]"><Card className="p-5 md:p-6"><SectionTitle eyebrow="See your district" title="What’s happening nearby?" description="A mock view of community challenges across Jharkhand." action={<select className="rounded-lg border border-border bg-background px-2 py-2 text-xs font-semibold" data-testid="select-map-category"><option>All categories</option>{categories.map(c => <option key={c}>{c}</option>)}</select>} /><MapMock /><div className="mt-4 flex flex-wrap gap-2">{['Ranchi', 'Jamshedpur', 'Gumla', 'Deoghar'].map(d => <span key={d} className="rounded-lg bg-muted px-2.5 py-1.5 text-xs font-semibold text-muted-foreground">{d}</span>)}</div></Card><Card className="p-5 md:p-6"><SectionTitle eyebrow="Quick actions" title="Make a difference" /><div className="space-y-2">{[{ label: 'Report a local problem', href: '/citizen/report', icon: Plus, tone: 'bg-orange-100 text-accent' }, { label: 'Track my submissions', href: '/citizen/submissions', icon: ListChecks, tone: 'bg-sky-100 text-sky-700' }, { label: 'Explore innovation', href: '/university/challenges', icon: Lightbulb, tone: 'bg-secondary text-primary' }].map(action => <Link key={action.label} href={action.href} className="group flex items-center gap-3 rounded-xl border border-border p-3 transition hover:border-primary hover:bg-muted" data-testid={`link-quick-${action.label.toLowerCase().replaceAll(' ', '-')}`}><span className={cx('flex h-9 w-9 items-center justify-center rounded-lg', action.tone)}><Icon icon={action.icon} size={17} /></span><span className="flex-1 text-sm font-bold">{action.label}</span><ArrowRight size={16} className="text-muted-foreground transition group-hover:translate-x-1" /></Link>)}</div><div className="mt-7 border-t border-border pt-5"><p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Your voice counts</p><p className="mt-2 font-display text-2xl font-bold text-primary">1 in 4</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">validated challenges in your block received citizen evidence.</p></div></Card></div><div className="mt-7"><SectionTitle eyebrow="Recent activity" title="Your submissions" action={<Link href="/citizen/submissions" className="text-sm font-bold text-primary" data-testid="link-view-all-submissions">View all <ArrowRight className="ml-1 inline" size={15} /></Link>} /><div className="grid gap-3 md:grid-cols-2">{problems.slice(0, 4).map((p: typeof initialProblems[number]) => <button key={p.id} onClick={() => setLocation(`/citizen/submissions/${p.id}`)} className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-4 text-left transition hover:-translate-y-0.5 hover:border-primary" data-testid={`card-submission-${p.id}`}><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted text-primary"><MapPin size={18} /></span><span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold">{p.title}</span><span className="mt-1 block text-xs text-muted-foreground">{p.district} · {p.age}</span></span><Badge tone={p.status === 'In progress' ? 'green' : p.status === 'Assigned' ? 'blue' : 'amber'}>{p.status}</Badge></button>)}</div></div></Shell>; }
 
 function Report() {
-  const [, setLocation] = useLocation(); const [step, setStep] = useState(1); const [submitted, setSubmitted] = useState(false); const [analyzing, setAnalyzing] = useState(false); const [error, setError] = useState(''); const [isListening, setIsListening] = useState(false);
-const recognitionRef = useRef<any>(null);const [form, setForm] = useState({ title: '', description: '', district: 'Ranchi', category: categories[0], location: '', urgency: 'Medium', people: '10–50', evidence: '' });
-  const update = (key: keyof typeof form, value: string) => setForm(prev => ({ ...prev, [key]: value }));
+  const [, setLocation] = useLocation();
+
+  const [step, setStep] = useState(1);
+  const [submitted, setSubmitted] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [error, setError] = useState('');
+  const [isListening, setIsListening] = useState(false);
+
+  // Existing voice recognition
+  const recognitionRef = useRef<any>(null);
+
+  // Camera
+  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
+
+  const [cameraOpen, setCameraOpen] = useState(false);
+  const [cameraPreview, setCameraPreview] = useState('');
+
+  const [form, setForm] = useState({
+    title: '',
+    description: '',
+    district: 'Ranchi',
+    category: categories[0],
+    location: '',
+    urgency: 'Medium',
+    people: '10–50',
+    evidence: ''
+  });
+
+  const update = (key: keyof typeof form, value: string) =>
+    setForm(prev => ({ ...prev, [key]: value }));
+
+  // -----------------------------
+  // EXISTING VOICE INPUT
+  // -----------------------------
   const toggleVoiceInput = () => {
-  const SpeechRecognition =
-    (window as any).SpeechRecognition ||
-    (window as any).webkitSpeechRecognition;
+    const SpeechRecognition =
+      (window as any).SpeechRecognition ||
+      (window as any).webkitSpeechRecognition;
 
-  if (!SpeechRecognition) {
-    setError(
-      'Voice input is not supported in this browser. Please use Chrome or Edge.'
-    );
-    return;
-  }
-
-  if (isListening) {
-    recognitionRef.current?.stop();
-    return;
-  }
-
-  setError('');
-
-  const recognition = new SpeechRecognition();
-
-  recognition.lang = navigator.language || 'en-IN';
-  recognition.continuous = true;
-  recognition.interimResults = false;
-
-  recognition.onresult = (event: any) => {
-    let spokenText = '';
-
-    for (
-      let i = event.resultIndex;
-      i < event.results.length;
-      i += 1
-    ) {
-      if (event.results[i].isFinal) {
-        spokenText += event.results[i][0].transcript;
-      }
-    }
-
-    if (spokenText.trim()) {
-      setForm((prev) => ({
-        ...prev,
-        description: `${prev.description}${
-          prev.description.trim() ? ' ' : ''
-        }${spokenText.trim()}`.slice(0, 500),
-      }));
-    }
-  };
-
-  recognition.onerror = (event: any) => {
-    console.error('Speech recognition error:', event.error);
-    setIsListening(false);
-
-    if (
-      event.error === 'not-allowed' ||
-      event.error === 'service-not-allowed'
-    ) {
+    if (!SpeechRecognition) {
       setError(
-        'Microphone permission was denied. Please allow microphone access and try again.'
+        'Voice input is not supported in this browser. Please use Chrome or Edge.'
       );
-    } else if (event.error !== 'aborted') {
-      setError('Voice input stopped. Please try again.');
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current?.stop();
+      return;
+    }
+
+    setError('');
+
+    const recognition = new SpeechRecognition();
+
+    recognition.lang = navigator.language || 'en-IN';
+    recognition.continuous = true;
+    recognition.interimResults = false;
+
+    recognition.onresult = (event: any) => {
+      let spokenText = '';
+
+      for (
+        let i = event.resultIndex;
+        i < event.results.length;
+        i += 1
+      ) {
+        if (event.results[i].isFinal) {
+          spokenText += event.results[i][0].transcript;
+        }
+      }
+
+      if (spokenText.trim()) {
+        setForm(prev => ({
+          ...prev,
+          description: `${prev.description}${
+            prev.description.trim() ? ' ' : ''
+          }${spokenText.trim()}`.slice(0, 500)
+        }));
+      }
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error('Speech recognition error:', event.error);
+      setIsListening(false);
+
+      if (
+        event.error === 'not-allowed' ||
+        event.error === 'service-not-allowed'
+      ) {
+        setError(
+          'Microphone permission was denied. Please allow microphone access and try again.'
+        );
+      } else if (event.error !== 'aborted') {
+        setError('Voice input stopped. Please try again.');
+      }
+    };
+
+    recognition.onend = () => {
+      setIsListening(false);
+      recognitionRef.current = null;
+    };
+
+    recognitionRef.current = recognition;
+    setIsListening(true);
+
+    try {
+      recognition.start();
+    } catch (error) {
+      console.error('Unable to start voice input:', error);
+      setIsListening(false);
+      recognitionRef.current = null;
     }
   };
 
-  recognition.onend = () => {
-    setIsListening(false);
-    recognitionRef.current = null;
+  // -----------------------------
+  // CAMERA
+  // -----------------------------
+  const startCamera = async () => {
+    setError('');
+
+    if (!navigator.mediaDevices?.getUserMedia) {
+      setError(
+        'Camera access is not supported in this browser. Please use Chrome or Edge.'
+      );
+      return;
+    }
+
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          facingMode: { ideal: 'environment' },
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
+      });
+
+      cameraStreamRef.current = stream;
+      setCameraOpen(true);
+
+      // Wait for video element to appear
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play().catch(() => {});
+        }
+      }, 50);
+    } catch (err) {
+      console.error('Camera access error:', err);
+      setCameraOpen(false);
+
+      setError(
+        'Camera permission was denied. Please allow camera access and try again.'
+      );
+    }
   };
 
-  recognitionRef.current = recognition;
-  setIsListening(true);
+  const stopCamera = () => {
+    cameraStreamRef.current?.getTracks().forEach(track => track.stop());
+    cameraStreamRef.current = null;
 
-  try {
-    recognition.start();
-  } catch (error) {
-    console.error('Unable to start voice input:', error);
-    setIsListening(false);
-    recognitionRef.current = null;
-  }
-};
+    if (videoRef.current) {
+      videoRef.current.srcObject = null;
+    }
 
-useEffect(() => {
-  return () => {
-    recognitionRef.current?.stop();
+    setCameraOpen(false);
   };
-}, []);
+
+  const capturePhoto = () => {
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+
+    if (!video || !canvas) {
+      setError('Unable to capture the photo. Please try again.');
+      return;
+    }
+
+    if (!video.videoWidth || !video.videoHeight) {
+      setError('Camera is still loading. Please wait a moment and try again.');
+      return;
+    }
+
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    const context = canvas.getContext('2d');
+
+    if (!context) {
+      setError('Unable to capture the photo. Please try again.');
+      return;
+    }
+
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const imageData = canvas.toDataURL('image/jpeg', 0.85);
+
+    setCameraPreview(imageData);
+
+    // Keep the existing evidence field behaviour.
+    update('evidence', `Camera photo ${new Date().toLocaleString()}`);
+
+    stopCamera();
+  };
+
+  const retakePhoto = () => {
+    setCameraPreview('');
+    update('evidence', '');
+    startCamera();
+  };
+
+  // Cleanup camera + microphone when leaving page
+  useEffect(() => {
+    return () => {
+      recognitionRef.current?.stop();
+      cameraStreamRef.current?.getTracks().forEach(track => track.stop());
+    };
+  }, []);
+
   const assessment = {
     summary: `A local ${form.category.toLowerCase()} challenge in ${form.district} may affect ${form.people} residents and warrants ${form.urgency.toLowerCase()}-priority community follow-up.`,
-    problemType: ({ 'Water & sanitation': 'Public Water Infrastructure', 'Roads & transport': 'Local Mobility & Road Safety', Health: 'Community Health Access', Education: 'Public Education Services', Livelihoods: 'Local Livelihood Support', Environment: 'Local Environmental Management' } as Record<string, string>)[form.category] || 'Community Service Access',
+
+    problemType:
+      ({
+        'Water & sanitation': 'Public Water Infrastructure',
+        'Roads & transport': 'Local Mobility & Road Safety',
+        Health: 'Community Health Access',
+        Education: 'Public Education Services',
+        Livelihoods: 'Local Livelihood Support',
+        Environment: 'Local Environmental Management'
+      } as Record<string, string>)[form.category] ||
+      'Community Service Access',
+
     severity: form.urgency,
+
     impact: `${form.people} people potentially affected`,
+
     likelyIssue: `${form.category} service gap or local maintenance requirement`,
+
     recommendedAction: `Review the reported ${form.category.toLowerCase()} issue on site, confirm the need, and route it for local action.`,
-    authority: form.category === 'Water & sanitation' ? 'Panchayat / Local Water & Sanitation Authority' : 'Panchayat / Relevant Local Authority',
-    priority: form.urgency === 'High' ? 'Immediate local intervention' : form.urgency === 'Low' ? 'Monitor and address locally' : 'Needs local intervention',
+
+    authority:
+      form.category === 'Water & sanitation'
+        ? 'Panchayat / Local Water & Sanitation Authority'
+        : 'Panchayat / Relevant Local Authority',
+
+    priority:
+      form.urgency === 'High'
+        ? 'Immediate local intervention'
+        : form.urgency === 'Low'
+          ? 'Monitor and address locally'
+          : 'Needs local intervention'
   };
-const next = async () => {
-  setError('');
 
-  if (step === 1 && (!form.title || form.description.length < 12)) {
-    setError('Add a clear title and a little more detail so others can understand the challenge.');
-    return;
-  }
+  const next = async () => {
+    setError('');
 
-  if (step === 2 && !form.location) {
-    setError('Please add a village, ward, landmark or pin description.');
-    return;
-  }
+    if (step === 1 && (!form.title || form.description.length < 12)) {
+      setError(
+        'Add a clear title and a little more detail so others can understand the challenge.'
+      );
+      return;
+    }
 
-  if (step < 5) {
-    setStep(step + 1);
-    return;
-  }
+    if (step === 2 && !form.location) {
+      setError('Please add a village, ward, landmark or pin description.');
+      return;
+    }
 
-  setAnalyzing(true);
+    if (step < 5) {
+      setStep(step + 1);
+      return;
+    }
 
-  try {
-    const user = readStore('ss-user', null) as {
-      id?: string;
-      name?: string;
-      email?: string;
-      role?: string;
-    } | null;
+    setAnalyzing(true);
 
-    const id = `SS-JH-${new Date().getFullYear()}-${String(Date.now()).slice(-8)}`;
+    try {
+      const user = readStore('ss-user', null) as {
+        id?: string;
+        name?: string;
+        email?: string;
+        role?: string;
+      } | null;
 
-    const created = await apiRequest('/problems', {
-      method: 'POST',
-      body: JSON.stringify({
-        id,
-        title: form.title,
-        description: form.description,
-        category: form.category,
-        district: form.district,
-        location: form.location,
-        urgency: form.urgency,
-        people: form.people,
-        evidence: form.evidence,
-        status: 'Under review',
-        votes: 0,
-        reportedBy: user?.id || '',
-      }),
-    });
+      const id = `SS-JH-${new Date().getFullYear()}-${String(
+        Date.now()
+      ).slice(-8)}`;
 
-    const saved = [
-      {
-        ...form,
-        id: created.id || id,
-        status: created.status || 'Under review',
-        votes: created.votes || 0,
-        age: 'Just now',
-      },
-      ...readStore('ss-problems', initialProblems),
-    ];
+      const created = await apiRequest('/problems', {
+        method: 'POST',
+        body: JSON.stringify({
+          id,
+          title: form.title,
+          description: form.description,
+          category: form.category,
+          district: form.district,
+          location: form.location,
+          urgency: form.urgency,
+          people: form.people,
+          evidence: form.evidence,
+          status: 'Under review',
+          votes: 0,
+          reportedBy: user?.id || ''
+        })
+      });
 
-    writeStore('ss-problems', saved);
-    writeStore('ss-unread', 4);
+      const saved = [
+        {
+          ...form,
+          id: created.id || id,
+          status: created.status || 'Under review',
+          votes: created.votes || 0,
+          age: 'Just now'
+        },
+        ...readStore('ss-problems', initialProblems)
+      ];
 
-    setAnalyzing(false);
-    setSubmitted(true);
-  } catch (error) {
-    console.error('Problem submission failed:', error);
-    setAnalyzing(false);
-    setError(
-      error instanceof Error
-        ? error.message
-        : 'Unable to submit the problem right now. Please try again.'
+      writeStore('ss-problems', saved);
+      writeStore('ss-unread', 4);
+
+      setAnalyzing(false);
+      setSubmitted(true);
+    } catch (error) {
+      console.error('Problem submission failed:', error);
+
+      setAnalyzing(false);
+
+      setError(
+        error instanceof Error
+          ? error.message
+          : 'Unable to submit the problem right now. Please try again.'
+      );
+    }
+  };
+
+  if (submitted)
+    return (
+      <Shell>
+        <div className="mx-auto max-w-2xl py-10 text-center">
+          <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 rise-in">
+            <CheckCircle2 size={38} />
+          </div>
+
+          <p className="mt-6 text-xs font-bold uppercase tracking-[.18em] text-accent">
+            Submission received
+          </p>
+
+          <h1 className="mt-2 font-display text-4xl font-bold text-primary">
+            Your voice is now in motion.
+          </h1>
+
+          <p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">
+            The community team will review your challenge and keep you updated.
+            This is demo data, not a real complaint.
+          </p>
+
+          <div className="mx-auto mt-7 max-w-sm rounded-2xl border border-secondary bg-secondary/25 p-5">
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Your tracking ID
+            </p>
+
+            <p
+              className="mt-2 font-display text-2xl font-bold text-primary"
+              data-testid="text-generated-submission-id"
+            >
+              SS-JH-2026-00124
+            </p>
+
+            <p className="mt-2 text-xs text-muted-foreground">
+              {form.title}
+            </p>
+          </div>
+
+          <div className="mt-7 flex justify-center gap-3">
+            <Link
+              href="/citizen/submissions/SS-JH-2026-00124"
+              className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground"
+              data-testid="link-track-new-submission"
+            >
+              Track submission
+              <ArrowRight size={16} />
+            </Link>
+
+            <Link
+              href="/citizen/dashboard"
+              className="inline-flex items-center gap-2 rounded-xl border border-border px-5 py-3 text-sm font-bold"
+              data-testid="link-back-dashboard"
+            >
+              Back to dashboard
+            </Link>
+          </div>
+        </div>
+      </Shell>
     );
-  }
-};
-  if (submitted) return <Shell><div className="mx-auto max-w-2xl py-10 text-center"><div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 text-emerald-700 rise-in"><CheckCircle2 size={38} /></div><p className="mt-6 text-xs font-bold uppercase tracking-[.18em] text-accent">Submission received</p><h1 className="mt-2 font-display text-4xl font-bold text-primary">Your voice is now in motion.</h1><p className="mx-auto mt-4 max-w-md text-sm leading-relaxed text-muted-foreground">The community team will review your challenge and keep you updated. This is demo data, not a real complaint.</p><div className="mx-auto mt-7 max-w-sm rounded-2xl border border-secondary bg-secondary/25 p-5"><p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Your tracking ID</p><p className="mt-2 font-display text-2xl font-bold text-primary" data-testid="text-generated-submission-id">SS-JH-2026-00124</p><p className="mt-2 text-xs text-muted-foreground">{form.title}</p></div><div className="mt-7 flex justify-center gap-3"><Link href="/citizen/submissions/SS-JH-2026-00124" className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground" data-testid="link-track-new-submission">Track submission <ArrowRight size={16} /></Link><Link href="/citizen/dashboard" className="inline-flex items-center gap-2 rounded-xl border border-border px-5 py-3 text-sm font-bold" data-testid="link-back-dashboard">Back to dashboard</Link></div></div></Shell>;
-  const titles = ['Describe the challenge', 'Where is it?', 'Add evidence', 'Show the impact', 'Review & submit'];
-  return <Shell><div className="mx-auto max-w-4xl"><Link href="/citizen/dashboard" className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-muted-foreground hover:text-primary" data-testid="link-back-report"><ArrowLeft size={16} />Back to dashboard</Link><PageIntro eyebrow="New community challenge" title="Tell us what needs attention." description="You can save this in under five minutes. Share what you know; the community will help fill the gaps." /><div className="mb-8 flex items-start justify-between">{titles.map((title, i) => <div key={title} className="relative flex flex-1 flex-col items-center text-center"><div className={cx('relative z-10 flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold transition', step > i + 1 ? 'bg-secondary text-primary' : step === i + 1 ? 'bg-primary text-secondary' : 'bg-muted text-muted-foreground')}>{step > i + 1 ? <Check size={16} /> : i + 1}</div><span className={cx('mt-2 hidden text-[11px] font-semibold sm:block', step === i + 1 ? 'text-primary' : 'text-muted-foreground')}>{title}</span>{i < titles.length - 1 && <div className={cx('absolute left-1/2 top-4 h-px w-full', step > i + 1 ? 'bg-secondary' : 'bg-border')} />}</div>)}</div><Card className="p-5 md:p-8">{step === 1 && <div className="space-y-5"><div><label className="mb-1.5 block text-sm font-bold">What is the challenge? <span className="text-accent">*</span></label><input value={form.title} onChange={e => update('title', e.target.value)} placeholder="Example: Handpump is not working near the school" className="w-full rounded-xl border border-input bg-background px-4 py-3.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15" data-testid="input-report-title" /></div><div><label className="mb-1.5 block text-sm font-bold">Tell us what is happening <span className="text-accent">*</span></label>
-    <div className="relative">
-  <textarea
-    value={form.description}
-    onChange={e => update('description', e.target.value)}
-    rows={5}
-    placeholder="What have you observed? Who is affected? Add any useful context."
-    className="w-full resize-none rounded-xl border border-input bg-background px-4 py-3.5 pr-14 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
-    data-testid="textarea-report-description"
-  />
 
-  <button
-    type="button"
-    onClick={toggleVoiceInput}
-    aria-label={isListening ? 'Stop voice input' : 'Start voice input'}
-    title={isListening ? 'Stop voice input' : 'Speak your problem'}
-    className={cx(
-      'absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full transition',
-      isListening
-        ? 'bg-red-100 text-red-700'
-        : 'bg-secondary text-primary hover:bg-secondary/80'
-    )}
-    data-testid="button-voice-input"
-  >
-    {isListening ? <MicOff size={18} /> : <Mic size={18} />}
-  </button>
-</div><p className="mt-1 text-right text-xs text-muted-foreground">{form.description.length} / 500</p></div><div><label className="mb-1.5 block text-sm font-bold">Choose a category</label><select value={form.category} onChange={e => update('category', e.target.value)} className="w-full rounded-xl border border-input bg-background px-4 py-3.5 text-sm" data-testid="select-report-category">{categories.map(c => <option key={c}>{c}</option>)}</select></div></div>}{step === 2 && <div className="space-y-5"><div><label className="mb-1.5 block text-sm font-bold">District</label><select value={form.district} onChange={e => update('district', e.target.value)} className="w-full rounded-xl border border-input bg-background px-4 py-3.5 text-sm" data-testid="select-report-district">{districts.map(d => <option key={d}>{d}</option>)}</select></div><div><label className="mb-1.5 block text-sm font-bold">Village, ward or nearby landmark <span className="text-accent">*</span></label><input value={form.location} onChange={e => update('location', e.target.value)} placeholder="Example: Beside Birsa Munda School, Torpa block" className="w-full rounded-xl border border-input bg-background px-4 py-3.5 text-sm" data-testid="input-report-location" /></div><div className="flex items-center gap-3 rounded-xl border border-secondary bg-secondary/20 p-4 text-sm"><MapPin className="text-primary" size={20} /><span><strong>Map pin included in demo</strong><br /><span className="text-xs text-muted-foreground">Your approximate district location will help route the challenge.</span></span></div></div>}{step === 3 && <div><label className="mb-2 block text-sm font-bold">Photos, documents or audio note</label><label className="flex min-h-52 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-muted/30 text-center transition hover:border-primary hover:bg-muted"><Upload size={25} className="mb-3 text-primary" /><span className="text-sm font-bold">Drop evidence here or browse</span><span className="mt-1 text-xs text-muted-foreground">JPG, PNG, PDF or audio up to 10 MB</span><input type="file" className="hidden" onChange={e => update('evidence', e.target.files?.[0]?.name || '')} data-testid="input-report-evidence" />{form.evidence && <Badge tone="green">{form.evidence}</Badge>}</label><p className="mt-4 text-xs leading-relaxed text-muted-foreground">Evidence is optional. A clear description is enough to start a conversation.</p></div>}{step === 4 && <div className="space-y-6"><div><label className="mb-2 block text-sm font-bold">How urgent is this?</label><div className="grid grid-cols-3 gap-2">{['Low', 'Medium', 'High'].map(level => <button key={level} type="button" onClick={() => update('urgency', level)} className={cx('rounded-xl border px-3 py-3 text-sm font-bold', form.urgency === level ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:border-primary')} data-testid={`button-urgency-${level.toLowerCase()}`}>{level}</button>)}</div></div><div><label className="mb-2 block text-sm font-bold">How many people are affected?</label><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{['1–10', '10–50', '50–200', '200+'].map(count => <button key={count} type="button" onClick={() => update('people', count)} className={cx('rounded-xl border px-3 py-3 text-sm font-bold', form.people === count ? 'border-primary bg-primary text-primary-foreground' : 'border-border hover:border-primary')} data-testid={`button-people-${count}`}>{count}</button>)}</div></div><div className="rounded-2xl bg-muted p-4 text-sm"><p className="font-bold">Why this helps</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">Urgency and reach help community managers prioritise fairly. You can always update this later.</p></div></div>}{step === 5 && <div className="space-y-4"><div><h3 className="font-display text-xl font-bold">AI Review & Community Assessment</h3><p className="mt-1 text-sm text-muted-foreground">Our AI has reviewed the information you provided and prepared a structured assessment for the next stage.</p></div><div className="rounded-2xl border border-secondary bg-secondary/20 p-5"><div className="flex items-center gap-2"><Sparkles size={17} className="text-primary" /><p className="text-xs font-bold uppercase tracking-wider text-primary">AI Summary</p></div><p className="mt-3 text-sm leading-relaxed">{assessment.summary}</p></div><div className="divide-y divide-border rounded-2xl border border-border">{[['Problem Type', assessment.problemType], ['Severity', assessment.severity], ['Estimated Community Impact', assessment.impact], ['Likely Issue', assessment.likelyIssue], ['Recommended Action', assessment.recommendedAction], ['Suggested Responsible Authority', assessment.authority], ['Priority', assessment.priority]].map(([label, value]) => <div key={label} className="grid gap-1 p-4 sm:grid-cols-[210px_1fr] sm:gap-4"><span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">{label}</span><span className="text-sm">{value}</span></div>)}</div><div className="flex items-start gap-3 rounded-xl bg-secondary/25 p-4 text-sm"><ShieldCheck size={18} className="mt-0.5 shrink-0 text-primary" /><span><strong>AI-generated preliminary assessment</strong><br />This is an AI-style assessment, not a final government decision. Your submission will enter the community validation queue. This demo never sends a real complaint.</span></div></div>}{error && <p className="mt-5 flex items-center gap-2 rounded-xl bg-red-50 p-3 text-sm font-medium text-red-700" data-testid="text-report-error"><AlertCircle size={16} />{error}</p>}<div className="mt-8 flex justify-between gap-3 border-t border-border pt-5"><Button variant="ghost" onClick={() => step > 1 ? setStep(step - 1) : setLocation('/citizen/dashboard')} data-testid="button-report-back"><ArrowLeft size={16} />{step > 1 ? 'Back' : 'Cancel'}</Button><Button onClick={next} disabled={analyzing} data-testid="button-report-next">{analyzing ? <><Activity size={17} className="soft-pulse" />Analysing your challenge...</> : step === 5 ? <><Send size={16} />Submit challenge</> : <>Continue <ArrowRight size={16} /></>}</Button></div></Card></div></Shell>;
+  const titles = [
+    'Describe the challenge',
+    'Where is it?',
+    'Add evidence',
+    'Show the impact',
+    'Review & submit'
+  ];
+
+  return (
+    <Shell>
+      <div className="mx-auto max-w-4xl">
+        <Link
+          href="/citizen/dashboard"
+          className="mb-6 inline-flex items-center gap-2 text-sm font-bold text-muted-foreground hover:text-primary"
+          data-testid="link-back-report"
+        >
+          <ArrowLeft size={16} />
+          Back to dashboard
+        </Link>
+
+        <PageIntro
+          eyebrow="New community challenge"
+          title="Tell us what needs attention."
+          description="You can save this in under five minutes. Share what you know; the community will help fill the gaps."
+        />
+
+        <div className="mb-8 flex items-start justify-between">
+          {titles.map((title, i) => (
+            <div
+              key={title}
+              className="relative flex flex-1 flex-col items-center text-center"
+            >
+              <div
+                className={cx(
+                  'relative z-10 flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold transition',
+                  step > i + 1
+                    ? 'bg-secondary text-primary'
+                    : step === i + 1
+                      ? 'bg-primary text-secondary'
+                      : 'bg-muted text-muted-foreground'
+                )}
+              >
+                {step > i + 1 ? <Check size={16} /> : i + 1}
+              </div>
+
+              <span
+                className={cx(
+                  'mt-2 hidden text-[11px] font-semibold sm:block',
+                  step === i + 1
+                    ? 'text-primary'
+                    : 'text-muted-foreground'
+                )}
+              >
+                {title}
+              </span>
+
+              {i < titles.length - 1 && (
+                <div
+                  className={cx(
+                    'absolute left-1/2 top-4 h-px w-full',
+                    step > i + 1 ? 'bg-secondary' : 'bg-border'
+                  )}
+                />
+              )}
+            </div>
+          ))}
+        </div>
+
+        <Card className="p-5 md:p-8">
+
+          {/* STEP 1 */}
+          {step === 1 && (
+            <div className="space-y-5">
+              <div>
+                <label className="mb-1.5 block text-sm font-bold">
+                  What is the challenge?{' '}
+                  <span className="text-accent">*</span>
+                </label>
+
+                <input
+                  value={form.title}
+                  onChange={e => update('title', e.target.value)}
+                  placeholder="Example: Handpump is not working near the school"
+                  className="w-full rounded-xl border border-input bg-background px-4 py-3.5 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
+                  data-testid="input-report-title"
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-bold">
+                  Tell us what is happening{' '}
+                  <span className="text-accent">*</span>
+                </label>
+
+                <div className="relative">
+                  <textarea
+                    value={form.description}
+                    onChange={e => update('description', e.target.value)}
+                    rows={5}
+                    placeholder="What have you observed? Who is affected? Add any useful context."
+                    className="w-full resize-none rounded-xl border border-input bg-background px-4 py-3.5 pr-14 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/15"
+                    data-testid="textarea-report-description"
+                  />
+
+                  <button
+                    type="button"
+                    onClick={toggleVoiceInput}
+                    aria-label={
+                      isListening
+                        ? 'Stop voice input'
+                        : 'Start voice input'
+                    }
+                    title={
+                      isListening
+                        ? 'Stop voice input'
+                        : 'Speak your problem'
+                    }
+                    className={cx(
+                      'absolute bottom-3 right-3 flex h-10 w-10 items-center justify-center rounded-full transition',
+                      isListening
+                        ? 'bg-red-100 text-red-700'
+                        : 'bg-secondary text-primary hover:bg-secondary/80'
+                    )}
+                    data-testid="button-voice-input"
+                  >
+                    {isListening ? (
+                      <MicOff size={18} />
+                    ) : (
+                      <Mic size={18} />
+                    )}
+                  </button>
+                </div>
+
+                <p className="mt-1 text-right text-xs text-muted-foreground">
+                  {form.description.length} / 500
+                </p>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-bold">
+                  Choose a category
+                </label>
+
+                <select
+                  value={form.category}
+                  onChange={e => update('category', e.target.value)}
+                  className="w-full rounded-xl border border-input bg-background px-4 py-3.5 text-sm"
+                  data-testid="select-report-category"
+                >
+                  {categories.map(c => (
+                    <option key={c}>{c}</option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 2 */}
+          {step === 2 && (
+            <div className="space-y-5">
+              <div>
+                <label className="mb-1.5 block text-sm font-bold">
+                  District
+                </label>
+
+                <select
+                  value={form.district}
+                  onChange={e => update('district', e.target.value)}
+                  className="w-full rounded-xl border border-input bg-background px-4 py-3.5 text-sm"
+                  data-testid="select-report-district"
+                >
+                  {districts.map(d => (
+                    <option key={d}>{d}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-sm font-bold">
+                  Village, ward or nearby landmark{' '}
+                  <span className="text-accent">*</span>
+                </label>
+
+                <input
+                  value={form.location}
+                  onChange={e => update('location', e.target.value)}
+                  placeholder="Example: Beside Birsa Munda School, Torpa block"
+                  className="w-full rounded-xl border border-input bg-background px-4 py-3.5 text-sm"
+                  data-testid="input-report-location"
+                />
+              </div>
+
+              <div className="flex items-center gap-3 rounded-xl border border-secondary bg-secondary/20 p-4 text-sm">
+                <MapPin className="text-primary" size={20} />
+
+                <span>
+                  <strong>Map pin included in demo</strong>
+                  <br />
+                  <span className="text-xs text-muted-foreground">
+                    Your approximate district location will help route the
+                    challenge.
+                  </span>
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 3 WITH CAMERA */}
+          {step === 3 && (
+            <div className="space-y-5">
+              <div>
+                <label className="mb-2 block text-sm font-bold">
+                  Photos, documents or audio note
+                </label>
+
+                {/* CAMERA PREVIEW */}
+                {cameraPreview ? (
+                  <div className="rounded-2xl border border-border bg-muted/30 p-4">
+                    <div className="overflow-hidden rounded-xl border border-border bg-black">
+                      <img
+                        src={cameraPreview}
+                        alt="Captured evidence"
+                        className="max-h-[420px] w-full object-contain"
+                      />
+                    </div>
+
+                    <div className="mt-4 flex flex-wrap gap-3">
+                      <button
+                        type="button"
+                        onClick={retakePhoto}
+                        className="inline-flex items-center gap-2 rounded-xl border border-border bg-background px-4 py-3 text-sm font-bold hover:border-primary"
+                      >
+                        <Camera size={17} />
+                        Retake photo
+                      </button>
+
+                      <div className="flex items-center rounded-xl bg-secondary/30 px-4 py-3 text-sm font-semibold text-primary">
+                        Photo captured successfully
+                      </div>
+                    </div>
+                  </div>
+                ) : cameraOpen ? (
+                  /* LIVE CAMERA */
+                  <div className="rounded-2xl border border-border bg-black p-3">
+                    <div className="overflow-hidden rounded-xl">
+                      <video
+                        ref={videoRef}
+                        autoPlay
+                        playsInline
+                        muted
+                        className="aspect-video w-full object-cover"
+                      />
+                    </div>
+
+                    <div className="mt-4 flex justify-center gap-3">
+                      <button
+                        type="button"
+                        onClick={capturePhoto}
+                        className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-bold text-primary-foreground"
+                      >
+                        <Camera size={18} />
+                        Capture photo
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={stopCamera}
+                        className="rounded-xl border border-white/30 bg-white/10 px-5 py-3 text-sm font-bold text-white"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  /* ORIGINAL UPLOAD BOX + CAMERA BUTTON */
+                  <div className="space-y-3">
+                    <label className="flex min-h-52 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed border-border bg-muted/30 text-center transition hover:border-primary hover:bg-muted">
+                      <Upload
+                        size={25}
+                        className="mb-3 text-primary"
+                      />
+
+                      <span className="text-sm font-bold">
+                        Drop evidence here or browse
+                      </span>
+
+                      <span className="mt-1 text-xs text-muted-foreground">
+                        JPG, PNG, PDF or audio up to 10 MB
+                      </span>
+
+                      <input
+                        type="file"
+                        accept="image/*,.pdf,audio/*"
+                        className="hidden"
+                        onChange={e =>
+                          update(
+                            'evidence',
+                            e.target.files?.[0]?.name || ''
+                          )
+                        }
+                        data-testid="input-report-evidence"
+                      />
+
+                      {form.evidence && !cameraPreview && (
+                        <Badge tone="green">
+                          {form.evidence}
+                        </Badge>
+                      )}
+                    </label>
+
+                    {/* CAMERA BUTTON */}
+                    <button
+                      type="button"
+                      onClick={startCamera}
+                      className="flex w-full items-center justify-center gap-2 rounded-xl border border-primary bg-secondary/20 px-4 py-3.5 text-sm font-bold text-primary transition hover:bg-secondary/40"
+                      data-testid="button-camera-input"
+                    >
+                      <Camera size={19} />
+                      Take a photo with camera
+                    </button>
+                  </div>
+                )}
+
+                {/* Hidden canvas used to capture the camera frame */}
+                <canvas
+                  ref={canvasRef}
+                  className="hidden"
+                />
+
+                <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
+                  Evidence is optional. A clear description is enough to start
+                  a conversation.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 4 */}
+          {step === 4 && (
+            <div className="space-y-6">
+              <div>
+                <label className="mb-2 block text-sm font-bold">
+                  How urgent is this?
+                </label>
+
+                <div className="grid grid-cols-3 gap-2">
+                  {['Low', 'Medium', 'High'].map(level => (
+                    <button
+                      key={level}
+                      type="button"
+                      onClick={() => update('urgency', level)}
+                      className={cx(
+                        'rounded-xl border px-3 py-3 text-sm font-bold',
+                        form.urgency === level
+                          ? 'border-primary bg-primary text-primary-foreground'
+                          : 'border-border hover:border-primary'
+                      )}
+                      data-testid={`button-urgency-${level.toLowerCase()}`}
+                    >
+                      {level}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-bold">
+                  How many people are affected?
+                </label>
+
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+                  {['1–10', '10–50', '50–200', '200+'].map(count => (
+                    <button
+                      key={count}
+                      type="button"
+                      onClick={() => update('people', count)}
+                      className={cx(
+                        'rounded-xl border px-3 py-3 text-sm font-bold',
+                        form.people === count
+                          ? 'border-primary bg-primary text-primary-foreground'
+                          : 'border-border hover:border-primary'
+                      )}
+                      data-testid={`button-people-${count}`}
+                    >
+                      {count}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="rounded-2xl bg-muted p-4 text-sm">
+                <p className="font-bold">Why this helps</p>
+                <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+                  Urgency and reach help community managers prioritise fairly.
+                  You can always update this later.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* STEP 5 */}
+          {step === 5 && (
+            <div className="space-y-4">
+              <div>
+                <h3 className="font-display text-xl font-bold">
+                  AI Review & Community Assessment
+                </h3>
+
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Our AI has reviewed the information you provided and prepared
+                  a structured assessment for the next stage.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-secondary bg-secondary/20 p-5">
+                <div className="flex items-center gap-2">
+                  <Sparkles size={17} className="text-primary" />
+
+                  <p className="text-xs font-bold uppercase tracking-wider text-primary">
+                    AI Summary
+                  </p>
+                </div>
+
+                <p className="mt-3 text-sm leading-relaxed">
+                  {assessment.summary}
+                </p>
+              </div>
+
+              <div className="divide-y divide-border rounded-2xl border border-border">
+                {[
+                  ['Problem Type', assessment.problemType],
+                  ['Severity', assessment.severity],
+                  ['Estimated Community Impact', assessment.impact],
+                  ['Likely Issue', assessment.likelyIssue],
+                  ['Recommended Action', assessment.recommendedAction],
+                  [
+                    'Suggested Responsible Authority',
+                    assessment.authority
+                  ],
+                  ['Priority', assessment.priority]
+                ].map(([label, value]) => (
+                  <div
+                    key={label}
+                    className="grid gap-1 p-4 sm:grid-cols-[210px_1fr] sm:gap-4"
+                  >
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      {label}
+                    </span>
+
+                    <span className="text-sm">
+                      {value}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex items-start gap-3 rounded-xl bg-secondary/25 p-4 text-sm">
+                <ShieldCheck
+                  size={18}
+                  className="mt-0.5 shrink-0 text-primary"
+                />
+
+                <span>
+                  <strong>AI-generated preliminary assessment</strong>
+                  <br />
+                  This is an AI-style assessment, not a final government
+                  decision. Your submission will enter the community validation
+                  queue. This demo never sends a real complaint.
+                </span>
+              </div>
+            </div>
+          )}
+
+          {error && (
+            <p
+              className="mt-5 flex items-center gap-2 rounded-xl bg-red-50 p-3 text-sm font-medium text-red-700"
+              data-testid="text-report-error"
+            >
+              <AlertCircle size={16} />
+              {error}
+            </p>
+          )}
+
+          <div className="mt-8 flex justify-between gap-3 border-t border-border pt-5">
+            <Button
+              variant="ghost"
+              onClick={() =>
+                step > 1
+                  ? setStep(step - 1)
+                  : setLocation('/citizen/dashboard')
+              }
+              data-testid="button-report-back"
+            >
+              <ArrowLeft size={16} />
+              {step > 1 ? 'Back' : 'Cancel'}
+            </Button>
+
+            <Button
+              onClick={next}
+              disabled={analyzing}
+              data-testid="button-report-next"
+            >
+              {analyzing ? (
+                <>
+                  <Activity size={17} className="soft-pulse" />
+                  Analysing your challenge...
+                </>
+              ) : step === 5 ? (
+                <>
+                  <Send size={16} />
+                  Submit challenge
+                </>
+              ) : (
+                <>
+                  Continue
+                  <ArrowRight size={16} />
+                </>
+              )}
+            </Button>
+          </div>
+        </Card>
+      </div>
+    </Shell>
+  );
 }
 
 function Submissions() { const [query, setQuery] = useState(''); const [filter, setFilter] = useState('All'); const [, setLocation] = useLocation(); const problems = readStore('ss-problems', initialProblems); const filtered = problems.filter((p: typeof initialProblems[number]) => `${p.title} ${p.district} ${p.id}`.toLowerCase().includes(query.toLowerCase()) && (filter === 'All' || p.status === filter)); return <Shell><PageIntro eyebrow="Citizen workspace" title="My submissions" description="Keep an eye on every challenge you’ve brought forward." action={<Link href="/citizen/report" className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground" data-testid="link-new-submission"><Plus size={17} />New submission</Link>} /><Card className="overflow-hidden"><div className="flex flex-col gap-3 border-b border-border p-4 md:flex-row"><div className="relative flex-1"><Search size={17} className="absolute left-3 top-3 text-muted-foreground" /><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search by title, ID or district" className="w-full rounded-xl border border-input bg-background py-2.5 pl-9 pr-3 text-sm" data-testid="input-search-submissions" /></div><div className="flex gap-2 overflow-x-auto">{['All', 'Under review', 'Assigned', 'In progress', 'Validated'].map(item => <button key={item} onClick={() => setFilter(item)} className={cx('whitespace-nowrap rounded-xl border px-3 py-2 text-xs font-bold', filter === item ? 'border-primary bg-primary text-primary-foreground' : 'border-border')} data-testid={`button-filter-${item.toLowerCase().replaceAll(' ', '-')}`}>{item}</button>)}</div></div><div className="divide-y divide-border">{filtered.length ? filtered.map((p: typeof initialProblems[number]) => <button key={p.id} onClick={() => setLocation(`/citizen/submissions/${p.id}`)} className="flex w-full items-center gap-4 p-4 text-left transition hover:bg-muted/60" data-testid={`row-submission-${p.id}`}><span className="hidden h-10 w-10 items-center justify-center rounded-xl bg-muted text-primary sm:flex"><FileText size={18} /></span><span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold">{p.title}</span><span className="mt-1 block text-xs text-muted-foreground">{p.id} · {p.district} · {p.age}</span></span><span className="hidden text-xs text-muted-foreground md:block">{p.votes} community voices</span><Badge tone={p.status === 'In progress' ? 'green' : p.status === 'Assigned' ? 'blue' : 'amber'}>{p.status}</Badge><ArrowRight size={16} className="text-muted-foreground" /></button>) : <div className="p-12 text-center"><Search className="mx-auto text-muted-foreground" /><p className="mt-3 font-bold">No submissions match</p><p className="mt-1 text-sm text-muted-foreground">Try another search or filter.</p></div>}</div></Card></Shell>; }
