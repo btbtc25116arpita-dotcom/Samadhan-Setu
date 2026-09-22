@@ -103,104 +103,538 @@ const navItems = [
 ];
 function Shell({ children }: { children: ReactNode }) {
   const [, setLocation] = useLocation();
+
   const [profileOpen, setProfileOpen] = useState(false);
   const [toast, setToast] = useState('');
-  const role = currentRole(); const info = roleInfo[role]; const RoleIcon = info.icon;
+ const [user, setUser] = useState<any>(() =>
+  readStore('ss-user', {
+    name: 'User',
+    email: '',
+    phone: '',
+    role: currentRole(),
+  })
+);
+
+const [editingField, setEditingField] = useState<
+  'name' | 'email' | 'phone' | null
+>(null);
+
+const [editValue, setEditValue] = useState('');
+const [savingProfile, setSavingProfile] = useState(false);
+const [profileError, setProfileError] = useState('');
+
+  const [user, setUser] = useState<any>(() =>
+    readStore('ss-user', {
+      name: 'User',
+      email: '',
+      phone: '',
+      role: currentRole(),
+    })
+  );
+
+  const [editingField, setEditingField] = useState<
+    'name' | 'email' | 'phone' | null
+  >(null);
+
+  const [editValue, setEditValue] = useState('');
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileError, setProfileError] = useState('');
+
+  const role = currentRole();
+  const info = roleInfo[role];
   const unread = readStore<number>('ss-unread', 3);
-  const homeHref = role === 'government' ? '/government/dashboard' : role === 'industry' ? '/industry/dashboard' : role === 'faculty' ? '/faculty/dashboard' : role === 'student' ? '/university/dashboard' : role === 'panchayat' ? '/panchayat/dashboard' : role === 'ulb' ? '/ulb/dashboard' : '/citizen/dashboard';
-  const logout = () => { localStorage.removeItem('ss-role'); setProfileOpen(false); setToast('Signed out of workspace'); setLocation('/'); };
-  return <div className="min-h-[100dvh] bg-background">
-    <header className="sticky top-0 z-40 border-b border-border/80 bg-background/90 backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between px-4 md:px-8">
-        <div className="flex items-center gap-3"><Link href={homeHref} className="flex items-center gap-2.5" data-testid="link-app-logo"><span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-secondary"><img src="https://upload.wikimedia.org/wikipedia/commons/a/a9/Jharkhand_Rajakiya_Chihna.svg" alt="Jharkhand State Emblem" className="h-7 w-7 object-contain" /></span><span className="hidden font-display text-lg font-bold tracking-tight sm:block">Samadhan <span className="text-accent">Setu</span></span></Link></div>
-        <div className="hidden items-center gap-2 text-xs text-muted-foreground md:flex"><span className="h-2 w-2 rounded-full bg-emerald-500" /><span>workspace</span><span className="mx-2 text-border">|</span><span>Jharkhand</span></div>
-        <div className="flex items-center gap-1"><Link href="/notifications" className="relative rounded-xl p-2.5 transition hover:bg-muted" data-testid="link-notifications"><Bell size={19} />{unread > 0 && <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[9px] font-bold text-white">{unread}</span>}</Link><div className="relative"><button type="button" onClick={() => setProfileOpen(!profileOpen)} className="ml-1 flex items-center gap-2 rounded-xl p-1.5 pr-2 transition hover:bg-muted" data-testid="button-profile-menu" aria-expanded={profileOpen}><Avatar role={role} name={readStore('ss-user', { name: 'User' })?.name || 'User'} />
-<span className="hidden text-sm font-semibold lg:block">
-  {readStore('ss-user', { name: 'User' })?.name || 'User'}
-</span><ChevronDown size={14} className="hidden text-muted-foreground lg:block" /></button>{profileOpen && (
-  <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-2xl border border-border bg-card p-3 shadow-xl">
-    <div className="space-y-1">
 
-      <div className="flex items-center justify-between rounded-xl px-3 py-2.5 hover:bg-muted">
-        <div className="min-w-0">
-          <p className="text-xs text-muted-foreground">Name</p>
-          <p className="truncate text-sm font-semibold">
-            {readStore('ss-user', { name: 'User' })?.name || 'User'}
-          </p>
+  const homeHref =
+    role === 'government'
+      ? '/government/dashboard'
+      : role === 'industry'
+        ? '/industry/dashboard'
+        : role === 'faculty'
+          ? '/faculty/dashboard'
+          : role === 'student'
+            ? '/university/dashboard'
+            : role === 'panchayat'
+              ? '/panchayat/dashboard'
+              : role === 'ulb'
+                ? '/ulb/dashboard'
+                : '/citizen/dashboard';
+
+  const openEditor = (
+    field: 'name' | 'email' | 'phone'
+  ) => {
+    setEditingField(field);
+
+    if (field === 'name') {
+      setEditValue(user?.name || '');
+    } else if (field === 'email') {
+      setEditValue(user?.email || '');
+    } else {
+      setEditValue(user?.phone || '');
+    }
+
+    setProfileError('');
+    setProfileOpen(false);
+  };
+ const saveProfileField = async () => {
+  if (!user?.id) {
+    setProfileError('User information is missing. Please log in again.');
+    return;
+  }
+
+  if (!editValue.trim()) {
+    setProfileError('This field cannot be empty.');
+    return;
+  }
+
+  if (
+    editingField === 'phone' &&
+    !/^[0-9]{10}$/.test(editValue.trim())
+  ) {
+    setProfileError('Please enter a valid 10 digit mobile number.');
+    return;
+  }
+
+  if (
+    editingField === 'email' &&
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editValue.trim())
+  ) {
+    setProfileError('Please enter a valid email address.');
+    return;
+  }
+
+  setSavingProfile(true);
+  setProfileError('');
+
+  try {
+    const payload =
+      editingField === 'name'
+        ? { name: editValue.trim() }
+        : editingField === 'email'
+          ? { email: editValue.trim() }
+          : { phone: editValue.trim() };
+
+    const updatedUser = await apiRequest<any>(
+      `/users/${user.id}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      }
+    );
+
+    setUser(updatedUser);
+    writeStore('ss-user', updatedUser);
+
+    setEditingField(null);
+    setEditValue('');
+
+    setToast('Profile updated successfully');
+  } catch (error: any) {
+    setProfileError(
+      error?.message || 'Unable to update profile.'
+    );
+  } finally {
+    setSavingProfile(false);
+  }
+};
+
+  const saveProfileField = async () => {
+    if (!user?.id) {
+      setProfileError('User information is missing. Please log in again.');
+      return;
+    }
+
+    if (!editValue.trim()) {
+      setProfileError(
+        `${editingField === 'name'
+          ? 'Name'
+          : editingField === 'email'
+            ? 'Email'
+            : 'Mobile number'} cannot be empty.`
+      );
+      return;
+    }
+
+    if (
+      editingField === 'phone' &&
+      !/^[0-9]{10}$/.test(editValue.trim())
+    ) {
+      setProfileError('Please enter a valid 10 digit mobile number.');
+      return;
+    }
+
+    if (
+      editingField === 'email' &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editValue.trim())
+    ) {
+      setProfileError('Please enter a valid email address.');
+      return;
+    }
+
+    setSavingProfile(true);
+    setProfileError('');
+
+    try {
+      const payload =
+        editingField === 'name'
+          ? { name: editValue.trim() }
+          : editingField === 'email'
+            ? { email: editValue.trim() }
+            : { phone: editValue.trim() };
+
+      const updatedUser = await apiRequest<any>(
+        `/users/${user.id}`,
+        {
+          method: 'PATCH',
+          body: JSON.stringify(payload),
+        }
+      );
+
+      setUser(updatedUser);
+      writeStore('ss-user', updatedUser);
+
+      setEditingField(null);
+      setEditValue('');
+
+      setToast(
+        `${editingField === 'name'
+          ? 'Name'
+          : editingField === 'email'
+            ? 'Email'
+            : 'Mobile number'} updated successfully`
+      );
+    } catch (error: any) {
+      setProfileError(
+        error?.message || 'Unable to update profile.'
+      );
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+  const logout = () => {
+    localStorage.removeItem('ss-role');
+    localStorage.removeItem('ss-user');
+    localStorage.removeItem('ss-authenticated');
+
+    setProfileOpen(false);
+    setToast('Signed out of workspace');
+    setLocation('/');
+  };
+
+  const getFieldLabel = () => {
+    if (editingField === 'name') return 'Name';
+    if (editingField === 'email') return 'Email';
+    return 'Mobile number';
+  };
+
+  return (
+    <div className="min-h-[100dvh] bg-background">
+
+      <header className="sticky top-0 z-40 border-b border-border/80 bg-background/90 backdrop-blur-xl">
+
+        <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between px-4 md:px-8">
+
+          <div className="flex items-center gap-3">
+            <Link
+              href={homeHref}
+              className="flex items-center gap-2.5"
+              data-testid="link-app-logo"
+            >
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-secondary">
+                <img
+                  src="https://upload.wikimedia.org/wikipedia/commons/a/a9/Jharkhand_Rajakiya_Chihna.svg"
+                  alt="Jharkhand State Emblem"
+                  className="h-7 w-7 object-contain"
+                />
+              </span>
+
+              <span className="hidden font-display text-lg font-bold tracking-tight sm:block">
+                Samadhan <span className="text-accent">Setu</span>
+              </span>
+            </Link>
+          </div>
+
+          <div className="hidden items-center gap-2 text-xs text-muted-foreground md:flex">
+            <span className="h-2 w-2 rounded-full bg-emerald-500" />
+            <span>workspace</span>
+            <span className="mx-2 text-border">|</span>
+            <span>Jharkhand</span>
+          </div>
+
+          <div className="flex items-center gap-1">
+
+            <Link
+              href="/notifications"
+              className="relative rounded-xl p-2.5 transition hover:bg-muted"
+              data-testid="link-notifications"
+            >
+              <Bell size={19} />
+
+              {unread > 0 && (
+                <span className="absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-accent px-1 text-[9px] font-bold text-white">
+                  {unread}
+                </span>
+              )}
+            </Link>
+
+            <div className="relative">
+
+              <button
+                type="button"
+                onClick={() => setProfileOpen(!profileOpen)}
+                className="ml-1 flex items-center gap-2 rounded-xl p-1.5 pr-2 transition hover:bg-muted"
+                data-testid="button-profile-menu"
+                aria-expanded={profileOpen}
+              >
+
+                <Avatar
+                  role={role}
+                  name={user?.name || 'User'}
+                />
+
+                <span className="hidden text-sm font-semibold lg:block">
+                  {user?.name || 'User'}
+                </span>
+
+                <ChevronDown
+                  size={14}
+                  className="hidden text-muted-foreground lg:block"
+                />
+
+              </button>
+
+              {profileOpen && (
+                <div className="absolute right-0 top-full z-50 mt-2 w-72 rounded-2xl border border-border bg-card p-3 shadow-xl">
+
+                  <div className="space-y-1">
+
+                    {/* NAME */}
+
+                    <div className="flex items-center justify-between rounded-xl px-3 py-2.5 hover:bg-muted">
+
+                      <div className="min-w-0">
+                        <p className="text-xs text-muted-foreground">
+                          Name
+                        </p>
+
+                        <p className="truncate text-sm font-semibold">
+                          {user?.name || 'Not provided'}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="ml-3 rounded-lg p-1.5 text-muted-foreground hover:bg-background hover:text-foreground"
+                        onClick={() => openEditor('name')}
+                        aria-label="Edit name"
+                      >
+                        <Pencil size={14} />
+                      </button>
+
+                    </div>
+
+                    {/* EMAIL */}
+
+                    <div className="flex items-center justify-between rounded-xl px-3 py-2.5 hover:bg-muted">
+
+                      <div className="min-w-0">
+                        <p className="text-xs text-muted-foreground">
+                          Email
+                        </p>
+
+                        <p className="truncate text-sm font-semibold">
+                          {user?.email || 'Not provided'}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="ml-3 rounded-lg p-1.5 text-muted-foreground hover:bg-background hover:text-foreground"
+                        onClick={() => openEditor('email')}
+                        aria-label="Edit email"
+                      >
+                        <Pencil size={14} />
+                      </button>
+
+                    </div>
+
+                    {/* MOBILE */}
+
+                    <div className="flex items-center justify-between rounded-xl px-3 py-2.5 hover:bg-muted">
+
+                      <div className="min-w-0">
+                        <p className="text-xs text-muted-foreground">
+                          Mobile
+                        </p>
+
+                        <p className="truncate text-sm font-semibold">
+                          {user?.phone || 'Not provided'}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        className="ml-3 rounded-lg p-1.5 text-muted-foreground hover:bg-background hover:text-foreground"
+                        onClick={() => openEditor('phone')}
+                        aria-label="Edit mobile"
+                      >
+                        <Pencil size={14} />
+                      </button>
+
+                    </div>
+
+                    {/* ROLE */}
+
+                    <div className="flex items-center justify-between rounded-xl px-3 py-2.5 hover:bg-muted">
+
+                      <div className="min-w-0">
+                        <p className="text-xs text-muted-foreground">
+                          Role
+                        </p>
+
+                        <p className="text-sm font-semibold capitalize">
+                          {user?.role?.replace('_', ' ') ||
+                            'Citizen'}
+                        </p>
+                      </div>
+
+                    </div>
+
+                    <div className="my-2 border-t border-border" />
+
+                    {/* LOGOUT */}
+
+                    <button
+                      type="button"
+                      onClick={logout}
+                      className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50"
+                      data-testid="button-logout"
+                    >
+                      <LogOut size={16} />
+                      Log out
+                    </button>
+
+                  </div>
+
+                </div>
+              )}
+
+            </div>
+
+          </div>
+
         </div>
-        <button
-          type="button"
-          className="ml-3 rounded-lg p-1.5 text-muted-foreground hover:bg-background hover:text-foreground"
-          onClick={() => setLocation('/profile')}
-          aria-label="Edit name"
+
+      </header>
+
+      <main className="mx-auto w-full max-w-[1440px] px-4 py-8 md:px-8 md:py-10">
+        {children}
+      </main>
+
+      {/* EDIT PROFILE MODAL */}
+
+      {editingField && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+          onClick={() => {
+            if (!savingProfile) {
+              setEditingField(null);
+              setProfileError('');
+            }
+          }}
         >
-          <Pencil size={14} />
-        </button>
-      </div>
 
-      <div className="flex items-center justify-between rounded-xl px-3 py-2.5 hover:bg-muted">
-        <div className="min-w-0">
-          <p className="text-xs text-muted-foreground">Email</p>
-          <p className="truncate text-sm font-semibold">
-            {readStore('ss-user', { email: '' })?.email || 'Not provided'}
-          </p>
+          <div
+            className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+
+            <div className="mb-5">
+
+              <h2 className="font-display text-xl font-bold">
+                Edit {getFieldLabel()}
+              </h2>
+
+              <p className="mt-1 text-sm text-muted-foreground">
+                Update your {getFieldLabel().toLowerCase()}.
+              </p>
+
+            </div>
+
+            <label className="mb-2 block text-sm font-semibold">
+              {getFieldLabel()}
+            </label>
+
+            <input
+              autoFocus
+              type={
+                editingField === 'email'
+                  ? 'email'
+                  : editingField === 'phone'
+                    ? 'tel'
+                    : 'text'
+              }
+              value={editValue}
+              onChange={(e) => setEditValue(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  saveProfileField();
+                }
+              }}
+              className="w-full rounded-xl border border-border bg-background px-4 py-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20"
+              placeholder={
+                editingField === 'name'
+                  ? 'Enter your name'
+                  : editingField === 'email'
+                    ? 'Enter your email'
+                    : 'Enter 10 digit mobile number'
+              }
+            />
+
+            {profileError && (
+              <p className="mt-2 text-sm font-medium text-red-600">
+                {profileError}
+              </p>
+            )}
+
+            <div className="mt-6 flex justify-end gap-3">
+
+              <Button
+                variant="outline"
+                onClick={() => {
+                  if (!savingProfile) {
+                    setEditingField(null);
+                    setProfileError('');
+                  }
+                }}
+                disabled={savingProfile}
+              >
+                Cancel
+              </Button>
+
+              <Button
+                variant="primary"
+                onClick={saveProfileField}
+                disabled={savingProfile}
+              >
+                {savingProfile ? 'Saving...' : 'Save changes'}
+              </Button>
+
+            </div>
+
+          </div>
+
         </div>
-        <button
-          type="button"
-          className="ml-3 rounded-lg p-1.5 text-muted-foreground hover:bg-background hover:text-foreground"
-          onClick={() => setLocation('/profile')}
-          aria-label="Edit email"
-        >
-          <Pencil size={14} />
-        </button>
-      </div>
+      )}
 
-      <div className="flex items-center justify-between rounded-xl px-3 py-2.5 hover:bg-muted">
-        <div className="min-w-0">
-          <p className="text-xs text-muted-foreground">Mobile</p>
-          <p className="truncate text-sm font-semibold">
-            {readStore('ss-user', { phone: '' })?.phone || 'Not provided'}
-          </p>
-        </div>
-        <button
-          type="button"
-          className="ml-3 rounded-lg p-1.5 text-muted-foreground hover:bg-background hover:text-foreground"
-          onClick={() => setLocation('/profile')}
-          aria-label="Edit mobile"
-        >
-          <Pencil size={14} />
-        </button>
-      </div>
-
-      <div className="flex items-center justify-between rounded-xl px-3 py-2.5 hover:bg-muted">
-        <div className="min-w-0">
-          <p className="text-xs text-muted-foreground">Role</p>
-          <p className="text-sm font-semibold capitalize">
-            {readStore('ss-user', { role: 'citizen' })?.role?.replace('_', ' ') || 'Citizen'}
-          </p>
-        </div>
-      </div>
-
-      <div className="my-2 border-t border-border" />
-
-      <button
-        type="button"
-        onClick={logout}
-        className="flex w-full items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50"
-        data-testid="button-logout"
-      >
-        <LogOut size={16} />
-        Log out
-      </button>
+      {toast && (
+        <Toast
+          message={toast}
+          onClose={() => setToast('')}
+        />
+      )}
 
     </div>
-  </div>
-)}</div></div>
-      </div>
-    </header>
-    <main className="mx-auto max-w-[1440px] px-4 py-7 md:px-8 md:py-9">{children}</main>
-    {toast && <Toast message={toast} onClose={() => setToast('')} />}
-  </div>;
+  );
 }
 
 function LanguageSelector() { const { language, setLanguage, t } = useLanguage(); return <div className="flex items-center gap-2 rounded-xl border border-border bg-card px-2.5 py-1.5"><label htmlFor="language-select" className="hidden text-xs font-semibold text-muted-foreground sm:block">{t('Choose your language')}</label><select id="language-select" value={language} onChange={e => setLanguage(e.target.value as 'en' | 'hi')} className="rounded-lg border border-input bg-background px-2 py-1 text-xs font-semibold text-foreground outline-none focus:border-primary" data-testid="select-language"><option value="en">English</option><option value="hi">हिंदी</option></select></div>; }
