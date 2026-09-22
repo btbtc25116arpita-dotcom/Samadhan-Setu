@@ -123,15 +123,6 @@ const [editValue, setEditValue] = useState('');
 const [savingProfile, setSavingProfile] = useState(false);
 const [profileError, setProfileError] = useState('');
 
-  const [user, setUser] = useState<any>(() =>
-    readStore('ss-user', {
-      name: 'User',
-      email: '',
-      phone: '',
-      role: currentRole(),
-    })
-  );
-
   const [editingField, setEditingField] = useState<
     'name' | 'email' | 'phone' | null
   >(null);
