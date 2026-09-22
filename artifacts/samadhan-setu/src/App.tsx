@@ -5390,7 +5390,7 @@ function IndustryDashboard() {
 
         <PageIntro
           eyebrow="Industry workspace"
-          title={`Good morning, ${user?.name || 'User'}.`}
+          title={`${getGreeting()}, ${user?.name || 'User'}.`}
           description="Projects that may need funding, technology or implementation support."
         />
 
