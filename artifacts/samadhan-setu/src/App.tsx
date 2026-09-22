@@ -106,22 +106,23 @@ function Shell({ children }: { children: ReactNode }) {
 
   const [profileOpen, setProfileOpen] = useState(false);
   const [toast, setToast] = useState('');
- const [user, setUser] = useState<any>(() =>
-  readStore('ss-user', {
-    name: 'User',
-    email: '',
-    phone: '',
-    role: currentRole(),
-  })
-);
 
-const [editingField, setEditingField] = useState<
-  'name' | 'email' | 'phone' | null
->(null);
+  const [user, setUser] = useState<any>(() =>
+    readStore('ss-user', {
+      name: 'User',
+      email: '',
+      phone: '',
+      role: currentRole(),
+    })
+  );
 
-const [editValue, setEditValue] = useState('');
-const [savingProfile, setSavingProfile] = useState(false);
-const [profileError, setProfileError] = useState('');
+  const [editingField, setEditingField] = useState<
+    'name' | 'email' | 'phone' | null
+  >(null);
+
+  const [editValue, setEditValue] = useState('');
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [profileError, setProfileError] = useState('');
 
   const role = currentRole();
   const info = roleInfo[role];
@@ -158,67 +159,53 @@ const [profileError, setProfileError] = useState('');
     setProfileError('');
     setProfileOpen(false);
   };
- const saveProfileField = async () => {
-  if (!user?.id) {
-    setProfileError('User information is missing. Please log in again.');
-    return;
-  }
 
-  if (!editValue.trim()) {
-    setProfileError('This field cannot be empty.');
-    return;
-  }
+  const saveProfileField = async () => {
+    if (!user?.id) {
+      setProfileError(
+        'User information is missing. Please log in again.'
+      );
+      return;
+    }
 
-  if (
-    editingField === 'phone' &&
-    !/^[0-9]{10}$/.test(editValue.trim())
-  ) {
-    setProfileError('Please enter a valid 10 digit mobile number.');
-    return;
-  }
+    if (!editValue.trim()) {
+      setProfileError('This field cannot be empty.');
+      return;
+    }
 
-  if (
-    editingField === 'email' &&
-    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(editValue.trim())
-  ) {
-    setProfileError('Please enter a valid email address.');
-    return;
-  }
+    if (
+      editingField === 'phone' &&
+      !/^[0-9]{10}$/.test(editValue.trim())
+    ) {
+      setProfileError(
+        'Please enter a valid 10 digit mobile number.'
+      );
+      return;
+    }
 
-  setSavingProfile(true);
-  setProfileError('');
+    if (
+      editingField === 'email' &&
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+        editValue.trim()
+      )
+    ) {
+      setProfileError(
+        'Please enter a valid email address.'
+      );
+      return;
+    }
 
-  try {
-    const payload =
-      editingField === 'name'
-        ? { name: editValue.trim() }
-        : editingField === 'email'
-          ? { email: editValue.trim() }
-          : { phone: editValue.trim() };
+    setSavingProfile(true);
+    setProfileError('');
 
-    const updatedUser = await apiRequest<any>(
-      `/users/${user.id}`,
-      {
-        method: 'PATCH',
-        body: JSON.stringify(payload),
-      }
-    );
+    try {
+      const payload =
+        editingField === 'name'
+          ? { name: editValue.trim() }
+          : editingField === 'email'
+            ? { email: editValue.trim() }
+            : { phone: editValue.trim() };
 
-    setUser(updatedUser);
-    writeStore('ss-user', updatedUser);
-
-    setEditingField(null);
-    setEditValue('');
-
-    setToast('Profile updated successfully');
-  } catch (error: any) {
-    setProfileError(
-      error?.message || 'Unable to update profile.'
-    );
-  } finally {
-    setSavingProfile(false);
-  }
-};
       const updatedUser = await apiRequest<any>(
         `/users/${user.id}`,
         {
@@ -233,21 +220,17 @@ const [profileError, setProfileError] = useState('');
       setEditingField(null);
       setEditValue('');
 
-      setToast(
-        `${editingField === 'name'
-          ? 'Name'
-          : editingField === 'email'
-            ? 'Email'
-            : 'Mobile number'} updated successfully`
-      );
+      setToast('Profile updated successfully');
     } catch (error: any) {
       setProfileError(
-        error?.message || 'Unable to update profile.'
+        error?.message ||
+          'Unable to update profile.'
       );
     } finally {
       setSavingProfile(false);
     }
   };
+
   const logout = () => {
     localStorage.removeItem('ss-role');
     localStorage.removeItem('ss-user');
@@ -272,23 +255,28 @@ const [profileError, setProfileError] = useState('');
         <div className="mx-auto flex h-16 max-w-[1440px] items-center justify-between px-4 md:px-8">
 
           <div className="flex items-center gap-3">
+
             <Link
               href={homeHref}
               className="flex items-center gap-2.5"
               data-testid="link-app-logo"
             >
               <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-secondary">
+
                 <img
                   src="https://upload.wikimedia.org/wikipedia/commons/a/a9/Jharkhand_Rajakiya_Chihna.svg"
                   alt="Jharkhand State Emblem"
                   className="h-7 w-7 object-contain"
                 />
+
               </span>
 
               <span className="hidden font-display text-lg font-bold tracking-tight sm:block">
                 Samadhan <span className="text-accent">Setu</span>
               </span>
+
             </Link>
+
           </div>
 
           <div className="hidden items-center gap-2 text-xs text-muted-foreground md:flex">
@@ -350,6 +338,7 @@ const [profileError, setProfileError] = useState('');
                     <div className="flex items-center justify-between rounded-xl px-3 py-2.5 hover:bg-muted">
 
                       <div className="min-w-0">
+
                         <p className="text-xs text-muted-foreground">
                           Name
                         </p>
@@ -357,6 +346,7 @@ const [profileError, setProfileError] = useState('');
                         <p className="truncate text-sm font-semibold">
                           {user?.name || 'Not provided'}
                         </p>
+
                       </div>
 
                       <button
@@ -375,6 +365,7 @@ const [profileError, setProfileError] = useState('');
                     <div className="flex items-center justify-between rounded-xl px-3 py-2.5 hover:bg-muted">
 
                       <div className="min-w-0">
+
                         <p className="text-xs text-muted-foreground">
                           Email
                         </p>
@@ -382,6 +373,7 @@ const [profileError, setProfileError] = useState('');
                         <p className="truncate text-sm font-semibold">
                           {user?.email || 'Not provided'}
                         </p>
+
                       </div>
 
                       <button
@@ -400,6 +392,7 @@ const [profileError, setProfileError] = useState('');
                     <div className="flex items-center justify-between rounded-xl px-3 py-2.5 hover:bg-muted">
 
                       <div className="min-w-0">
+
                         <p className="text-xs text-muted-foreground">
                           Mobile
                         </p>
@@ -407,6 +400,7 @@ const [profileError, setProfileError] = useState('');
                         <p className="truncate text-sm font-semibold">
                           {user?.phone || 'Not provided'}
                         </p>
+
                       </div>
 
                       <button
@@ -425,6 +419,7 @@ const [profileError, setProfileError] = useState('');
                     <div className="flex items-center justify-between rounded-xl px-3 py-2.5 hover:bg-muted">
 
                       <div className="min-w-0">
+
                         <p className="text-xs text-muted-foreground">
                           Role
                         </p>
@@ -433,6 +428,7 @@ const [profileError, setProfileError] = useState('');
                           {user?.role?.replace('_', ' ') ||
                             'Citizen'}
                         </p>
+
                       </div>
 
                     </div>
@@ -464,7 +460,7 @@ const [profileError, setProfileError] = useState('');
 
       </header>
 
-      <main className="mx-auto w-full max-w-[1440px] px-4 py-8 md:px-8 md:py-10">
+      <main className="mx-auto max-w-[1440px] px-4 py-7 md:px-8 md:py-9">
         {children}
       </main>
 
@@ -554,7 +550,9 @@ const [profileError, setProfileError] = useState('');
                 onClick={saveProfileField}
                 disabled={savingProfile}
               >
-                {savingProfile ? 'Saving...' : 'Save changes'}
+                {savingProfile
+                  ? 'Saving...'
+                  : 'Save changes'}
               </Button>
 
             </div>
