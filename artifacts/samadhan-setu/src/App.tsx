@@ -3757,7 +3757,7 @@ function FacultyDashboard() {
     <Shell>
       <PageIntro
         eyebrow="Faculty workspace"
-        title={`Good morning, ${user?.name || 'User'}.`}
+        title={`${getGreeting()}, ${user?.name || 'User'}.`}
         description="Review team progress, give timely feedback and open doors to research."
         action={
           <Button
