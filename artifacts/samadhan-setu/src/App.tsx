@@ -1335,7 +1335,8 @@ function Report() {
           id: created.id || id,
           status: created.status || 'Under review',
           votes: created.votes || 0,
-          age: 'Just now'
+          age: 'Just now',
+         reportedBy: user?.id || ''
         },
         ...readStore('ss-problems', initialProblems)
       ];
