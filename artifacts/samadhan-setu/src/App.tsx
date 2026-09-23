@@ -1009,16 +1009,340 @@ function MapMock({ filter = 'All' }: { filter?: string }) {
     {points.map(point => <div key={point.name} className="absolute z-10 -translate-x-1/2 -translate-y-1/2" style={{ left: point.x, top: point.y }}><div className="flex h-9 w-9 items-center justify-center rounded-full border-4 border-card bg-accent text-[10px] font-bold text-white shadow-lg transition hover:scale-125" title={`${point.name}: ${point.count} challenges`} data-testid={`map-point-${point.name.toLowerCase()}`}>{point.count}</div><span className="mt-1 block text-center text-[10px] font-bold text-primary">{point.name}</span></div>)}
   </div>;
 }
-function Dashboard() { const role = currentRole(); if (role === 'government') return <GovernmentDashboard />; if (role === 'industry') return <IndustryDashboard />; if (role === 'faculty') return <FacultyDashboard />; if (role === 'student') return <UniversityDashboard />; if ((role === 'panchayat' || role === 'ulb')) return <CommunityDashboard />;const [, setLocation] = useLocation();
-const problems = readStore('ss-problems', initialProblems);
-const user = readStore('ss-user', null) as { id?: string } | null;
-const mySubmissions = problems.filter((p: any) => p.reportedBy === user?.id); return <Shell><PageIntro eyebrow="Citizen workspace" title={`${getGreeting()}, ${readStore('ss-user', { name: 'User' })?.name || 'User'}.`} description="Small observations become shared action. Here’s what’s moving in your communities." action={<Link href="/citizen/report" className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition hover:brightness-110" data-testid="link-report-header"><Plus size={17} />Report a problem</Link>} /><div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><Metric
-  label="My submissions"
-  value={String(mySubmissions.length).padStart(2, '0')}
-  detail={mySubmissions.length === 0 ? 'No problems reported yet' : `${mySubmissions.length} problem${mySubmissions.length === 1 ? '' : 's'} reported`}
-  icon={FileText}
-  tone="primary"
-/><Metric label="Community votes" value="148" detail="Across 4 challenges" icon={Users} tone="orange" /><Metric label="In motion" value="03" detail="Projects near you" icon={Activity} tone="green" /><Metric label="Impact reached" value="1,240" detail="Households in pilot" icon={Target} tone="blue" /></div><div className="mt-7 grid gap-6 lg:grid-cols-[1.35fr_.65fr]"><Card className="p-5 md:p-6"><SectionTitle eyebrow="See your district" title="What’s happening nearby?" description="A mock view of community challenges across Jharkhand." action={<select className="rounded-lg border border-border bg-background px-2 py-2 text-xs font-semibold" data-testid="select-map-category"><option>All categories</option>{categories.map(c => <option key={c}>{c}</option>)}</select>} /><MapMock /><div className="mt-4 flex flex-wrap gap-2">{['Ranchi', 'Jamshedpur', 'Gumla', 'Deoghar'].map(d => <span key={d} className="rounded-lg bg-muted px-2.5 py-1.5 text-xs font-semibold text-muted-foreground">{d}</span>)}</div></Card><Card className="p-5 md:p-6"><SectionTitle eyebrow="Quick actions" title="Make a difference" /><div className="space-y-2">{[{ label: 'Report a local problem', href: '/citizen/report', icon: Plus, tone: 'bg-orange-100 text-accent' }, { label: 'Track my submissions', href: '/citizen/submissions', icon: ListChecks, tone: 'bg-sky-100 text-sky-700' }, { label: 'Explore innovation', href: '/university/challenges', icon: Lightbulb, tone: 'bg-secondary text-primary' }].map(action => <Link key={action.label} href={action.href} className="group flex items-center gap-3 rounded-xl border border-border p-3 transition hover:border-primary hover:bg-muted" data-testid={`link-quick-${action.label.toLowerCase().replaceAll(' ', '-')}`}><span className={cx('flex h-9 w-9 items-center justify-center rounded-lg', action.tone)}><Icon icon={action.icon} size={17} /></span><span className="flex-1 text-sm font-bold">{action.label}</span><ArrowRight size={16} className="text-muted-foreground transition group-hover:translate-x-1" /></Link>)}</div><div className="mt-7 border-t border-border pt-5"><p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Your voice counts</p><p className="mt-2 font-display text-2xl font-bold text-primary">1 in 4</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">validated challenges in your block received citizen evidence.</p></div></Card></div><div className="mt-7"><SectionTitle eyebrow="Recent activity" title="Community problems" action={<Link href="/citizen/submissions" className="text-sm font-bold text-primary" data-testid="link-view-all-submissions">View all <ArrowRight className="ml-1 inline" size={15} /></Link>} /><div className="grid gap-3 md:grid-cols-2">{problems.slice(0, 4).map((p: typeof initialProblems[number]) => <button key={p.id} onClick={() => setLocation(`/citizen/submissions/${p.id}`)} className="group flex items-center gap-4 rounded-2xl border border-border bg-card p-4 text-left transition hover:-translate-y-0.5 hover:border-primary" data-testid={`card-submission-${p.id}`}><span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted text-primary"><MapPin size={18} /></span><span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold">{p.title}</span><span className="mt-1 block text-xs text-muted-foreground">{p.district} · {p.age}</span></span><Badge tone={p.status === 'In progress' ? 'green' : p.status === 'Assigned' ? 'blue' : 'amber'}>{p.status}</Badge></button>)}</div></div></Shell>; }
+function Dashboard() {
+  const role = currentRole();
+
+  if (role === 'government') return <GovernmentDashboard />;
+  if (role === 'industry') return <IndustryDashboard />;
+  if (role === 'faculty') return <FacultyDashboard />;
+  if (role === 'student') return <UniversityDashboard />;
+  if (role === 'panchayat' || role === 'ulb') return <CommunityDashboard />;
+
+  const [, setLocation] = useLocation();
+
+  const problems = readStore('ss-problems', initialProblems);
+  const user = readStore('ss-user', null) as { id?: string; name?: string } | null;
+
+  const mySubmissions = problems.filter(
+    (p: any) => p.reportedBy === user?.id
+  );
+
+  const supportedProblems = readStore(
+    `ss-supported-problems-${user?.id || 'guest'}`,
+    []
+  ) as string[];
+
+  const handleSupport = (problemId: string) => {
+    if (!user?.id) return;
+
+    if (supportedProblems.includes(problemId)) return;
+
+    const updatedSupportedProblems = [
+      ...supportedProblems,
+      problemId,
+    ];
+
+    localStorage.setItem(
+      `ss-supported-problems-${user.id}`,
+      JSON.stringify(updatedSupportedProblems)
+    );
+
+    const updatedProblems = problems.map((problem: any) =>
+      problem.id === problemId
+        ? {
+            ...problem,
+            votes: Number(problem.votes || 0) + 1,
+          }
+        : problem
+    );
+
+    localStorage.setItem(
+      'ss-problems',
+      JSON.stringify(updatedProblems)
+    );
+
+    window.dispatchEvent(new Event('storage'));
+    window.location.reload();
+  };
+
+  return (
+    <Shell>
+      <PageIntro
+        eyebrow="Citizen workspace"
+        title={`${getGreeting()}, ${user?.name || 'User'}.`}
+        description="Small observations become shared action. Here’s what’s moving in your communities."
+        action={
+          <Link
+            href="/citizen/report"
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground transition hover:brightness-110"
+            data-testid="link-report-header"
+          >
+            <Plus size={17} />
+            Report a problem
+          </Link>
+        }
+      />
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <Metric
+          label="My submissions"
+          value={String(mySubmissions.length).padStart(2, '0')}
+          detail={
+            mySubmissions.length === 0
+              ? 'No problems reported yet'
+              : `${mySubmissions.length} problem${
+                  mySubmissions.length === 1 ? '' : 's'
+                } reported`
+          }
+          icon={FileText}
+          tone="primary"
+        />
+
+        <Metric
+          label="Community votes"
+          value="148"
+          detail="Across 4 challenges"
+          icon={Users}
+          tone="orange"
+        />
+
+        <Metric
+          label="In motion"
+          value="03"
+          detail="Projects near you"
+          icon={Activity}
+          tone="green"
+        />
+
+        <Metric
+          label="Impact reached"
+          value="1,240"
+          detail="Households in pilot"
+          icon={Target}
+          tone="blue"
+        />
+      </div>
+
+      <div className="mt-7 grid gap-6 lg:grid-cols-[1.35fr_.65fr]">
+        <Card className="p-5 md:p-6">
+          <SectionTitle
+            eyebrow="See your district"
+            title="What’s happening nearby?"
+            description="A mock view of community challenges across Jharkhand."
+            action={
+              <select
+                className="rounded-lg border border-border bg-background px-2 py-2 text-xs font-semibold"
+                data-testid="select-map-category"
+              >
+                <option>All categories</option>
+
+                {categories.map((c) => (
+                  <option key={c}>{c}</option>
+                ))}
+              </select>
+            }
+          />
+
+          <MapMock />
+
+          <div className="mt-4 flex flex-wrap gap-2">
+            {['Ranchi', 'Jamshedpur', 'Gumla', 'Deoghar'].map((d) => (
+              <span
+                key={d}
+                className="rounded-lg bg-muted px-2.5 py-1.5 text-xs font-semibold text-muted-foreground"
+              >
+                {d}
+              </span>
+            ))}
+          </div>
+        </Card>
+
+        <Card className="p-5 md:p-6">
+          <SectionTitle
+            eyebrow="Quick actions"
+            title="Make a difference"
+          />
+
+          <div className="space-y-2">
+            {[
+              {
+                label: 'Report a local problem',
+                href: '/citizen/report',
+                icon: Plus,
+                tone: 'bg-orange-100 text-accent',
+              },
+              {
+                label: 'Track my submissions',
+                href: '/citizen/submissions',
+                icon: ListChecks,
+                tone: 'bg-sky-100 text-sky-700',
+              },
+              {
+                label: 'Explore innovation',
+                href: '/university/challenges',
+                icon: Lightbulb,
+                tone: 'bg-secondary text-primary',
+              },
+            ].map((action) => (
+              <Link
+                key={action.label}
+                href={action.href}
+                className="group flex items-center gap-3 rounded-xl border border-border p-3 transition hover:border-primary hover:bg-muted"
+                data-testid={`link-quick-${action.label
+                  .toLowerCase()
+                  .replaceAll(' ', '-')}`}
+              >
+                <span
+                  className={cx(
+                    'flex h-9 w-9 items-center justify-center rounded-lg',
+                    action.tone
+                  )}
+                >
+                  <Icon icon={action.icon} size={17} />
+                </span>
+
+                <span className="flex-1 text-sm font-bold">
+                  {action.label}
+                </span>
+
+                <ArrowRight
+                  size={16}
+                  className="text-muted-foreground transition group-hover:translate-x-1"
+                />
+              </Link>
+            ))}
+          </div>
+
+          <div className="mt-7 border-t border-border pt-5">
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Your voice counts
+            </p>
+
+            <p className="mt-2 font-display text-2xl font-bold text-primary">
+              1 in 4
+            </p>
+
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+              validated challenges in your block received citizen evidence.
+            </p>
+          </div>
+        </Card>
+      </div>
+
+      <div className="mt-7">
+        <SectionTitle
+          eyebrow="Community voice"
+          title="Community problems"
+          description="See what your community is reporting and support problems that matter to you."
+          action={
+            <Link
+              href="/citizen/submissions"
+              className="text-sm font-bold text-primary"
+              data-testid="link-view-all-submissions"
+            >
+              View all <ArrowRight className="ml-1 inline" size={15} />
+            </Link>
+          }
+        />
+
+        <div className="grid gap-3 md:grid-cols-2">
+          {problems.slice(0, 4).map((p: any) => {
+            const hasSupported = supportedProblems.includes(p.id);
+
+            return (
+              <div
+                key={p.id}
+                className="rounded-2xl border border-border bg-card p-4 transition hover:-translate-y-0.5 hover:border-primary"
+                data-testid={`card-community-problem-${p.id}`}
+              >
+                <button
+                  onClick={() =>
+                    setLocation(`/citizen/submissions/${p.id}`)
+                  }
+                  className="flex w-full items-center gap-4 text-left"
+                  data-testid={`button-view-problem-${p.id}`}
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted text-primary">
+                    <MapPin size={18} />
+                  </span>
+
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-bold">
+                      {p.title}
+                    </span>
+
+                    <span className="mt-1 block text-xs text-muted-foreground">
+                      {p.district} · {p.age}
+                    </span>
+                  </span>
+
+                  <Badge
+                    tone={
+                      p.status === 'In progress'
+                        ? 'green'
+                        : p.status === 'Assigned'
+                        ? 'blue'
+                        : 'amber'
+                    }
+                  >
+                    {p.status}
+                  </Badge>
+                </button>
+
+                <div className="mt-4 flex items-center justify-between border-t border-border pt-3">
+                  <span className="text-xs font-semibold text-muted-foreground">
+                    {Number(p.votes || 0)} support
+                    {Number(p.votes || 0) === 1 ? '' : 's'}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() => handleSupport(p.id)}
+                    disabled={hasSupported}
+                    className={cx(
+                      'rounded-lg px-3 py-1.5 text-xs font-bold transition',
+                      hasSupported
+                        ? 'cursor-not-allowed bg-muted text-muted-foreground'
+                        : 'bg-primary text-primary-foreground hover:brightness-110'
+                    )}
+                    data-testid={`button-support-${p.id}`}
+                  >
+                    {hasSupported ? 'Supported' : 'Support'}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {problems.length === 0 && (
+          <Card className="mt-3 p-8 text-center">
+            <FileText
+              className="mx-auto text-muted-foreground"
+              size={28}
+            />
+
+            <p className="mt-3 font-bold">
+              No community problems yet
+            </p>
+
+            <p className="mt-1 text-sm text-muted-foreground">
+              Be the first to report a local problem.
+            </p>
+
+            <Link
+              href="/citizen/report"
+              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground"
+            >
+              <Plus size={16} />
+              Report a problem
+            </Link>
+          </Card>
+        )}
+      </div>
+    </Shell>
+  );
+}
 
 function Report() {
   const [, setLocation] = useLocation();
