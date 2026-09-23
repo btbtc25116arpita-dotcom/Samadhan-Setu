@@ -1009,6 +1009,114 @@ function MapMock({ filter = 'All' }: { filter?: string }) {
     {points.map(point => <div key={point.name} className="absolute z-10 -translate-x-1/2 -translate-y-1/2" style={{ left: point.x, top: point.y }}><div className="flex h-9 w-9 items-center justify-center rounded-full border-4 border-card bg-accent text-[10px] font-bold text-white shadow-lg transition hover:scale-125" title={`${point.name}: ${point.count} challenges`} data-testid={`map-point-${point.name.toLowerCase()}`}>{point.count}</div><span className="mt-1 block text-center text-[10px] font-bold text-primary">{point.name}</span></div>)}
   </div>;
 }
+function Notifications() {
+  const notifications = [
+    {
+      id: '1',
+      title: 'Welcome to Samadhan Setu',
+      message:
+        'Stay updated about your reported problems, community activities, teams and projects.',
+      time: 'Just now',
+      type: 'system',
+      unread: true,
+    },
+    {
+      id: '2',
+      title: 'Community problems',
+      message:
+        'You can now support problems reported by other citizens and help bring attention to important local issues.',
+      time: 'Today',
+      type: 'community',
+      unread: true,
+    },
+    {
+      id: '3',
+      title: 'Innovation opportunities',
+      message:
+        'Explore solutions and innovation projects connected to community problems across Jharkhand.',
+      time: 'Today',
+      type: 'innovation',
+      unread: false,
+    },
+  ];
+
+  return (
+    <Shell>
+      <PageIntro
+        eyebrow="Updates"
+        title="Notifications"
+        description="Stay updated about your problems, community activities and innovation projects."
+      />
+
+      <div className="mt-7 space-y-3">
+        {notifications.map((notification) => (
+          <Card
+            key={notification.id}
+            className={cx(
+              'p-4 md:p-5 transition hover:border-primary',
+              notification.unread && 'border-primary/30 bg-primary/[0.02]'
+            )}
+          >
+            <div className="flex gap-4">
+              <span
+                className={cx(
+                  'flex h-10 w-10 shrink-0 items-center justify-center rounded-xl',
+                  notification.type === 'system'
+                    ? 'bg-secondary text-primary'
+                    : notification.type === 'community'
+                    ? 'bg-orange-100 text-accent'
+                    : 'bg-sky-100 text-sky-700'
+                )}
+              >
+                {notification.type === 'system' ? (
+                  <Bell size={18} />
+                ) : notification.type === 'community' ? (
+                  <Users size={18} />
+                ) : (
+                  <Lightbulb size={18} />
+                )}
+              </span>
+
+              <div className="min-w-0 flex-1">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <p className="text-sm font-bold">
+                      {notification.title}
+                    </p>
+
+                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                      {notification.message}
+                    </p>
+                  </div>
+
+                  {notification.unread && (
+                    <span className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-primary" />
+                  )}
+                </div>
+
+                <p className="mt-3 text-xs font-semibold text-muted-foreground">
+                  {notification.time}
+                </p>
+              </div>
+            </div>
+          </Card>
+        ))}
+      </div>
+
+      <div className="mt-6 flex justify-center">
+        <button
+          type="button"
+          className="rounded-xl border border-border px-4 py-2.5 text-sm font-bold transition hover:border-primary hover:bg-muted"
+          onClick={() => {
+            window.alert('All notifications marked as read.');
+          }}
+        >
+          Mark all as read
+        </button>
+      </div>
+    </Shell>
+  );
+}
 function Dashboard() {
   const role = currentRole();
 
