@@ -1178,8 +1178,8 @@ function Dashboard() {
                 tone: 'bg-sky-100 text-sky-700',
               },
               {
-                label: 'Explore innovation',
-                href: '/university/challenges',
+                label: 'Explore solutions',
+                href: '/citizen/solutions',
                 icon: Lightbulb,
                 tone: 'bg-secondary text-primary',
               },
