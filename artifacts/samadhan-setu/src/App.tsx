@@ -29,7 +29,6 @@ function getGreeting() {
     return "Good evening";
   }
 
-  return "Good night";
 }
 
 const queryClient = new QueryClient();
