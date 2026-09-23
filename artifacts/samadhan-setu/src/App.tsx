@@ -1021,7 +1021,10 @@ function Dashboard() {
   const [, setLocation] = useLocation();
 
   const problems = readStore('ss-problems', initialProblems);
-  const user = readStore('ss-user', null) as { id?: string; name?: string } | null;
+  const user = readStore('ss-user', null) as {
+    id?: string;
+    name?: string;
+  } | null;
 
   const mySubmissions = problems.filter(
     (p: any) => p.reportedBy === user?.id
@@ -1061,9 +1064,46 @@ function Dashboard() {
       JSON.stringify(updatedProblems)
     );
 
-    window.dispatchEvent(new Event('storage'));
     window.location.reload();
   };
+
+  const innovationProjects = [
+    {
+      title: 'Low-cost Water Quality Monitoring',
+      district: 'Ranchi',
+      category: 'Water & Sanitation',
+      partner: 'University / Student Team',
+      status: 'Prototype testing',
+      description:
+        'A low-cost monitoring approach for identifying unsafe drinking water in rural communities.',
+    },
+    {
+      title: 'Smart Irrigation Advisory',
+      district: 'Gumla',
+      category: 'Agriculture',
+      partner: 'University / Industry',
+      status: 'Field validation',
+      description:
+        'A technology-assisted solution to help farmers make better irrigation decisions.',
+    },
+    {
+      title: 'School Route Safety Mapping',
+      district: 'Deoghar',
+      category: 'Education & Infrastructure',
+      partner: 'Student Innovation Team',
+      status: 'Pilot deployed',
+      description:
+        'Mapping unsafe routes and identifying infrastructure issues around school journeys.',
+    },
+  ];
+
+  const openProblems = problems
+    .filter(
+      (p: any) =>
+        p.status !== 'In progress' &&
+        p.status !== 'Completed'
+    )
+    .slice(0, 3);
 
   return (
     <Shell>
@@ -1083,6 +1123,7 @@ function Dashboard() {
         }
       />
 
+      {/* METRICS */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <Metric
           label="My submissions"
@@ -1123,6 +1164,7 @@ function Dashboard() {
         />
       </div>
 
+      {/* MAP + QUICK ACTIONS */}
       <div className="mt-7 grid gap-6 lg:grid-cols-[1.35fr_.65fr]">
         <Card className="p-5 md:p-6">
           <SectionTitle
@@ -1178,13 +1220,13 @@ function Dashboard() {
                 tone: 'bg-sky-100 text-sky-700',
               },
               {
-                label: 'Explore solutions',
-                href: '/citizen/solutions',
+                label: 'Explore innovations',
+                href: '#explore-innovation',
                 icon: Lightbulb,
                 tone: 'bg-secondary text-primary',
               },
             ].map((action) => (
-              <Link
+              <a
                 key={action.label}
                 href={action.href}
                 className="group flex items-center gap-3 rounded-xl border border-border p-3 transition hover:border-primary hover:bg-muted"
@@ -1209,7 +1251,7 @@ function Dashboard() {
                   size={16}
                   className="text-muted-foreground transition group-hover:translate-x-1"
                 />
-              </Link>
+              </a>
             ))}
           </div>
 
@@ -1229,11 +1271,12 @@ function Dashboard() {
         </Card>
       </div>
 
+      {/* COMMUNITY PROBLEMS */}
       <div className="mt-7">
         <SectionTitle
           eyebrow="Community voice"
           title="Community problems"
-          description="See what your community is reporting and support problems that matter to you."
+          description="See what people in your community are reporting and support problems that matter to you."
           action={
             <Link
               href="/citizen/submissions"
@@ -1314,31 +1357,272 @@ function Dashboard() {
             );
           })}
         </div>
+      </div>
 
-        {problems.length === 0 && (
-          <Card className="mt-3 p-8 text-center">
-            <FileText
-              className="mx-auto text-muted-foreground"
-              size={28}
-            />
+      {/* EXPLORE INNOVATIONS */}
+      <div
+        id="explore-innovation"
+        className="mt-10 scroll-mt-24"
+      >
+        <SectionTitle
+          eyebrow="From problems to solutions"
+          title="Explore innovations"
+          description="Discover how universities, students and industry partners are working on community problems across Jharkhand."
+        />
 
-            <p className="mt-3 font-bold">
-              No community problems yet
+        {/* SOLUTIONS IN PROGRESS */}
+        <div className="mt-4">
+          <div className="mb-3 flex items-center justify-between">
+            <div>
+              <p className="text-sm font-bold">
+                Solutions in progress
+              </p>
+              <p className="text-xs text-muted-foreground">
+                Ideas and projects currently being developed or tested.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-3">
+            {innovationProjects.map((project) => (
+              <Card
+                key={project.title}
+                className="p-5 transition hover:-translate-y-0.5 hover:border-primary"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary text-primary">
+                    <Lightbulb size={19} />
+                  </span>
+
+                  <Badge tone="green">
+                    {project.status}
+                  </Badge>
+                </div>
+
+                <p className="mt-4 text-sm font-bold">
+                  {project.title}
+                </p>
+
+                <p className="mt-1 text-xs font-semibold text-primary">
+                  {project.category}
+                </p>
+
+                <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+                  {project.description}
+                </p>
+
+                <div className="mt-4 border-t border-border pt-3">
+                  <p className="text-xs font-semibold">
+                    {project.partner}
+                  </p>
+
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {project.district}, Jharkhand
+                  </p>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
+
+        {/* PROBLEMS LOOKING FOR INNOVATION */}
+        <div className="mt-8">
+          <div className="mb-3">
+            <p className="text-sm font-bold">
+              Problems looking for innovation
             </p>
 
-            <p className="mt-1 text-sm text-muted-foreground">
-              Be the first to report a local problem.
+            <p className="text-xs text-muted-foreground">
+              Community problems that can be taken up by universities,
+              student teams or industry partners.
+            </p>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-3">
+            {openProblems.map((p: any) => (
+              <Card
+                key={p.id}
+                className="p-4"
+              >
+                <div className="flex items-start gap-3">
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-orange-100 text-accent">
+                    <MapPin size={17} />
+                  </span>
+
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-sm font-bold">
+                      {p.title}
+                    </p>
+
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      {p.district} · {p.category || 'Community issue'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex items-center justify-between">
+                  <span className="text-xs font-semibold text-muted-foreground">
+                    {Number(p.votes || 0)} community support
+                    {Number(p.votes || 0) === 1 ? '' : 's'}
+                  </span>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setLocation(`/citizen/submissions/${p.id}`)
+                    }
+                    className="text-xs font-bold text-primary"
+                  >
+                    View problem →
+                  </button>
+                </div>
+              </Card>
+            ))}
+
+            {openProblems.length === 0 && (
+              <Card className="p-6 md:col-span-3">
+                <p className="text-sm font-bold">
+                  No open problems at the moment.
+                </p>
+
+                <p className="mt-1 text-xs text-muted-foreground">
+                  New community challenges will appear here when they are
+                  reported.
+                </p>
+              </Card>
+            )}
+          </div>
+        </div>
+
+        {/* ECOSYSTEM */}
+        <div className="mt-8">
+          <div className="mb-3">
+            <p className="text-sm font-bold">
+              Who is working on community problems?
             </p>
 
-            <Link
-              href="/citizen/report"
-              className="mt-4 inline-flex items-center gap-2 rounded-xl bg-primary px-4 py-2.5 text-sm font-bold text-primary-foreground"
-            >
-              <Plus size={16} />
-              Report a problem
-            </Link>
+            <p className="text-xs text-muted-foreground">
+              Samadhan Setu connects community needs with knowledge,
+              technology and implementation support.
+            </p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-3">
+            <Card className="p-5">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-100 text-sky-700">
+                <GraduationCap size={19} />
+              </div>
+
+              <p className="mt-4 font-display text-2xl font-bold text-primary">
+                12
+              </p>
+
+              <p className="text-sm font-bold">
+                University initiatives
+              </p>
+
+              <p className="mt-1 text-xs text-muted-foreground">
+                Academic expertise connected to community challenges.
+              </p>
+            </Card>
+
+            <Card className="p-5">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary text-primary">
+                <Users size={19} />
+              </div>
+
+              <p className="mt-4 font-display text-2xl font-bold text-primary">
+                18
+              </p>
+
+              <p className="text-sm font-bold">
+                Student teams
+              </p>
+
+              <p className="mt-1 text-xs text-muted-foreground">
+                Students turning real problems into practical projects.
+              </p>
+            </Card>
+
+            <Card className="p-5">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-orange-100 text-accent">
+                <Building2 size={19} />
+              </div>
+
+              <p className="mt-4 font-display text-2xl font-bold text-primary">
+                07
+              </p>
+
+              <p className="text-sm font-bold">
+                Industry partners
+              </p>
+
+              <p className="mt-1 text-xs text-muted-foreground">
+                Technical, financial and implementation support.
+              </p>
+            </Card>
+          </div>
+        </div>
+
+        {/* COMPLETED IMPACT */}
+        <div className="mt-8">
+          <div className="mb-3">
+            <p className="text-sm font-bold">
+              Solutions delivered
+            </p>
+
+            <p className="text-xs text-muted-foreground">
+              Examples of community-focused solutions that have reached
+              the field.
+            </p>
+          </div>
+
+          <Card className="overflow-hidden">
+            {[
+              {
+                title: 'Handpump monitoring system',
+                location: 'Ranchi',
+                impact: '320 households reached',
+              },
+              {
+                title: 'School route safety mapping',
+                location: 'Gumla',
+                impact: '4 schools covered',
+              },
+              {
+                title: 'Crop advisory pilot',
+                location: 'Deoghar',
+                impact: '86 farmers reached',
+              },
+            ].map((item, index) => (
+              <div
+                key={item.title}
+                className={cx(
+                  'flex items-center gap-4 p-4',
+                  index !== 0 && 'border-t border-border'
+                )}
+              >
+                <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-green-100 text-green-700">
+                  <CheckCircle2 size={17} />
+                </span>
+
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-bold">
+                    {item.title}
+                  </p>
+
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    {item.location} · {item.impact}
+                  </p>
+                </div>
+
+                <Badge tone="green">
+                  Delivered
+                </Badge>
+              </div>
+            ))}
           </Card>
-        )}
+        </div>
       </div>
     </Shell>
   );
