@@ -14,7 +14,7 @@ LogIn, LogOut, Mail, MapPin, MessageSquare, Mic, MicOff, Milestone, MoreHorizont
 Pencil, Phone, Plus, Search, Send, Settings, ShieldCheck, Sparkles, Target, TrendingUp,
 Upload, UserCircle2, Users, X, Zap, Droplets, Landmark, BriefcaseBusiness
 } from 'lucide-react';
-function getGreeting() {
+function getGreeting(): string {
   const hour = new Date().getHours();
 
   if (hour >= 5 && hour < 12) {
@@ -25,10 +25,7 @@ function getGreeting() {
     return "Good afternoon";
   }
 
-  if (hour >= 17 && hour < 24) {
-    return "Good evening";
-  }
-
+  return "Good evening";
 }
 
 const queryClient = new QueryClient();
