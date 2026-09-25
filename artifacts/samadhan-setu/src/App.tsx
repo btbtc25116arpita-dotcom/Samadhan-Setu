@@ -5572,9 +5572,54 @@ function IndustryDashboard() {
    * SUPPORT REQUEST
    * ---------------------------------------------------------
    */
-  const sendSupportRequest = () => {
+  const sendSupportRequest = async () => {
+  if (!selectedProject?.id) {
+    setSupportSent(false);
+    return;
+  }
+
+  try {
+    setLoading(true);
+    setError('');
+
+    const fundingAmount = budget
+      ? budget.replace(/[₹,\s]/g, '')
+      : '';
+
+    await apiRequest('/support-offers', {
+      method: 'POST',
+      body: JSON.stringify({
+        projectId: selectedProject.id,
+        supportType,
+        description: [
+          timeline
+            ? `Timeline: ${timeline}`
+            : '',
+          expertise
+            ? `Expertise: ${expertise}`
+            : '',
+        ]
+          .filter(Boolean)
+          .join('\n'),
+        fundingAmount,
+      }),
+    });
+
     setSupportSent(true);
-  };
+  } catch (err) {
+    console.error('Failed to send support request:', err);
+
+    setError(
+      err instanceof Error
+        ? err.message
+        : 'Unable to send support request.'
+    );
+
+    setSupportSent(false);
+  } finally {
+    setLoading(false);
+  }
+};
 
   /*
    * =========================================================
