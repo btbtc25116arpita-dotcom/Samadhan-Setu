@@ -19,6 +19,7 @@ router.get("/projects", async (_req, res) => {
     return res.json(rows);
   } catch (error) {
     console.error("GET /api/projects failed", error);
+
     return res.status(500).json({
       message: "Unable to load projects",
     });
@@ -68,12 +69,6 @@ router.post("/projects", async (req, res) => {
   } catch (error) {
     console.error("POST /api/projects failed", error);
 
-    return res.status(500).json({
-      message: "Unable to create project",
-    });
-  }
-});
-    console.error("POST /api/projects failed", error);
     return res.status(500).json({
       message: "Unable to create project",
     });
