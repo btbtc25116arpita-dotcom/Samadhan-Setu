@@ -1,5 +1,5 @@
 import { Router, type IRouter } from "express";
-import { desc } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { randomUUID } from "node:crypto";
 import { db, projects } from "@workspace/db";
 
