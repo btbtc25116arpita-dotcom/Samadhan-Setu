@@ -1,3 +1,0 @@
-- [Imported artifact registration](imported-artifact-registration.md) — imported artifact metadata may exist on disk while the artifact registry remains empty.
-- [TypeScript JSX modules](typescript-jsx-modules.md) — keep JSX-bearing modules as `.tsx`; `.ts` files are parsed without JSX support here.
-- [pnpm version alignment](pnpm-version-alignment.md) — align packageManager with the installed pnpm when the wrapper stalls trying to self-download another version.
