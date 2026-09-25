@@ -4456,42 +4456,59 @@ function FacultyDashboard() {
     }
   };
 
-  const approveProblem = async () => {
-    if (!selectedProblem) return;
+ const createProjectFromProblem = async (problem: any) => {
+  if (!problem?.id) {
+    throw new Error('Problem ID is missing.');
+  }
 
-    setActionLoading(true);
-    setActionMessage('');
+  const existingProject = projects.find(
+    (project) => project.problemId === problem.id
+  );
 
-    try {
-      /*
-       * Use the existing validation endpoint if available.
-       * The problem is already community-validated, so this marks
-       * the faculty review state locally without inventing a new API.
-       */
-      const updatedProblem = {
-        ...selectedProblem,
-        facultyStatus: 'approved',
-      };
+  if (existingProject) {
+    return existingProject;
+  }
 
-      setProblems((current) =>
-        current.map((problem) =>
-          problem.id === selectedProblem.id
-            ? updatedProblem
-            : problem
-        )
-      );
+  const createdProject = await apiRequest<any>('/projects', {
+    method: 'POST',
+    body: JSON.stringify({
+      problemId: problem.id,
+      projectName: problem.title || 'Community Problem Project',
+      description: problem.description || '',
+    }),
+  });
 
-      setSelectedProblem(updatedProblem);
+  setProjects((current) => [createdProject, ...current]);
 
-      setActionMessage(
-        'Problem approved. It can now be taken up as a collaborative project.'
-      );
-    } catch (err) {
-      setActionMessage('Unable to approve this problem.');
-    } finally {
-      setActionLoading(false);
-    }
-  };
+  return createdProject;
+};
+
+const approveProblem = async () => {
+  if (!selectedProblem) return;
+
+  setActionLoading(true);
+  setActionMessage('');
+
+  try {
+    const project = await createProjectFromProblem(selectedProblem);
+
+    setActionMessage(
+      project
+        ? 'Problem accepted. A collaborative project has been created and is now available to industry partners.'
+        : 'Problem accepted.'
+    );
+  } catch (err) {
+    console.error('Failed to create collaborative project:', err);
+
+    setActionMessage(
+      err instanceof Error
+        ? err.message
+        : 'Unable to accept this problem.'
+    );
+  } finally {
+    setActionLoading(false);
+  }
+};
 
   const exploreOpportunity = (problem: any) => {
     openProblemReview(problem);
