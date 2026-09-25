@@ -1,6 +1,6 @@
 # Samadhan Setu
 
-### A Collaborative Platform for Solving Local Challenges Through Academia, Industry and Government
+### A Collaborative Platform Connecting Local Challenges with Academic, Industry and Government Resources
 
 Samadhan Setu is a Jharkhand-focused digital platform designed to connect local community problems with relevant academic expertise, industry resources and government stakeholders.
 
@@ -10,14 +10,14 @@ The platform provides a structured workflow through which a reported problem can
 
 ## Problem Statement
 
-Local problems often require technical knowledge, research, funding and coordinated implementation. However, citizens, educational institutions, industries and government bodies frequently operate through disconnected channels.
+Local challenges often require technical expertise, research, funding and coordinated implementation. However, citizens, educational institutions, industries and government stakeholders frequently operate through disconnected channels.
 
-As a result:
+This can result in:
 
-* Local problems may not reach the appropriate technical expertise.
-* Universities and students may lack access to relevant real-world challenges.
-* Industry support and CSR resources may not reach suitable projects.
-* Government stakeholders may have limited visibility into the progress of collaborative solutions.
+* Local problems not reaching relevant technical expertise
+* Universities and students lacking access to suitable real-world challenges
+* Industry and CSR resources not reaching appropriate projects
+* Limited visibility into the progress of collaborative solutions
 
 Samadhan Setu addresses this collaboration gap through a unified platform.
 
@@ -25,7 +25,7 @@ Samadhan Setu addresses this collaboration gap through a unified platform.
 
 ## Solution
 
-Samadhan Setu establishes a structured pathway connecting the major stakeholders involved in solving local challenges:
+Samadhan Setu provides a structured pathway for moving a local problem from reporting to potential implementation.
 
 ```text
 Citizen
@@ -56,7 +56,7 @@ Government Coordination
 Implementation
 ```
 
-The objective is to move a problem beyond reporting and create a structured mechanism for collaboration and implementation.
+The objective is to transform an isolated problem report into a structured collaborative project.
 
 ---
 
@@ -82,7 +82,7 @@ The objective is to move a problem beyond reporting and create a structured mech
 * Provide technical mentorship
 * Offer funding or CSR support
 * Contribute technology, infrastructure and domain expertise
-* Support implementation
+* Support project implementation
 
 ### Government
 
@@ -132,9 +132,9 @@ The objective is to reduce the gap between community requirements and available 
 
 ## Industry Collaboration
 
-Once a validated problem is accepted as a project, relevant industry partners can review the project and offer support based on their capabilities.
+After a problem is accepted as a project, relevant industry partners can discover the project and offer support based on their capabilities.
 
-Potential forms of support include:
+Potential support includes:
 
 * Funding and CSR support
 * Technical mentorship
@@ -143,13 +143,13 @@ Potential forms of support include:
 * Domain expertise
 * Implementation assistance
 
-This enables projects developed through academic collaboration to receive practical resources required for implementation.
+This creates a pathway for academically developed solutions to receive practical resources for implementation.
 
 ---
 
 ## Jharkhand Focus
 
-Samadhan Setu is designed with the requirements and local context of Jharkhand in mind.
+Samadhan Setu is designed around the local context and requirements of Jharkhand.
 
 The platform can support challenges across areas including:
 
@@ -164,7 +164,7 @@ The platform can support challenges across areas including:
 * Urban infrastructure
 * Public service delivery
 
-The platform architecture allows the workflow to be adapted to different districts, institutions and government stakeholders.
+The platform architecture can be adapted to different districts, institutions and government stakeholders.
 
 ---
 
@@ -243,27 +243,34 @@ Samadhan-Setu/
 pnpm install
 ```
 
-### Environment Configuration
+### Database Configuration
 
-Create a `.env` file containing the required database configuration:
+The backend requires a PostgreSQL database connection through the `DATABASE_URL` environment variable.
+
+For local development, configure the required environment variable in a local `.env` file.
 
 ```env
 DATABASE_URL=your_database_connection_string
 ```
 
-Do not commit credentials, API keys or other secrets to the repository.
+The actual database connection string should remain local and must not be committed to the repository.
 
-### Run the Project
+### Running the Application
 
-Use the workspace development scripts to start the frontend and backend according to the configuration provided in the repository.
+Use the development scripts defined in the repository to start the frontend and backend.
 
 ---
 
 ## Security
 
-The project uses environment variables for sensitive configuration such as database credentials.
+Sensitive configuration is managed through environment variables rather than being stored directly in source code.
 
-Production credentials, private API keys and other secrets should never be committed to the repository.
+The repository should not contain:
+
+* Production database credentials
+* Private API keys
+* Authentication secrets
+* Other sensitive configuration
 
 ---
 
@@ -271,7 +278,16 @@ Production credentials, private API keys and other secrets should never be commi
 
 Samadhan Setu is currently implemented as a working prototype demonstrating the proposed collaboration workflow between citizens, educational institutions, industry partners and government stakeholders.
 
-The current prototype focuses on demonstrating the core platform workflow, role-based dashboards, problem validation, project collaboration and industry support mechanisms.
+The prototype demonstrates core platform workflows including:
+
+* Role-based access
+* Problem reporting
+* Problem validation
+* Faculty collaboration
+* Project creation
+* Industry project discovery
+* Industry support mechanisms
+* Government-oriented monitoring
 
 Additional automation, integrations and large-scale deployment capabilities can be incorporated in future iterations.
 
@@ -279,7 +295,7 @@ Additional automation, integrations and large-scale deployment capabilities can 
 
 ## Vision
 
-Samadhan Setu aims to establish a structured bridge between local challenges and the expertise, resources and institutions capable of addressing them.
+Samadhan Setu aims to establish a structured connection between local challenges and the expertise, technology and resources available across educational institutions, industry and government.
 
 The intended workflow is:
 
@@ -294,3 +310,5 @@ Support
    |
 Implement
 ```
+
+The platform is designed to make collaboration around local challenges more structured, visible and actionable.
