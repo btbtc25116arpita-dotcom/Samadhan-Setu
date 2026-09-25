@@ -15,11 +15,13 @@ router.get("/support-offers", async (_req, res) => {
     return res.json(rows);
   } catch (error) {
     console.error("GET /api/support-offers failed", error);
+
     return res.status(500).json({
       message: "Unable to load support offers",
     });
   }
 });
+
 router.post("/support-offers", async (req, res) => {
   try {
     const body = req.body as {
@@ -50,22 +52,6 @@ router.post("/support-offers", async (req, res) => {
       });
     }
 
-    let fundingAmount: string | null = null;
-
-    if (
-      body.fundingAmount !== undefined &&
-      body.fundingAmount !== null &&
-      String(body.fundingAmount).trim()
-    ) {
-      const cleanedAmount = String(body.fundingAmount)
-        .replace(/[₹,\s]/g, "")
-        .trim();
-
-      if (cleanedAmount) {
-        fundingAmount = cleanedAmount;
-      }
-    }
-
     const [created] = await db
       .insert(supportOffers)
       .values({
@@ -73,7 +59,12 @@ router.post("/support-offers", async (req, res) => {
         projectId,
         supportType,
         description: description || null,
-        fundingAmount,
+        fundingAmount:
+          body.fundingAmount !== undefined &&
+          body.fundingAmount !== null &&
+          String(body.fundingAmount).trim()
+            ? String(body.fundingAmount).trim()
+            : null,
         status: "Pending",
       })
       .returning();
