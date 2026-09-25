@@ -5184,17 +5184,39 @@ const approveProblem = async () => {
                 Cancel
               </Button>
 
-              <Button
-                variant="primary"
-                onClick={() => {
-                  setActionMessage(
-                    'Collaborative project setup selected.'
-                  );
-                }}
-              >
-                Continue
-                <ArrowRight size={16} />
-              </Button>
+             <Button
+  variant="primary"
+  disabled={actionLoading}
+  onClick={async () => {
+    if (!selectedProblem) return;
+
+    setActionLoading(true);
+    setActionMessage('');
+
+    try {
+      await createProjectFromProblem(selectedProblem);
+
+      setActionMessage(
+        'Collaborative project created successfully. Industry partners can now view and support it.'
+      );
+
+      setShowCollaboration(false);
+    } catch (err) {
+      console.error('Failed to create collaborative project:', err);
+
+      setActionMessage(
+        err instanceof Error
+          ? err.message
+          : 'Unable to create collaborative project.'
+      );
+    } finally {
+      setActionLoading(false);
+    }
+  }}
+>
+  Continue
+  <ArrowRight size={16} />
+</Button>
 
             </div>
 
