@@ -42,6 +42,16 @@ router.post("/projects", async (req, res) => {
       });
     }
 
+    const existing = await db
+      .select()
+      .from(projects)
+      .where(eq(projects.problemId, problemId))
+      .limit(1);
+
+    if (existing.length > 0) {
+      return res.status(200).json(existing[0]);
+    }
+
     const [created] = await db
       .insert(projects)
       .values({
@@ -56,6 +66,13 @@ router.post("/projects", async (req, res) => {
 
     return res.status(201).json(created);
   } catch (error) {
+    console.error("POST /api/projects failed", error);
+
+    return res.status(500).json({
+      message: "Unable to create project",
+    });
+  }
+});
     console.error("POST /api/projects failed", error);
     return res.status(500).json({
       message: "Unable to create project",
